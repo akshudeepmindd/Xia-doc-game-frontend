@@ -1,0 +1,111 @@
+.top-nav{
+    .navbar-brand{
+        color:#fff
+    }
+    .login-btn{
+        background-color: #ffb700;
+        border: 0;
+        padding: 8px 28px;
+    }
+    .reg-btn{
+        background-color: #67dfde;
+        padding: 8px 28px;
+        border: 0;
+    }
+    
+}
+.home-page{
+    .bottom-nav{
+        background-color: #ffb700;
+        ul{
+            list-style: none;
+            padding-left: 0;
+            li{
+                text-transform: uppercase;
+                font-weight: bold;
+                font-size: 12px;
+                padding: .8rem 0;
+                img{
+                    width: 18px;
+                    margin-right: .4rem;
+                }
+               
+            }
+        }
+    }
+    .banner{
+        background-image: url('https://img.freepik.com/free-photo/casino-roulette-wheel-close-up-ai-generative_123827-24159.jpg');
+        background-repeat: no-repeat;
+        background-size: cover;
+        height: 90vh;
+        width: 100%;
+        position: relative;
+        .banner-content{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            h2{
+                color: #fff;
+                font-size: 50px;
+                font-weight: bold;
+            }
+            p{
+                color: #fff;
+                font-size: 2rem;
+            }
+            .btn-start{
+                background-color: #ffb700;
+                border: 0;
+                padding: 10px 30px;
+                margin-top: 1rem;
+            }
+        }
+    }
+    .offers{
+        margin-top: 2rem;
+        h2{
+            color: #ffb700;
+            text-align: center;
+            font-size: 40px;
+        }
+        .offer-box{
+            background-color: #c72828;
+            border: 2px solid #ffb700;
+            border-radius: 7px;
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+            background-image: url("./images/download12.gif");
+            height: 65vh;
+            background-repeat: no-repeat;
+            background-size: cover;
+            img{
+                border-radius: 50px;
+                margin-bottom: 1rem;
+            }
+            h4{
+                font-size: 16px;
+                font-weight: bold;
+            }
+            p{
+                font-size: 14px;
+            }
+            ul{
+                padding-left: 0;
+                li{
+                    font-size: 14px;
+                    list-style: none;
+
+                }
+            }
+        }
+    }
+    .game-winner{
+        flex-direction: row;
+        
+    }
+}
+    
+
