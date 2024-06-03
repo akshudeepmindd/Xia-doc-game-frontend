@@ -91,9 +91,9 @@ const Home = () => {
           </div>
         </Slider>
 
-        <div className="game-winner">
+        {/* <div className="game-winner">
           <Slider settings2={settings2}>
-            <div>
+           
               <div className="d-flex justify-content-between">
                 <img src="/images/cas.png" />
                 <div>
@@ -104,9 +104,8 @@ const Home = () => {
                   <p>$2345634343</p>
                 </div>
               </div>
-            </div>
           </Slider>
-        </div>
+        </div> */}
         <div className="offers">
           <h2 className="mb-3">Special offers</h2>
           <Container>
