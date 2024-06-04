@@ -1,4 +1,5 @@
 .top-nav{
+    background-color: #21232a;
     .navbar-brand{
         color:#fff
     }
@@ -103,8 +104,12 @@
         }
     }
     .game-winner{
-        flex-direction: row;
-        
+        // flex-direction: row;
+        img{
+            width: 10%;
+            height: 10%;
+        }
+
     }
 }
     

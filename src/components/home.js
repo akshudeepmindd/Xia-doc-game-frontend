@@ -2,6 +2,7 @@ import { Button, Container, Row, Col } from "react-bootstrap";
 import Slider from "react-slick";
 
 import Header from "./common/header";
+import Footer from "./common/footer";
 
 const Home = () => {
   var settings = {
@@ -16,8 +17,8 @@ const Home = () => {
     dots: false,
     infinite: true,
     speed: 500,
-    slidesToShow: 5,
-    slidesToScroll: 1,
+    slidesToShow: 3,
+    slidesToScroll: 3,
     autoPlay: true,
   };
   return (
@@ -90,22 +91,56 @@ const Home = () => {
             </div>
           </div>
         </Slider>
-
         {/* <div className="game-winner">
           <Slider settings2={settings2}>
-           
-              <div className="d-flex justify-content-between">
-                <img src="/images/cas.png" />
-                <div>
-                  <h5>Royal wheel</h5>
-                  <p>$2345634343</p>
-                  <p>$2345634343</p>
+            <div>
+            <div className="d-flex flex-row">
+              <img src="/images/cas.png" />
+              <div>
+                <h5>Royal wheel</h5>
+                <p>$2345634343</p>
+                <p>$2345634343</p>
 
-                  <p>$2345634343</p>
-                </div>
+                <p>$2345634343</p>
               </div>
+            </div>
+            </div>
+            <div className="d-flex flex-row">
+              <img src="/images/cas.png" />
+              <div>
+                <h5>Royal wheel</h5>
+                <p>$2345634343</p>
+                <p>$2345634343</p>
+
+                <p>$2345634343</p>
+              </div>
+            </div>
+            <div className="d-flex flex-row">
+              <img src="/images/cas.png" />
+              <div>
+                <h5>Royal wheel</h5>
+                <p>$2345634343</p>
+                <p>$2345634343</p>
+
+                <p>$2345634343</p>
+              </div>
+            </div>
+            <div>
+            <div className="d-flex flex-row">
+              <img src="/images/cas.png" />
+              <div>
+                <h5>Royal wheel</h5>
+                <p>$2345634343</p>
+                <p>$2345634343</p>
+
+                <p>$2345634343</p>
+              </div>
+            </div>
+            </div>
+          
           </Slider>
         </div> */}
+
         <div className="offers">
           <h2 className="mb-3">Special offers</h2>
           <Container>
@@ -196,6 +231,7 @@ const Home = () => {
           </Container>
         </div>
       </div>
+      <Footer/>
     </>
   );
 };
