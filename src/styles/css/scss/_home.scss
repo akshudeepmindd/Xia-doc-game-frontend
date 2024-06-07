@@ -15,6 +15,12 @@
     }
     
 }
+.mobile-nav{
+    display: none;
+}
+.mobile-bottom-nav {
+    display: none;
+}
 .home-page{
     .bottom-nav{
         background-color: #ffb700;
@@ -112,5 +118,71 @@
 
     }
 }
-    
+.signup-modal{
+    .modal-dialog{
+        max-width: 1024px;
+        .login{
+            padding: 0 4rem;
+            h5{
+                font-size: 20px;
+                margin-bottom: 2rem;
+                text-transform: uppercase;
+            }
+            .btn-reg{
+                background-color: #ffb700;
+                border: 0;
+                width: 100%;
+            }
+            .form-check-label{
+                font-size: 14px;
+            }
+            .form-label{
+                font-weight: 500;
+            }
+            .right-content{
+                position: relative;
+                .circle{
+                    background-color: #e3e3e2;
+                    border-radius: 50px;
+                    padding: .4rem;
+                    margin-right: .6rem;
+                    img{
+                        
+                        width: 24px;
+                    
+                    }
 
+                }
+                h6{
+                    margin-bottom: 0;
+                    font-size: 14px;
+                }
+                span{
+                    font-size: 13px;
+                }
+                .img-soccer{
+                    img{
+                        position: absolute;
+                        width: 40%;
+                        left: 45%;
+                        top: 6%;
+                    }
+                   
+                }
+                
+            }
+        }
+    }
+}  
+
+.login-modal{
+    .btn-log{
+        background-color: #ffb700;
+        border: 0;
+        width: 100%;
+    }
+    p{
+        color: #67dfde;
+        font-size: 13px;
+    }
+}

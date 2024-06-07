@@ -1,0 +1,105 @@
+@media (max-width: 768px)and(min-width: 320px) {
+  .mobile-bottom-nav {
+    display: block;
+    background-color: #21232a;
+    height: 100vh;
+    padding-top: 1rem;
+    ul {
+      list-style: none;
+      padding-left: 0;
+      li {
+        text-transform: uppercase;
+        font-weight: bold;
+        font-size: 12px;
+        padding: 0.8rem 0;
+        color: #fff;
+        img {
+          width: 18px;
+          margin-right: 0.4rem;
+        }
+      }
+    }
+    .login-btn{
+        background-color: #ffb700;
+        border: 0;
+        padding: 8px 28px;
+        width: 100%;
+    }
+    .reg-btn{
+        background-color: #67dfde;
+        padding: 8px 28px;
+        border: 0;
+        width: 100%;
+
+    }
+    .nav-link{
+        width: 100%;
+    }
+  }
+  .offer-box{
+  margin-bottom: 1rem;
+
+  }
+  .top-nav{
+    display: none;
+  }
+  .mobile-nav{
+    background-color: #21232a;
+    display: block;
+    padding: 1rem;
+    .navbar-brand{
+      color: #fff;
+    }   
+  }
+  .bottom-nav{
+    display: none;
+  }
+  .mobile-drawr{
+    background-color: #21232a;
+    .bg-nav{
+    background-color: #21232a;
+    padding: 1rem;
+   
+
+    }
+
+
+  }
+ 
+.footer .top-links ul{
+    padding-left: 0;
+    display: inline!important;
+}
+.btn-drwr{
+    background: none!important;
+}
+.home-page{
+    .banner{
+        background-size: contain;
+        height: 32vh!important;
+        .banner-content{
+            top: 45%!important;
+            h2{
+                font-size: 26px!important;
+            }
+            p{
+                font-size: 1rem!important;
+            }
+            .btn-start{
+                margin-top: 0rem;
+            }
+        }
+    }
+
+} 
+.offers{
+    margin-top: 1rem!important;
+}
+.game-banner{
+    height: 20vh!important;
+    background-size: cover;
+    .card{
+        margin-bottom: 1rem;
+    }
+}
+}
