@@ -1,4 +1,4 @@
-@media (max-width: 768px)and(min-width: 320px) {
+@media (max-width: 767px)and(min-width: 320px) {
   .mobile-bottom-nav {
     display: block;
     background-color: #21232a;
@@ -103,3 +103,58 @@
     }
 }
 }
+@media (width:375px){
+    .home-page{
+        .banner{
+            height: 40vh!important;
+        }
+
+    } 
+
+}
+@media (width:540px){
+    .home-page{
+        .banner{
+            height: 50vh!important;
+        }
+        
+
+    } 
+
+}
+@media (width:1024px){
+    .home-page{
+        .offers{
+            .offer-box{
+                height: 40vh!important;
+            }
+        }
+        
+
+    } 
+}
+@media (width:912px){
+    .home-page{
+        .offers{
+            .offer-box{
+                height: 51vh!important;
+            }
+        }
+        
+
+    } 
+
+}
+@media (width:820px){
+    .home-page{
+        .offers{
+            .offer-box{
+                height: 60vh!important;
+            }
+        }
+        
+
+    } 
+
+}
+    

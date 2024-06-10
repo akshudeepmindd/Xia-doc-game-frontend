@@ -12,6 +12,7 @@ const Home = () => {
     slidesToShow: 1,
     slidesToScroll: 1,
     autoPlay: true,
+    arrows: false,
   };
   var settings2 = {
     dots: false,
@@ -20,6 +21,8 @@ const Home = () => {
     slidesToShow: 3,
     slidesToScroll: 3,
     autoPlay: true,
+    arrows: false,
+
   };
   return (
     <>
@@ -231,7 +234,7 @@ const Home = () => {
           </Container>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 };
