@@ -6,6 +6,8 @@ import "slick-carousel/slick/slick-theme.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from "./components/home";
 import Games from "./components/games";
+import Zocgame from "./components/zocgame";
+import Gameplayui from "./components/gameplayui";
 function App() {
   return (
     <>
@@ -13,6 +15,10 @@ function App() {
         <Routes>
           <Route path="/" Component={Home} />
           <Route path="/games" Component={Games} />
+          <Route path="/zocgame" Component={Zocgame} />
+          <Route path="/gameplay" Component={Gameplayui} />
+
+
 
         </Routes>
       </BrowserRouter>
