@@ -1,5 +1,3 @@
-import logo from "./logo.svg";
-// import "./App.css";
 import "././styles/css/main.scss";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -8,20 +6,24 @@ import Home from "./components/home";
 import Games from "./components/games";
 import Zocgame from "./components/zocgame";
 import Gameplayui from "./components/gameplayui";
+import { Provider } from "react-redux";
+import store from "./redux/store";
+import { Toaster } from "react-hot-toast";
+import RoomOwnerView from "./components/roomownerview";
 function App() {
   return (
     <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" Component={Home} />
-          <Route path="/games" Component={Games} />
-          <Route path="/zocgame" Component={Zocgame} />
-          <Route path="/gameplay" Component={Gameplayui} />
-
-
-
-        </Routes>
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" Component={Home} />
+            <Route path="/games" Component={Games} />
+            <Route path="/ownerview" Component={RoomOwnerView} />
+            <Route path="/play/:id" Component={Gameplayui} />
+          </Routes>
+          <Toaster position="top-right" />
+        </BrowserRouter>
+      </Provider>
     </>
   );
 }

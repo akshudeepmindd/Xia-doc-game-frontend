@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import {
   Navbar,
@@ -11,10 +11,39 @@ import {
 } from "react-bootstrap";
 import Drawer from "react-modern-drawer";
 import "react-modern-drawer/dist/index.css";
+import { useSelector, useDispatch } from "react-redux";
+import { userLogin } from "../../redux/reducers/userslice";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 const Header = () => {
   const [isOpen, setIsOpen] = React.useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { loader, status, user } = useSelector((state) => state.user);
+  const [data, setData] = useState({
+    telegramusername: "",
+    password: "",
+  });
   const toggleDrawer = () => {
     setIsOpen((prevState) => !prevState);
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const response = await dispatch(userLogin(data));
+    if (loader == false && status === "success") {
+      console.log(user, "user");
+      toast.success("You loggedin SucessFully", { icon: "🚀" });
+      localStorage.setItem("token", user?.token);
+      localStorage.setItem("userid", user?.user?._id);
+      localStorage.setItem("roomowner", user?.user?.roomowner);
+      localStorage.setItem("username", user?.user?.telegramusername);
+      setTimeout(() => {
+        user?.user?.roomowner ? navigate("/ownerview") : navigate("/games");
+      }, 1000);
+    } else if (status !== "success") {
+      toast.error("Invalid Credentials");
+    }
   };
   return (
     <>
@@ -24,26 +53,63 @@ const Header = () => {
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link href="#deets">
-                <Button
-                  variant="primary"
-                  className="login-btn"
-                  data-toggle="modal"
-                  data-target="#exampleModal2"
-                >
-                  Login
-                </Button>
-              </Nav.Link>
-              <Nav.Link eventKey={2} href="#memes">
-                <Button
-                  variant="primary"
-                  className="reg-btn"
-                  data-toggle="modal"
-                  data-target="#exampleModal"
-                >
-                  Register
-                </Button>
-              </Nav.Link>
+              {!localStorage.getItem("token") ? (
+                <>
+                  <Nav.Link href="#">
+                    <Button
+                      variant="primary"
+                      className="login-btn"
+                      data-toggle="modal"
+                      data-target="#exampleModal2"
+                    >
+                      Login
+                    </Button>
+                  </Nav.Link>
+                  <Nav.Link eventKey={2} href="#memes">
+                    <Button
+                      variant="primary"
+                      className="reg-btn"
+                      data-toggle="modal"
+                      data-target="#exampleModal"
+                    >
+                      Register
+                    </Button>
+                  </Nav.Link>
+                </>
+              ) : (
+                <>
+                  <Nav.Link
+                    style={{
+                      color: "#fff",
+                    }}
+                  >
+                    @{localStorage.getItem("username")}
+                  </Nav.Link>
+                  {localStorage.getItem("roomowner") === "true" ? (
+                    <Nav.Link
+                      href="/ownerview"
+                      style={{
+                        color: "#fff",
+                      }}
+                    >
+                      Your Rooms
+                    </Nav.Link>
+                  ) : (
+                    ""
+                  )}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="logout-btn"
+                    onClick={() => {
+                      localStorage.clear();
+                      navigate("/");
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              )}
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -71,11 +137,20 @@ const Header = () => {
                 <Container className="login">
                   <Row>
                     <Col sm={5} lg={5} md={5}>
-                      <h5>Sign in</h5>
+                      <h5>Register</h5>
                       <Form>
                         <Form.Group className="mb-3" controlId="formBasicEmail">
                           <Form.Label>User Name</Form.Label>
-                          <Form.Control type="name" placeholder="" />
+                          <Form.Control
+                            type="name"
+                            placeholder="Enter your username"
+                            onChange={(e) => {
+                              setData({
+                                ...data,
+                                telegramusername: e.target.value,
+                              });
+                            }}
+                          />
                         </Form.Group>
 
                         <Form.Group
@@ -85,7 +160,10 @@ const Header = () => {
                           <Form.Label>Password</Form.Label>
                           <Form.Control
                             type="password"
-                            placeholder="Password"
+                            placeholder="Enter your password"
+                            onChange={(e) => {
+                              setData({ ...data, password: e.target.value });
+                            }}
                           />
                         </Form.Group>
                         <Form.Group
@@ -158,9 +236,7 @@ const Header = () => {
                   </Row>
                 </Container>
               </div>
-              <div className="modal-footer">
-               
-              </div>
+              <div className="modal-footer"></div>
             </div>
           </div>
         </div>
@@ -190,16 +266,36 @@ const Header = () => {
                   <Form>
                     <Form.Group className="mb-3" controlId="formBasicEmail">
                       <Form.Label>User Name</Form.Label>
-                      <Form.Control type="name" placeholder="" />
+                      <Form.Control
+                        type="name"
+                        placeholder="Enter your username"
+                        onChange={(e) => {
+                          setData({
+                            ...data,
+                            telegramusername: e.target.value,
+                          });
+                        }}
+                      />
                     </Form.Group>
 
                     <Form.Group className="mb-1" controlId="formBasicPassword">
                       <Form.Label>Password</Form.Label>
-                      <Form.Control type="password" placeholder="Password" />
+                      <Form.Control
+                        type="password"
+                        placeholder="Enter your password"
+                        onChange={(e) => {
+                          setData({ ...data, password: e.target.value });
+                        }}
+                      />
                     </Form.Group>
                     <p>Forgot password? Please sign up</p>
 
-                    <Button variant="primary" type="submit" className="btn-log">
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      className="btn-log"
+                      onClick={(e) => handleLogin(e)}
+                    >
                       Login
                     </Button>
                   </Form>
@@ -270,31 +366,66 @@ const Header = () => {
                       game
                     </li>
                   </ul>
-                  <Nav className="ms-auto">
-                <Nav.Link href="#deets">
-                  <Button
-                    variant="primary"
-                    className="login-btn"
-                    data-toggle="modal"
-                    data-target="#exampleModal2"
-                  >
-                    Login
-                  </Button>
-                </Nav.Link>
-                <Nav.Link eventKey={2} href="#memes">
-                  <Button
-                    variant="primary"
-                    className="reg-btn"
-                    data-toggle="modal"
-                    data-target="#exampleModal"
-                  >
-                    Register
-                  </Button>
-                </Nav.Link>
-              </Nav>
+                  {localStorage.getItem("token") !== null || undefined ? (
+                    <>
+                      <Nav.Link
+                        style={{
+                          color: "#fff",
+                        }}
+                      >
+                        @{localStorage.getItem("username")}
+                      </Nav.Link>
+                      {localStorage.getItem("roomowner") === "true" ? (
+                        <Nav.Link
+                          href="/ownerview"
+                          style={{
+                            color: "#fff",
+                          }}
+                        >
+                          Your Rooms
+                        </Nav.Link>
+                      ) : (
+                        ""
+                      )}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="logout-btn"
+                        onClick={() => {
+                          localStorage.clear();
+                          navigate("/");
+                        }}
+                      >
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <Nav className="ms-auto">
+                      {" "}
+                      <Nav.Link href="#deets">
+                        <Button
+                          variant="primary"
+                          className="login-btn"
+                          data-toggle="modal"
+                          data-target="#exampleModal2"
+                        >
+                          Login
+                        </Button>
+                      </Nav.Link>
+                      <Nav.Link eventKey={2} href="#memes">
+                        <Button
+                          variant="primary"
+                          className="reg-btn"
+                          data-toggle="modal"
+                          data-target="#exampleModal"
+                        >
+                          Register
+                        </Button>
+                      </Nav.Link>{" "}
+                    </Nav>
+                  )}
                 </Container>
               </div>
-           
             </Drawer>
           </div>
         </div>
