@@ -18,7 +18,7 @@ import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useDispatch, useSelector } from "react-redux";
 import { GetRoomDetails } from "../redux/reducers/gameroomslice";
 
-const Gameplayui = () => {
+const Dealer = () => {
   const [players, setPlayers] = useState([]);
   const [requestPlayers, setRequestlayers] = useState([]);
   const [playersRequested, setplayersRequested] = useState([]);
@@ -226,7 +226,6 @@ const Gameplayui = () => {
               </Col>
               <Col sm={6} lg={6} md={6} className="camera-img">
                 <img src="/images/casi.png" alt="Casino" />
-                
               </Col>
               <Col sm={3} lg={3} md={3} className="history">
                 <div className="d-flex justify-content-between">
@@ -287,109 +286,9 @@ const Gameplayui = () => {
                   </Table>
                 )}
               </Col>
-              <Col sm={6} lg={6} md={6} className="scored">
-                <div className="score d-flex justify-content-between">
-                  <div className="blue-box">
-                    <div className="d-flex justify-content-center align-items-center flex-column">
-                      <h5>Chian</h5>
-                      <InputGroup className="mb-3">
-                        <FormControl
-                          placeholder="Enter bet amount"
-                          aria-label="Bet amount"
-                          aria-describedby="basic-addon2"
-                          type="number"
-                          min="0"
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          value={depositAmount}
-                        />
-                        <Button
-                          variant="primary"
-                          className="btn-rank"
-                          onClick={() => handleBet(100, "Even")}
-                        >
-                          Even
-                        </Button>
-                      </InputGroup>
-                    </div>
-                  </div>
-                  <div>
-                    <img
-                      src="/images/casi.png"
-                      className="camera2"
-                      alt="Casino"
-                    />
-                    <div className="green-box">
-                      <div className="d-flex justify-content-between">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id=" " className="me-2 ms-2" />
 
-                          <Form.Control type="" id="" />
-
-                        </div>
-                        <div className="d-flex ">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" />
-
-                        </div>
-                      </div>
-                      <div className="d-flex justify-content-between mt-4">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id=" " className="me-2 ms-2" />
-
-                          <Form.Control type="" id="" />
-
-                        </div>
-                        <div className="d-flex ">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" />
-
-                        </div>
-                      </div>
-                  </div>
-                  </div>
-                  <div className="red-box">
-                    <div className="d-flex justify-content-center align-items-center flex-column">
-                      <h5>Chian</h5>
-                      <InputGroup className="mb-3">
-                        <FormControl
-                          placeholder="Enter bet amount"
-                          aria-label="Bet amount"
-                          aria-describedby="basic-addon2"
-                          type="number"
-                          min="0"
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          value={depositAmount}
-                        />
-                        <Button
-                          variant="primary"
-                          className="btn-rank"
-                          onClick={() => handleBet(100, "Odd")}
-                        >
-                          Odd
-                        </Button>
-                      </InputGroup>
-                    </div>
-                  </div>
-                </div>
-                <div className="d-flex justify-content-between mt-4">
-                  <Button variant="info" onClick={shakeCoins}>
-                    Shake Coins
-                  </Button>
-                  <Button variant="success" onClick={handleRevealCoins}>
-                    Reveal Coins
-                  </Button>
-                </div>
-              </Col>
               <Col sm={3} lg={3} md={3} className="player-list">
-                <Table striped bordered hover>
+                {/* <Table striped bordered hover>
                   <thead>
                     <tr>
                       <th>Player Requested </th>
@@ -422,52 +321,137 @@ const Gameplayui = () => {
                         </tr>
                       ))}
                   </tbody>
-                </Table>
+                </Table> */}
+              </Col>
+            </Row>
+            <Row className="bg-white pb-5">
+              <Col sm={4} lg={4} md={4} className="fields">
+                <div className="d-flex justify-content-center align-items-center flex-column">
+                  <h5>Chan-even</h5>
+                  <div className="green-box">
+                    <div className="d-flex">
+                      <div className="d-flex justify-content-between">
+                        <Form.Control type="" id="i5" className="me-2" />
+                        <Form.Control type="" id="" />
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <Form.Control type="" id="" className="me-2 ms-2" />
+                        <Form.Control type="" id="" placeholder="1" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="d-flex justify-content-center mt-4 row-gap1">
+                  <div className="d-flex justify-content-center align-items-center flex-column">
+                    <div className="green-box">
+                      <div className="d-flex">
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="i5" className="me-2" />
+                          <Form.Control type="" id="" />
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="" className="me-2 ms-2" />
+                          <Form.Control type="" id="" placeholder="1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-center align-items-center flex-column">
+                    <div className="green-box">
+                      <div className="d-flex">
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="i5" className="me-2" />
+                          <Form.Control type="" id="" />
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="" className="me-2 ms-2" />
+                          <Form.Control type="" id="" placeholder="1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Col>
+              <Col sm={4} lg={4} md={4} className="scored">
+                <div>
+                  <img
+                    src="/images/casi.png"
+                    className="camera2"
+                    alt="Casino"
+                  />
+                </div>
+              </Col>
+              <Col sm={4} lg={4} md={4} className="fields">
+                <h5 className="text-center">Le-odd</h5>
+
+                <div className="d-flex justify-content-center mt-4 row-gap1">
+                  <div className="d-flex justify-content-center align-items-center flex-column">
+                    <div className="green-box">
+                      <div className="d-flex">
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="i5" className="me-2" />
+                          <Form.Control type="" id="" />
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="" className="me-2 ms-2" />
+                          <Form.Control type="" id="" placeholder="1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-center align-items-center flex-column">
+                    <div className="green-box">
+                      <div className="d-flex">
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="i5" className="me-2" />
+                          <Form.Control type="" id="" />
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <Form.Control type="" id="" className="me-2 ms-2" />
+                          <Form.Control type="" id="" placeholder="1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </Col>
             </Row>
           </Container>
-        </div>
-        <div className="footer-gameplay">
-          <div className="d-flex justify-content-between">
-            <div className="d-flex">
-              <h6>Balance</h6>
-              <Button className="btn-balance">${balance}</Button>
-            </div>
-            <div className="slider-btn ms-2">
-              <ul>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
-                </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
-                </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
-                </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
-                </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
-                </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
-                </li>
-              </ul>
-            </div>
-            <div className="d-flex">
-              <Button
-                className="clear-btn me-2"
-                onClick={() => setShowDepositModal(true)}
-              >
-                Deposit
-              </Button>
-              <Button className="confirm-btn me-2">Confirm</Button>
-              <Button className="rebet-btn me-2">Rebet</Button>
-              <Button className="clear-btn">Clear</Button>
+          <div className="border "></div>
+          <div className="footer-div">
+            <div className="d-flex justify-content-between flex-row">
+              <div className="d-flex align-items-center">
+                <Button variant="primary" className="camera.btn ms-2">
+                  <img src="/images/setting.png" className="me-2" />
+                  Setting Camera
+                </Button>
+                <Button variant="primary" className="live-btn ms-4">
+                  <img src="/images/play.png" className="me-2" />
+                  Start Live
+                </Button>
+              </div>
+              <div className="deal-box">
+                <div className="d-flex mb-2">
+                  <Button variant="primary" className="camera.btn ms-2">
+                    
+                    Start Round
+                  </Button>
+                  <Button variant="primary" className="live-btn ms-4">
+                    End Round
+                  </Button>
+                </div>
+                <div className="d-flex">
+                    <h5>Dealer: <span className="">Alice</span></h5>
+                    <Button variant="primary" className="live-btn ms-4">
+                   <img src="/images/sort.png" className="me-1 sortimg"/>Doi Dealer
+                  </Button>
+
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
         <Modal
           show={showDepositModal}
           onHide={() => setShowDepositModal(false)}
@@ -506,4 +490,4 @@ const Gameplayui = () => {
   );
 };
 
-export default Gameplayui;
+export default Dealer;

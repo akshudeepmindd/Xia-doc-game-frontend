@@ -10,6 +10,7 @@ import { Provider } from "react-redux";
 import store from "./redux/store";
 import { Toaster } from "react-hot-toast";
 import RoomOwnerView from "./components/roomownerview";
+import Dealer from "./components/dealer";
 function App() {
   return (
     <>
@@ -20,6 +21,8 @@ function App() {
             <Route path="/games" Component={Games} />
             <Route path="/ownerview" Component={RoomOwnerView} />
             <Route path="/play/:id" Component={Gameplayui} />
+            <Route path="/dealer" Component={Dealer} />
+
           </Routes>
           <Toaster position="top-right" />
         </BrowserRouter>

@@ -97,6 +97,18 @@
         }
     }
     .scored{
+        .green-box{
+            background-color: #1d744a;
+            padding: 1rem;
+            .form-control{
+                width: 20px;
+                border-radius: 50%;
+                padding: 0;
+                text-align: center;
+                height: 30px;
+            }
+            
+        }
         .blue-box{
             background-color: #00487b;
             color: #fff;
@@ -208,4 +220,44 @@
 
 }
     }
+    .bg-white{
+        background-color: #fff;
+    
+.green-box{
+    background-color: #1d744a;
+    padding: 1rem;
+    .form-control{
+        width: 20px;
+        border-radius: 50%;
+        padding: 0;
+        text-align: center;
+        height: 30px;
+    }
+    
+}
+.row-gap1{
+    column-gap:3rem
+}
+}
+.camera-btn{
+    background-color: #212fec;
+    border: 0;
+}
+.live-btn{
+    background-color: #5b9b4f;
+    border: 0;
+}
+.footer-div{
+    background-color: #fff;
+    padding-top: 3rem;
+    .deal-box{
+        background-color: #ddd;
+        padding: 1rem;
+        .sortimg{
+            width: 20px;
+            height: 20px;
+        }
+    }
+   
+}
 }
