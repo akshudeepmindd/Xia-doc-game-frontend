@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const ConfigBase = axios.create({
-  baseURL: "http://localhost:4000",
+  baseURL: "https://xoc-dia-backend.onrender.com",
   headers: {
     "Content-type": "application/json",
   },

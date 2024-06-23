@@ -28,9 +28,21 @@ const getGamedetails = async (id) => {
     return error;
   }
 };
-const GetGameRooms = async () => {
+const GetGameRooms = async (payload) => {
   try {
-    const response = await ConfigBase.get("/gameroom/get");
+    const response = await ConfigBase.get(
+      `/gameroom/get?playerid=${payload.playerid}`
+    );
+    const data = await response.data;
+    return data;
+  } catch (error) {
+    return error;
+  }
+};
+
+const UpdateRoom = async (id, game) => {
+  try {
+    const response = await ConfigBase.patch(`/gameroom/update/${id}`, game);
     const data = await response.data;
     return data;
   } catch (error) {
@@ -83,4 +95,5 @@ export {
   getGamedetails,
   GetGameRooms,
   rejectjoinrequestservice,
+  UpdateRoom,
 };

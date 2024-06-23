@@ -16,7 +16,12 @@ import {
 } from "react-bootstrap";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useDispatch, useSelector } from "react-redux";
-import { GetRoomDetails } from "../redux/reducers/gameroomslice";
+import { GameUpdate, GetRoomDetails } from "../redux/reducers/gameroomslice";
+import { AuthToken } from "../config.js";
+import SpeakerScreenContainer from "./LiveCam/dealerCamview.js";
+import { useMeeting } from "@videosdk.live/react-sdk";
+// const AuthToken =
+//   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiIwZWMyYWVkOC03Mzc2LTRjODEtYjc4YS1kMTU0ZTk3ZmU4MDMiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTcxOTA5NDc2OCwiZXhwIjoxNzE5MTgxMTY4fQ.Hyb_RpRhddoBq3-GXKBxHj7rvQpqJy8BEAmISd6q2gQ";
 
 const Dealer = () => {
   const [players, setPlayers] = useState([]);
@@ -33,7 +38,12 @@ const Dealer = () => {
   const [depositAmount, setDepositAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
   const dispatch = useDispatch();
+  const meeting = useMeeting();
   const { room } = useSelector((state) => state.game);
+  const [loading, setLoading] = useState(false);
+  const _handleToggleHls = () => {
+    meeting && meeting.startHls({ quality: "high" });
+  };
   useEffect(() => {
     dispatch(GetRoomDetails(localStorage.getItem("currentRoom")));
     if (room !== null) {
@@ -50,6 +60,28 @@ const Dealer = () => {
       setroomowner(localStorage.getItem("roomowner"));
     }
   }, []);
+  const StartLive = async () => {
+    setLoading(true);
+    const res = await fetch(`https://api.videosdk.live/v2/rooms`, {
+      method: "POST",
+      headers: {
+        authorization: `${AuthToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const { roomId } = await res.json();
+    dispatch(
+      GameUpdate({
+        id: localStorage.getItem("currentRoom"),
+        game: { dealerLiveStreamId: roomId },
+      })
+    );
+
+    dispatch(GetRoomDetails(localStorage.getItem("currentRoom")));
+    _handleToggleHls();
+    return roomId;
+  };
   useEffect(() => {
     const interval = setInterval(() => {
       const currentRoom = localStorage.getItem("currentRoom");
@@ -225,7 +257,16 @@ const Dealer = () => {
                 </div>
               </Col>
               <Col sm={6} lg={6} md={6} className="camera-img">
-                <img src="/images/casi.png" alt="Casino" />
+                {room?.dealerLiveStreamId ? (
+                  <SpeakerScreenContainer
+                    meetingId={room?.dealerLiveStreamId}
+                    authToken={AuthToken}
+                    name={room?.dealer?.telegramusername}
+                    StartLive={StartLive}
+                  />
+                ) : (
+                  "Please Start the Live streaming"
+                )}{" "}
               </Col>
               <Col sm={3} lg={3} md={3} className="history">
                 <div className="d-flex justify-content-between">
@@ -326,46 +367,82 @@ const Dealer = () => {
             </Row>
             <Row className="bg-white pb-5">
               <Col sm={4} lg={4} md={4} className="fields">
-                <div className="d-flex justify-content-center align-items-center flex-column">
+                <div className="scored2 d-flex justify-content-center align-items-center flex-column">
                   <h5>Chan-even</h5>
-                  <div className="green-box">
-                    <div className="d-flex">
-                      <div className="d-flex justify-content-between">
-                        <Form.Control type="" id="i5" className="me-2" />
-                        <Form.Control type="" id="" />
+                  <div className="d-flex flex-column row-gap-1">
+                    <div
+                      className={`d-flex green-box flex-column ${
+                        // specialbetactive == "4 Black" &&
+                        "green-box-blinking"
+                      }`}
+                      // onClick={() => {
+                      //   if (currentBet === 0) {
+                      //     toast.error("Please select a amount for bet");
+                      //   } else if (balance < currentBet) {
+                      //     toast.error(
+                      //       "Please Deposit more amount to bet with this amount"
+                      //     );
+                      //   } else if (
+                      //     rounds[currentRound]?.filter(
+                      //       (round) =>
+                      //         round.type == "Sepcial" &&
+                      //         round.selection == "4 Black"
+                      //     ).length > 0
+                      //   ) {
+                      //     toast.error("You have already placed this bet");
+                      //   } else if (rounds.length === 0) {
+                      //     toast.error(
+                      //       "Please bet on either even or odd first"
+                      //     );
+                      //   } else {
+                      //     handleSpecialBets(
+                      //       localStorage.getItem("username"),
+                      //       100,
+                      //       "4 Black"
+                      //     );
+                      //     setspecialbetActive("4 Black");
+                      //   }
+                      // }}
+                    >
+                      <div>
+                        <p className="text-center white-text">White</p>
                       </div>
-                      <div className="d-flex justify-content-between">
-                        <Form.Control type="" id="" className="me-2 ms-2" />
-                        <Form.Control type="" id="" placeholder="1" />
+                      <div className="d-flex  column-gap-3 justify-content-center align-items-center">
+                        <div className="circle"></div>
+                        <div className="circle"></div>
+                        <div className="circle"></div>
+                        <div className="circle"></div>
                       </div>
                     </div>
-                  </div>
-                </div>
-                <div className="d-flex justify-content-center mt-4 row-gap1">
-                  <div className="d-flex justify-content-center align-items-center flex-column">
-                    <div className="green-box">
-                      <div className="d-flex">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" />
+                    <div className="d-flex column-gap-1">
+                      <div className="d-flex green-box flex-column">
+                        <div>
+                          <p className="text-center white-text">4 Red</p>
                         </div>
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" />
+                        <div className="d-flex column-gap-3 justify-content-center align-items-center">
+                          {" "}
+                          <div className="red-circle text-center p-1 font-bold"></div>
+                          <div className="red-circle text-center p-1 font-bold"></div>
+                          <div className="red-circle text-center p-1 font-bold"></div>
+                          <div className="red-circle text-center p-1 font-bold">
+                            4
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-center align-items-center flex-column">
-                    <div className="green-box">
-                      <div className="d-flex">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" />
+                      <div className="d-flex green-box flex-column">
+                        <div>
+                          <p className="text-center white-text">
+                            2 White 2 Red
+                          </p>
                         </div>
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" />
+                        <div className="d-flex column-gap-3">
+                          {" "}
+                          <div className="circle"></div>
+                          <div className="circle"></div>
+                          <div className="red-circle text-center p-1 font-bold"></div>
+                          <div className="red-circle text-center p-1 font-bold">
+                            4
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -384,32 +461,30 @@ const Dealer = () => {
               <Col sm={4} lg={4} md={4} className="fields">
                 <h5 className="text-center">Le-odd</h5>
 
-                <div className="d-flex justify-content-center mt-4 row-gap1">
-                  <div className="d-flex justify-content-center align-items-center flex-column">
-                    <div className="green-box">
-                      <div className="d-flex">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" />
-                        </div>
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" />
-                        </div>
+                <div className="d-flex scored2 flex-column row-gap-1 justify-content-center align-items-center">
+                  <div className="d-flex green-box flex-column ">
+                    <div>
+                      <p className="text-center white-text">3 White 1 Red</p>
+                    </div>
+                    <div className="d-flex  column-gap-3 justify-content-center align-items-center">
+                      <div className="circle"></div>
+                      <div className="circle"></div>
+                      <div className="circle"></div>
+                      <div className="red-circle text-center p-1 font-bold">
+                        1
                       </div>
                     </div>
                   </div>
-                  <div className="d-flex justify-content-center align-items-center flex-column">
-                    <div className="green-box">
-                      <div className="d-flex">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" />
-                        </div>
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" />
-                        </div>
+                  <div className="d-flex green-box flex-column">
+                    <div>
+                      <p className="text-center white-text">1 White 3 Red</p>
+                    </div>
+                    <div className="d-flex  column-gap-3 d-flex  column-gap-3 justify-content-center align-items-center">
+                      <div className="circle"></div>
+                      <div className="red-circle"></div>
+                      <div className="red-circle"></div>
+                      <div className="red-circle text-center p-1 font-bold">
+                        3
                       </div>
                     </div>
                   </div>
@@ -425,15 +500,20 @@ const Dealer = () => {
                   <img src="/images/setting.png" className="me-2" />
                   Setting Camera
                 </Button>
-                <Button variant="primary" className="live-btn ms-4">
+                <Button
+                  variant="primary"
+                  className="live-btn ms-4"
+                  onClick={() => StartLive()}
+                >
                   <img src="/images/play.png" className="me-2" />
-                  Start Live
+                  {loading == true
+                    ? "Streaming Starting Please Wait"
+                    : "Start Live"}
                 </Button>
               </div>
               <div className="deal-box">
                 <div className="d-flex mb-2">
                   <Button variant="primary" className="camera.btn ms-2">
-                    
                     Start Round
                   </Button>
                   <Button variant="primary" className="live-btn ms-4">
@@ -441,11 +521,13 @@ const Dealer = () => {
                   </Button>
                 </div>
                 <div className="d-flex">
-                    <h5>Dealer: <span className="">Alice</span></h5>
-                    <Button variant="primary" className="live-btn ms-4">
-                   <img src="/images/sort.png" className="me-1 sortimg"/>Doi Dealer
+                  <h5>
+                    Dealer: <span className="">Alice</span>
+                  </h5>
+                  <Button variant="primary" className="live-btn ms-4">
+                    <img src="/images/sort.png" className="me-1 sortimg" />
+                    Doi Dealer
                   </Button>
-
                 </div>
               </div>
             </div>

@@ -19,6 +19,9 @@ import {
   GetGameRoomsAction,
 } from "../redux/reducers/gameroomslice";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:4000");
 const Games = () => {
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
@@ -26,47 +29,92 @@ const Games = () => {
   const navigate = useNavigate();
   const handleJoin = (room) => {
     dispatch(GetRoomDetails(room._id));
-    localStorage.setItem("currentRoom", JSON.stringify(room));
-    dispatch(
-      GameJoinRequest({
-        id: room._id,
-        user: localStorage.getItem("userid"),
-      })
-    );
-    setOpen(true);
+    if (room?.dealer._id === localStorage.getItem("userid")) {
+      navigate("/dealer/" + localStorage.getItem("currentRoom"));
+    }
+    if (
+      room?.players?.length > 0 &&
+      room?.players?.includes(localStorage.getItem("userid"))
+    ) {
+      navigate("/play/" + room._id);
+    }
+    localStorage.setItem("currentRoom", room._id);
+    socket.emit("joinRoom", {
+      roomId: room._id,
+      userId: localStorage.getItem("userid"),
+    });
+    // setOpen(true);
     setTimeout(() => {
-      const currentRoom = JSON.parse(localStorage.getItem("currentRoom"));
-      dispatch(GetRoomDetails(currentRoom._id));
-      if (
-        room?.playersRequested?.length > 0 &&
-        room?.playersRequested?.includes(localStorage.getItem("userid"))
-      ) {
-        setOpen(true);
-      } else {
-      }
+      socket.on("updateGameroom", (updatedRoom) => {
+        const currentRoom = JSON.parse(localStorage.getItem("currentRoom"));
+        dispatch(GetRoomDetails(currentRoom));
+        if (
+          room?.playersRequested?.length > 0 &&
+          room?.playersRequested?.includes(localStorage.getItem("userid"))
+        ) {
+          setOpen(true);
+        } else if (
+          room?.players?.length > 0 &&
+          room?.players?.includes(localStorage.getItem("userid")) &&
+          !room?.playersRequested?.includes(localStorage.getItem("userid"))
+        ) {
+          setOpen(false);
+          navigate("/play/" + currentRoom);
+        } else if (
+          !room?.players?.includes(localStorage.getItem("userid")) &&
+          !room?.playersRequested?.includes(localStorage.getItem("userid"))
+        ) {
+          navigate("/games");
+        }
+      });
     }, 2000);
   };
   useEffect(() => {
-    if (Object.keys(userRoom).length !== 0) {
-      handleJoin(userRoom.message);
+    if (
+      Object.keys(userRoom).length !== 0 &&
+      room?.dealer?._id !== localStorage.getItem("userid")
+    ) {
+      handleJoin(userRoom.message); // Assuming handleJoin is defined elsewhere
+
       const interval = setInterval(() => {
-        const currentRoom = JSON.parse(localStorage.getItem("currentRoom"));
-        dispatch(GetRoomDetails(currentRoom._id));
+        const currentRoom = localStorage.getItem("currentRoom");
+        dispatch(GetRoomDetails(currentRoom));
+
         if (
           room?.players?.length > 0 &&
           room?.players?.includes(localStorage.getItem("userid")) &&
           !room?.playersRequested?.includes(localStorage.getItem("userid"))
         ) {
-          clearInterval(interval);
+          clearInterval(interval); // Clear interval when condition is met
+          setOpen(false); // Update state
+          navigate("/play/" + currentRoom); // Navigate to play
+        } else if (
+          room?.players?.length > 0 &&
+          room?.players?.includes(localStorage.getItem("userid")) &&
+          !room?.playersRequested?.includes(localStorage.getItem("userid"))
+        ) {
           setOpen(false);
-          navigate("/play/" + currentRoom._id);
+          navigate("/play/" + currentRoom);
+        } else if (
+          !room?.players?.includes(localStorage.getItem("userid")) &&
+          !room?.playersRequested?.includes(localStorage.getItem("userid"))
+        ) {
+          navigate("/games");
         }
-      }, 10000);
+      }, 10000); // Adjust the interval time as needed (10 seconds here)
+
+      return () => clearInterval(interval); // Clear interval on component unmount
     }
-  }, [userRoom]);
+  }, [userRoom, dispatch, navigate]); // Dependencies array
 
   const handleGame = () => {
-    dispatch(GetGameRoomsAction());
+    console.log(room, "room");
+    if (room?.dealer?._id == localStorage.getItem("userid")) {
+      navigate("/dealer/" + localStorage.getItem("currentRoom"));
+    } else {
+      const userid = { playerid: localStorage.getItem("userid") };
+      dispatch(GetGameRoomsAction(userid));
+    }
   };
   return (
     <>

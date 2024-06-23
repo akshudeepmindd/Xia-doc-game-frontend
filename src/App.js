@@ -21,8 +21,7 @@ function App() {
             <Route path="/games" Component={Games} />
             <Route path="/ownerview" Component={RoomOwnerView} />
             <Route path="/play/:id" Component={Gameplayui} />
-            <Route path="/dealer" Component={Dealer} />
-
+            <Route path="/dealer/:id" Component={Dealer} />
           </Routes>
           <Toaster position="top-right" />
         </BrowserRouter>

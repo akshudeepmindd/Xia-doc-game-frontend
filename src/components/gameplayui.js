@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 import React, { useState, useEffect } from "react";
 import {
   Navbar,
@@ -16,26 +17,68 @@ import {
 } from "react-bootstrap";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useDispatch, useSelector } from "react-redux";
-import { GetRoomDetails } from "../redux/reducers/gameroomslice";
+import {
+  GetRoomDetails,
+  GameJoinRequest,
+  AcceptJoinRequest,
+} from "../redux/reducers/gameroomslice";
+import toast from "react-hot-toast";
+import ViewerScreenContainer from "./LiveCam/ViewScreenView";
+import { AuthToken } from "../config.js";
+// import { acceptrequestservice } from "../services/gameservice";
 
 const Gameplayui = () => {
   const [players, setPlayers] = useState([]);
+  console.log(players, "players");
+  const [rounds, setRounds] = useState([]);
+  const [currentRound, setCurrentRound] = useState(0);
   const [requestPlayers, setRequestlayers] = useState([]);
+  const [currentBet, setCurrentBet] = useState(0);
   const [playersRequested, setplayersRequested] = useState([]);
   const [roomowner, setroomowner] = useState(false);
   const [bets, setBets] = useState([]);
   const [dealer, setDealer] = useState({});
   const [coinResult, setCoinResult] = useState("");
-  const [timerDuration, setTimerDuration] = useState(7);
+  const [timerDuration, setTimerDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [remainingTime, setRemainingTime] = useState(7);
   const [balance, setBalance] = useState(10000);
   const [depositAmount, setDepositAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [active, setActive] = useState("");
+  const [specialbetactive, setspecialbetActive] = useState("");
+  const [sepecialBetsRequest, setSepcialBetsRequest] = useState([]);
   const dispatch = useDispatch();
   const { room } = useSelector((state) => state.game);
   useEffect(() => {
-    dispatch(GetRoomDetails(localStorage.getItem("currentRoom")));
+    const fetchRoomDetails = async () => {
+      const currentRoom = localStorage
+        .getItem("currentRoom")
+        .replaceAll('^"|"$', "");
+      await dispatch(GetRoomDetails(currentRoom));
+    };
+
+    fetchRoomDetails();
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (room) {
+      const updatedPlayers = Array.isArray(room.players)
+        ? room.players
+        : [room.players];
+      const updatedPlayersRequested = Array.isArray(room.playersRequested)
+        ? room.playersRequested
+        : [room.playersRequested];
+
+      setPlayers(updatedPlayers);
+      setplayersRequested(updatedPlayersRequested);
+      setDealer(localStorage.getItem("roomowner"));
+    }
+  }, [room]);
+  const UpdateRoom = () => {
+    let currentRoomId = localStorage.getItem("currentRoom");
+    console.log(currentRoomId, "currentRoomId");
+    dispatch(GetRoomDetails(currentRoomId));
     if (room !== null) {
       room?.players !== undefined &&
         setPlayers(
@@ -49,23 +92,38 @@ const Gameplayui = () => {
       setDealer(room?.owner);
       setroomowner(localStorage.getItem("roomowner"));
     }
-  }, []);
+  };
   useEffect(() => {
     const interval = setInterval(() => {
-      const currentRoom = localStorage.getItem("currentRoom");
-      dispatch(GetRoomDetails(currentRoom));
-      if (room?.players?.length > 0) {
-        setPlayers(room?.players);
-        clearInterval(interval);
-      }
-    }, 100000);
-  }, []);
-  const handleAcceptPlayer = (player) => {
+      const fetchRoomDetails = async () => {
+        const currentRoom = localStorage.getItem("currentRoom");
+        await dispatch(GetRoomDetails(currentRoom));
+      };
+      fetchRoomDetails();
+    }, 10000); // Adjust the interval time as needed (10 seconds here)
+
+    return () => clearInterval(interval); // Clear interval on component unmount
+  }, [dispatch]);
+  const handleAcceptPlayer = async (player) => {
+    console.log(player, "player");
     // Logic to accept player into the game room
-    const updatedPlayers = players.map((p) =>
-      p.name === player.name ? { ...p, status: "Accepted" } : p
+    const updatedRequestedPlayers = playersRequested.filter(
+      (p) => p._id !== player._id
     );
-    setPlayers(updatedPlayers);
+    console.log(updatedRequestedPlayers);
+    const updatedPlayers = [];
+    updatedPlayers.push(player);
+    setplayersRequested(updatedRequestedPlayers);
+    setPlayers([...players, ...updatedPlayers]);
+    dispatch(
+      AcceptJoinRequest({
+        id: localStorage.getItem("currentRoom"),
+        user: player._id,
+      })
+    );
+    const currentRoom = localStorage.getItem("currentRoom");
+        await dispatch(GetRoomDetails(currentRoom));
+    UpdateRoom();
   };
 
   const handleRejectPlayer = (player) => {
@@ -79,14 +137,22 @@ const Gameplayui = () => {
     console.log("Timer completed");
   };
 
-  const handleBet = (betAmount, betType) => {
-    setBets([...bets, { amount: betAmount, type: betType }]);
-    console.log(`Placed bet of ${betAmount} on ${betType}`);
-  };
-
-  const handleRegisterDealer = (player) => {
-    setDealer(player);
-    console.log(`${player.name} is now the dealer`);
+  const handleBet = (playerName, betAmount, betType) => {
+    const newBet = {
+      round: currentRound,
+      amount: betAmount,
+      type: betType,
+      player: playerName,
+    };
+    setRounds((prevRounds) => {
+      const updatedRounds = { ...prevRounds };
+      if (!updatedRounds[currentRound]) {
+        updatedRounds[currentRound] = [];
+      }
+      updatedRounds[currentRound].push(newBet);
+      return updatedRounds;
+    });
+    setBalance(balance - betAmount);
   };
 
   const shakeCoins = () => {
@@ -99,6 +165,21 @@ const Gameplayui = () => {
     ];
     const randomResult = results[Math.floor(Math.random() * results.length)];
     setCoinResult(randomResult);
+  };
+  const handleSpecialBets = (playerName, betAmount, selected) => {
+    const newSBet = {
+      round: currentRound,
+      amount: betAmount,
+      type: "Sepcial",
+      player: playerName,
+      selection: selected,
+    };
+    setRounds((prevRounds) => {
+      const updatedRounds = { ...prevRounds };
+      updatedRounds[currentRound].push(newSBet);
+      return updatedRounds;
+    });
+    setBalance(balance - betAmount);
   };
 
   const handleRevealCoins = () => {
@@ -113,7 +194,6 @@ const Gameplayui = () => {
     setShowDepositModal(false);
     setDepositAmount("");
   };
-
   return (
     <>
       <div className="gameplay">
@@ -180,13 +260,25 @@ const Gameplayui = () => {
                     <div className="round">
                       <ul>
                         <li>
-                          <img src="/images/info.png" alt="Info" />
+                          <img
+                            src="/images/info.png"
+                            alt="Info"
+                            className="gameplayimg"
+                          />
                         </li>
                         <li>
-                          <img src="/images/signall.png" alt="Signal" />
+                          <img
+                            src="/images/signall.png"
+                            alt="Signal"
+                            className="gameplayimg"
+                          />
                         </li>
                         <li>
-                          <img src="/images/msg.png" alt="Message" />
+                          <img
+                            src="/images/msg.png"
+                            alt="Message"
+                            className="gameplayimg"
+                          />
                         </li>
                         <li>
                           <div className="circle d-flex justify-content-center align-items-center">
@@ -213,7 +305,7 @@ const Gameplayui = () => {
                   <div className="box1 ">
                     <div className="d-flex justify-content-between align-items-center">
                       <h4>Bet </h4>
-                      <h6>100</h6>
+                      <h6 style={{ color: "#fff" }}>{currentBet}</h6>
                     </div>
                   </div>
                   <div className="box1 ">
@@ -225,7 +317,15 @@ const Gameplayui = () => {
                 </div>
               </Col>
               <Col sm={6} lg={6} md={6} className="camera-img">
-                <img src="/images/casi.png" alt="Casino" />
+                {room?.dealerLiveStreamId ? (
+                  <ViewerScreenContainer
+                    meetingId={room?.dealerLiveStreamId}
+                    authToken={AuthToken}
+                    name={room?.dealer?.telegramusername}
+                  />
+                ) : (
+                  "Live is going to start please wait..."
+                )}
                 
               </Col>
               <Col sm={3} lg={3} md={3} className="history">
@@ -247,7 +347,7 @@ const Gameplayui = () => {
             </Row>
             <Row>
               <Col sm={3} lg={3} md={3} className="player-list">
-                {roomowner == "true" && (
+                {localStorage.getItem("roomowner") == "true" && (
                   <Table striped bordered hover>
                     <thead>
                       <tr>
@@ -256,7 +356,7 @@ const Gameplayui = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {players == undefined || players.length > 0 ? (
+                      {players.length > 0 ? (
                         players?.map((player, index) => (
                           <tr key={index}>
                             <td>{player?.telegramusername}</td>
@@ -289,27 +389,52 @@ const Gameplayui = () => {
               </Col>
               <Col sm={6} lg={6} md={6} className="scored">
                 <div className="score d-flex justify-content-between">
-                  <div className="blue-box">
-                    <div className="d-flex justify-content-center align-items-center flex-column">
-                      <h5>Chian</h5>
-                      <InputGroup className="mb-3">
-                        <FormControl
-                          placeholder="Enter bet amount"
-                          aria-label="Bet amount"
-                          aria-describedby="basic-addon2"
-                          type="number"
-                          min="0"
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          value={depositAmount}
-                        />
-                        <Button
-                          variant="primary"
-                          className="btn-rank"
-                          onClick={() => handleBet(100, "Even")}
+                  <div
+                    className={`blue-box ${
+                      active === "Odd" && "blue-box-blinking"
+                    }`}
+                    style={{
+                      cursor: active === "Even" ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <div
+                      className={`d-flex justify-content-center align-items-center flex-column `}
+                      onClick={() => {
+                        if (currentBet === 0) {
+                          toast.error("Please select a amount for bet");
+                        } else if (balance < currentBet) {
+                          toast.error(
+                            "Please Deposit more amount to bet with this amount"
+                          );
+                        } else {
+                          handleBet(
+                            localStorage.getItem("username"),
+                            currentBet,
+                            "Even"
+                          );
+                          setActive("Even");
+                        }
+                      }}
+                    >
+                      <h5>CHÃN</h5>
+                      {active === "Even" && currentBet !== 0 && (
+                        <div
+                          className={`bet-container ${
+                            active === "Even" && currentBet !== 0 && "visible"
+                          }`}
                         >
-                          Even
-                        </Button>
-                      </InputGroup>
+                          <img
+                            src="/images/chipset.png"
+                            alt="chipset"
+                            style={{
+                              marginBottom: "11px",
+                              height: "30px",
+                              width: "30px",
+                            }}
+                          />
+                          <p>{currentBet}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -318,144 +443,250 @@ const Gameplayui = () => {
                       className="camera2"
                       alt="Casino"
                     />
-                    <div className="green-box">
-                      <div className="d-flex justify-content-between">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id=" " className="me-2 ms-2" />
-
-                          <Form.Control type="" id="" />
-
-                        </div>
-                        <div className="d-flex ">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" />
-
-                        </div>
-                      </div>
-                      <div className="d-flex justify-content-between mt-4">
-                        <div className="d-flex justify-content-between">
-                          <Form.Control type="" id="i5" className="me-2" />
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id=" " className="me-2 ms-2" />
-
-                          <Form.Control type="" id="" />
-
-                        </div>
-                        <div className="d-flex ">
-                          <Form.Control type="" id="" className="me-2 ms-2" />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" className="me-2 ms-2"  />
-                          <Form.Control type="" id="" placeholder="1" />
-
-                        </div>
-                      </div>
-                  </div>
-                  </div>
-                  <div className="red-box">
-                    <div className="d-flex justify-content-center align-items-center flex-column">
-                      <h5>Chian</h5>
-                      <InputGroup className="mb-3">
-                        <FormControl
-                          placeholder="Enter bet amount"
-                          aria-label="Bet amount"
-                          aria-describedby="basic-addon2"
-                          type="number"
-                          min="0"
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          value={depositAmount}
-                        />
-                        <Button
-                          variant="primary"
-                          className="btn-rank"
-                          onClick={() => handleBet(100, "Odd")}
+                    <div className="d-flex justify-content-around pt-2  column-gap-1">
+                      <div className="d-flex flex-column row-gap-1">
+                        <div
+                          className={`d-flex green-box flex-column ${
+                            specialbetactive == "4 Black" &&
+                            "green-box-blinking"
+                          }`}
+                          onClick={() => {
+                            if (currentBet === 0) {
+                              toast.error("Please select a amount for bet");
+                            } else if (balance < currentBet) {
+                              toast.error(
+                                "Please Deposit more amount to bet with this amount"
+                              );
+                            } else if (
+                              rounds[currentRound]?.filter(
+                                (round) =>
+                                  round.type == "Sepcial" &&
+                                  round.selection == "4 Black"
+                              ).length > 0
+                            ) {
+                              toast.error("You have already placed this bet");
+                            } else if (rounds.length === 0) {
+                              toast.error(
+                                "Please bet on either even or odd first"
+                              );
+                            } else {
+                              handleSpecialBets(
+                                localStorage.getItem("username"),
+                                100,
+                                "4 Black"
+                              );
+                              setspecialbetActive("4 Black");
+                            }
+                          }}
                         >
-                          Odd
-                        </Button>
-                      </InputGroup>
+                          <div>
+                            <p className="text-center white-text">White</p>
+                          </div>
+                          <div className="d-flex  column-gap-3">
+                            <div className="circle"></div>
+                            <div className="circle"></div>
+                            <div className="circle"></div>
+                            <div className="circle"></div>
+                          </div>
+                        </div>
+                        <div className="d-flex green-box flex-column">
+                          <div>
+                            <p className="text-center white-text">4 Red</p>
+                          </div>
+                          <div className="d-flex column-gap-3">
+                            {" "}
+                            <div className="red-circle text-center p-1 font-bold"></div>
+                            <div className="red-circle text-center p-1 font-bold"></div>
+                            <div className="red-circle text-center p-1 font-bold"></div>
+                            <div className="red-circle text-center p-1 font-bold">
+                              4
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="d-flex flex-column row-gap-1">
+                        <div className="d-flex green-box flex-column">
+                          <div>
+                            <p className="text-center white-text">
+                              3 White 1 Red
+                            </p>
+                          </div>
+                          <div className="d-flex  column-gap-3">
+                            <div className="circle"></div>
+                            <div className="circle"></div>
+                            <div className="circle"></div>
+                            <div className="red-circle text-center p-1 font-bold">
+                              1
+                            </div>
+                          </div>
+                        </div>
+                        <div className="d-flex green-box flex-column">
+                          <div>
+                            <p className="text-center white-text">
+                              1 White 3 Red
+                            </p>
+                          </div>
+                          <div className="d-flex  column-gap-3">
+                            <div className="circle"></div>
+                            <div className="red-circle"></div>
+                            <div className="red-circle"></div>
+                            <div className="red-circle text-center p-1 font-bold">
+                              3
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className={`red-box ${
+                      active === "Odd" && "blue-box-blinking"
+                    }`}
+                    style={{
+                      cursor: active === "Even" ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <div
+                      className="d-flex justify-content-center align-items-center flex-column"
+                      onClick={() => {
+                        if (currentBet === 0) {
+                          toast.error("Please select a amount for bet");
+                        } else if (balance < currentBet) {
+                          toast.error(
+                            "Please Deposit more amount to bet with this amount"
+                          );
+                        } else {
+                          handleBet(
+                            localStorage.getItem("username"),
+                            currentBet,
+                            "Odd"
+                          );
+                          setActive("Odd");
+                        }
+                      }}
+                    >
+                      <h5>Lě</h5>
+                      {active === "Odd" && currentBet !== 0 && (
+                        <div
+                          className={`bet-container ${
+                            active === "Odd" && currentBet !== 0 && "visible"
+                          }`}
+                        >
+                          <img
+                            src="/images/chipset.png"
+                            alt="chipset"
+                            style={{
+                              marginBottom: "11px",
+                            }}
+                          />
+                          <p>{currentBet}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="d-flex justify-content-between mt-4">
-                  <Button variant="info" onClick={shakeCoins}>
-                    Shake Coins
-                  </Button>
-                  <Button variant="success" onClick={handleRevealCoins}>
-                    Reveal Coins
-                  </Button>
-                </div>
               </Col>
               <Col sm={3} lg={3} md={3} className="player-list">
-                <Table striped bordered hover>
-                  <thead>
-                    <tr>
-                      <th>Player Requested </th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {playersRequested?.length > 0 &&
-                      playersRequested?.map((player, index) => (
-                        <tr key={index}>
-                          <td>{player?.telegramusername}</td>
-
-                          <td>
-                            <Button
-                              variant="success"
-                              onClick={() => handleAcceptPlayer(player)}
-                              style={{ marginRight: "10px" }}
-                              size="sm"
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              variant="danger"
-                              onClick={() => handleRejectPlayer(player)}
-                              size="sm"
-                            >
-                              Decline
-                            </Button>
-                          </td>
-                        </tr>
+                {localStorage.getItem("roomowner") == "true" && (
+                  <div>
+                    <h6
+                      style={{
+                        color: "#fff",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      Player Requested Sepcial bets
+                    </h6>
+                    {rounds[currentRound]
+                      ?.filter((round) => round.type == "Sepcial")
+                      .map((specialbet) => (
+                        <div>
+                          <p className="p-container">
+                            <img
+                              src="/images/avatar.jpg"
+                              alt="Avatar"
+                              className="image"
+                            />
+                          </p>
+                        </div>
                       ))}
-                  </tbody>
-                </Table>
+                  </div>
+                )}
+                {localStorage.getItem("roomowner") == "true" && (
+                  <Table striped bordered hover>
+                    <thead>
+                      <tr>
+                        <th>Player Requested </th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {playersRequested?.length > 0 &&
+                        playersRequested?.map((player, index) => (
+                          <tr key={index}>
+                            <td>{player?.telegramusername}</td>
+
+                            <td>
+                              <Button
+                                variant="success"
+                                onClick={() => handleAcceptPlayer(player)}
+                                style={{ marginRight: "10px" }}
+                                size="sm"
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                variant="danger"
+                                onClick={() => handleRejectPlayer(player)}
+                                size="sm"
+                              >
+                                Decline
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </Table>
+                )}
               </Col>
             </Row>
           </Container>
         </div>
         <div className="footer-gameplay">
           <div className="d-flex justify-content-between">
-            <div className="d-flex">
+            <div className="d-flex justify-content-center align-items-center">
               <h6>Balance</h6>
               <Button className="btn-balance">${balance}</Button>
             </div>
             <div className="slider-btn ms-2">
               <ul>
-                <li>
+                <li onClick={() => setCurrentBet(50000)}>
                   <img src="/images/css.png" alt="CSS" />
+                  <p>50k</p>
                 </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
+                <li onClick={() => setCurrentBet(100000)}>
+                  <img src="/images/chip.png" alt="CSS" />
+                  <p>100k</p>
                 </li>
-                <li>
+                <li onClick={() => setCurrentBet(150000)}>
                   <img src="/images/css.png" alt="CSS" />
+                  <p>150k</p>
                 </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
+                <li onClick={() => setCurrentBet(200000)}>
+                  <img src="/images/chip.png" alt="CSS" />
+                  <p>200k</p>
                 </li>
-                <li>
+                <li onClick={() => setCurrentBet(250000)}>
                   <img src="/images/css.png" alt="CSS" />
+                  <p>250k</p>
                 </li>
-                <li>
-                  <img src="/images/css.png" alt="CSS" />
+                <li onClick={() => setCurrentBet(500000)}>
+                  <img src="/images/chip.png" alt="CSS" />
+                  <p>500k</p>
                 </li>
               </ul>
             </div>
-            <div className="d-flex">
+            <div className="d-flex justify-content-center align-items-center">
               <Button
                 className="clear-btn me-2"
                 onClick={() => setShowDepositModal(true)}

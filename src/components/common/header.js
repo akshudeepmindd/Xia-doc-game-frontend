@@ -31,7 +31,7 @@ const Header = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     const response = await dispatch(userLogin(data));
-    if (loader == false && status === "success") {
+   
       console.log(user, "user");
       toast.success("You loggedin SucessFully", { icon: "🚀" });
       localStorage.setItem("token", user?.token);
@@ -41,9 +41,7 @@ const Header = () => {
       setTimeout(() => {
         user?.user?.roomowner ? navigate("/ownerview") : navigate("/games");
       }, 1000);
-    } else if (status !== "success") {
-      toast.error("Invalid Credentials");
-    }
+    
   };
   return (
     <>
