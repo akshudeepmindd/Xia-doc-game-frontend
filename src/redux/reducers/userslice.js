@@ -22,6 +22,7 @@ export const userLogin = createAsyncThunk("user/login", async (user) => {
     const data = response.message;
     // console.log(response.data.message);
     console.log(response.message);
+
     return data;
   } catch (error) {
     return error;
@@ -54,6 +55,9 @@ const UserSlice = createSlice({
       state.loader = true;
     });
     builder.addCase(userLogin.fulfilled, (state, { payload }) => {
+      console.log(payload);
+      console.log(payload.user);
+    
       state.user = payload;
       state.status = "success";
       state.loader = false;

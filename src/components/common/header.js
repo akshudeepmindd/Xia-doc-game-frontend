@@ -29,25 +29,20 @@ const Header = () => {
   };
 
   const handleLogin = async (e) => {
-    try {
-      e.preventDefault();
-      const response = await dispatch(userLogin(data));
-
+    e.preventDefault();
+    const response = await dispatch(userLogin(data));
+    if (loader == false && status === "success") {
       console.log(user, "user");
-
+      toast.success("You loggedin SucessFully", { icon: "🚀" });
       localStorage.setItem("token", user?.token);
       localStorage.setItem("userid", user?.user?._id);
       localStorage.setItem("roomowner", user?.user?.roomowner);
       localStorage.setItem("username", user?.user?.telegramusername);
-      toast.success("You loggedin SucessFully", { icon: "🚀" });
+
       setTimeout(() => {
         user?.user?.roomowner ? navigate("/ownerview") : navigate("/games");
       }, 1000);
-    } catch (e) {
-      toast.error("Somethign went wrong", { icon: "🚀" });
     }
-   
-    
   };
   return (
     <>
