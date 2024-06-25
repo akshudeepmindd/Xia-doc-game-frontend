@@ -383,3 +383,192 @@
 .blinking {
   animation: blink 1s infinite;
 }
+.game-ui {
+  position: relative;
+  background-image: url("./images/bgtop.svg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+  .top-link{
+    ul{
+      list-style: none;
+      display: flex;
+
+      li{
+        img{
+          width: 30px;
+          margin-right: 1rem;
+          border-radius: 10px;
+
+        }
+      }
+    }
+    .balance{
+      width: 28px;
+      height: 28px;
+
+      border-radius: 5px;
+    }
+    .input-group {
+      width: 48%;
+      margin-left: 7rem;
+    }
+    .gap-3{
+      width: 24%;
+    }
+  }
+  .game-play {
+    background-image: url("./images/table.png");
+    background-repeat: no-repeat;
+    height: 100vh;
+    background-size: cover;
+    .box-1 {
+      top: 118px;
+      height: 156px;
+      width: 260px;
+      border-radius: 84% 16% 0% 100% / 100% 0% 100% 0%;
+      position: absolute;
+      left: 232px;
+      background-color: #234f67;
+      border: 1px solid #418ba1;
+      box-shadow: 0 0 10px #9ecaed;
+
+    }
+    .box-2 {
+      top: 118px;
+      height: 156px;
+      width: 260px;
+      border-radius: 0% 100% 2% 98% / 100% 100% 0% 0%;
+      position: absolute;
+      right: 233px;
+      background-color: #234f67;
+      border: 1px solid #418ba1;
+      box-shadow: 0 0 10px #9ecaed;
+
+    }
+    .box-3 {
+      top: 318px;
+      height: 156px;
+      width: 260px;
+      border-radius: 0% 100% 0% 100% / 1% 0% 100% 99%;
+      position: absolute;
+      left: 233px;
+      background-color: #234f67;
+      border: 1px solid #418ba1;
+      box-shadow: 0 0 10px #9ecaed;
+
+    }
+    .box-4 {
+      height: 156px;
+      width: 165px;
+      position: absolute;
+      left: 170px;
+      top: 318px;
+      background-color: #234f67;
+      border: 1px solid #418ba1;
+      box-shadow: 0 0 10px #9ecaed;
+
+    }
+    .box-5 {
+      height: 156px;
+      width: 159px;
+      position: absolute;
+      left: 16px;
+      top: 318px;
+      background-color: #234f67;
+      border: 1px solid #418ba1;
+      box-shadow: 0 0 10px #9ecaed;
+
+    }
+    .box-6 {
+      top: 318px;
+      height: 156px;
+      width: 260px;
+      border-radius: 0% 100% 100% 0% / 1% 0% 100% 99%;
+
+      position: absolute;
+      right: 233px;
+      background-color: #234f67;
+      border: 1px solid #418ba1;
+      box-shadow: 0 0 10px #9ecaed;
+
+    }
+    .dollar {
+      position: absolute;
+      position: absolute;
+      top: 0%;
+      left: 40%;
+      border-bottom: 1px solid #418ba1;
+      width: 60%;
+      background-color: #154159;
+      border-radius: 99% 12% 0% 0% / 100% 0% 98% 6% ;
+    }
+    h5 {
+      color: #fcc857;
+    }
+    h4 {
+      color: #fcc857;
+    }
+    .dollar2 {
+      position: absolute;
+      position: absolute;
+      top: 2%;
+      left: 0%;
+      border-bottom: 1px solid #418ba1;
+      width: 55%;
+      border-radius: 9% 100% 0% 100% / 0% 100% 0% 0%  ;
+      background-color: #154159;
+
+
+    }
+    .dollar3 {
+      position: absolute;
+      top: 0%;
+      left: 4%;
+      border-bottom: 1px solid #418ba1;
+      width: 96%;
+      padding: 5px;
+      background-color: #154159;
+
+    }
+    .dollar6 {
+      position: absolute;
+      top: 0%;
+      left: 0%;
+      border-bottom: 1px solid #418ba1;
+      width: 97%;
+      padding: 5px;
+      background-color: #154159;
+
+    }
+    .live-camera{
+      position: absolute;
+      border: 1px solid #ccc;
+      top: -37px;
+      left: 170px;
+      width: 51%;
+      height: 304px;
+      box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    }
+  }
+  .footer-chip{
+    width: 50%;
+    padding: .6rem;
+    left: 25%;
+    bottom: 1%;
+    position: absolute;
+    background-color: #224b62;
+    border-radius: 50px;
+    box-shadow: 0 0 20px #9ecaed;
+    img{
+      border-radius: 50%;
+      width: 80px;
+    }
+    
+  }
+}
+
+.table-div {
+  width: 30%;
+  
+}
