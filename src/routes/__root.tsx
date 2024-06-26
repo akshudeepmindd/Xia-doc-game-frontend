@@ -4,7 +4,6 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 const RootComponent = () => {
   return (
     <>
-      Hello
       <Outlet />
       <TanStackRouterDevtools />
     </>

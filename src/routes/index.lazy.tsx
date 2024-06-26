@@ -1,23 +1,15 @@
-import http from '@/services';
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { useEffect } from 'react';
 
-const HomeComponent = () => {
-  useEffect(() => {
-    async function fetchApiHealth() {
-      try {
-        const response = await http.get('/health');
-        console.log(response.data);
-      } catch (error: unknown) {
-        console.error(error);
-      }
-    }
+const GameComponent = () => {
+  return (
+    <div className="flex flex-col min-h-screen bg-[url(img/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
+      <div className="h-20"></div>
 
-    fetchApiHealth();
-  }, []);
-  return <div>Hello /</div>;
+      <div className="flex-1 bg-green-100"></div>
+    </div>
+  );
 };
 
 export const Route = createLazyFileRoute('/')({
-  component: HomeComponent,
+  component: GameComponent,
 });
