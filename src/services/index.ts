@@ -13,11 +13,19 @@ export const http = axios.create({
  */
 export const setAuthToken = (token: string | null = null) => {
   if (!token) {
+    localStorage.clear();
     delete http.defaults.headers.common['Authorization'];
   } else {
+    localStorage.setItem('token', token);
     http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 };
+
+export const setAuthUser = (payload: { username: string, roomOwner: boolean, userId: string }) => {
+  localStorage.setItem('username', payload.username);
+  localStorage.setItem('roomOwner', payload.roomOwner ? 'true' : 'false');
+  localStorage.setItem('userId', payload.userId);
+}
 
 http.interceptors.request.use((config) => {
   return config;

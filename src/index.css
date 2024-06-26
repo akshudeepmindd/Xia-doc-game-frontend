@@ -32,7 +32,7 @@
       --input: 214.3 31.8% 91.4%;
       --ring: 222.2 84% 4.9%;
 
-      --radius: 0.5rem;
+      --radius: 0.3rem;
     }
 
     .dark {
@@ -73,4 +73,16 @@
     body {
       @apply bg-background text-foreground;
     }
+  }
+
+  .clip-path-tl {
+    clip-path: ellipse(100% 99% at 100% 100%);
+  }
+
+  .clip-path-horizontal {
+    clip-path: ellipse(94% 100% at 5% 100%);
+  }
+
+  .clip-path-vertical {
+    clip-path: ellipse(94% 100% at 5% 100%);
   }

@@ -13,35 +13,77 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as BaseImport } from './routes/_base'
 
 // Create Virtual Routes
 
-const IndexLazyImport = createFileRoute('/')()
+const BaseIndexLazyImport = createFileRoute('/_base/')()
+const PlayRoomIdLazyImport = createFileRoute('/play/$roomId')()
+const BaseRoomLazyImport = createFileRoute('/_base/room')()
 
 // Create/Update Routes
 
-const IndexLazyRoute = IndexLazyImport.update({
-  path: '/',
+const BaseRoute = BaseImport.update({
+  id: '/_base',
   getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
+} as any)
+
+const BaseIndexLazyRoute = BaseIndexLazyImport.update({
+  path: '/',
+  getParentRoute: () => BaseRoute,
+} as any).lazy(() => import('./routes/_base/index.lazy').then((d) => d.Route))
+
+const PlayRoomIdLazyRoute = PlayRoomIdLazyImport.update({
+  path: '/play/$roomId',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/play.$roomId.lazy').then((d) => d.Route))
+
+const BaseRoomLazyRoute = BaseRoomLazyImport.update({
+  path: '/room',
+  getParentRoute: () => BaseRoute,
+} as any).lazy(() => import('./routes/_base/room.lazy').then((d) => d.Route))
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_base': {
+      id: '/_base'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof BaseImport
+      parentRoute: typeof rootRoute
+    }
+    '/_base/room': {
+      id: '/_base/room'
+      path: '/room'
+      fullPath: '/room'
+      preLoaderRoute: typeof BaseRoomLazyImport
+      parentRoute: typeof BaseImport
+    }
+    '/play/$roomId': {
+      id: '/play/$roomId'
+      path: '/play/$roomId'
+      fullPath: '/play/$roomId'
+      preLoaderRoute: typeof PlayRoomIdLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/_base/': {
+      id: '/_base/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexLazyImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof BaseIndexLazyImport
+      parentRoute: typeof BaseImport
     }
   }
 }
 
 // Create and export the route tree
 
-export const routeTree = rootRoute.addChildren({ IndexLazyRoute })
+export const routeTree = rootRoute.addChildren({
+  BaseRoute: BaseRoute.addChildren({ BaseRoomLazyRoute, BaseIndexLazyRoute }),
+  PlayRoomIdLazyRoute,
+})
 
 /* prettier-ignore-end */
 
@@ -51,11 +93,27 @@ export const routeTree = rootRoute.addChildren({ IndexLazyRoute })
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/"
+        "/_base",
+        "/play/$roomId"
       ]
     },
-    "/": {
-      "filePath": "index.lazy.tsx"
+    "/_base": {
+      "filePath": "_base.tsx",
+      "children": [
+        "/_base/room",
+        "/_base/"
+      ]
+    },
+    "/_base/room": {
+      "filePath": "_base/room.lazy.tsx",
+      "parent": "/_base"
+    },
+    "/play/$roomId": {
+      "filePath": "play.$roomId.lazy.tsx"
+    },
+    "/_base/": {
+      "filePath": "_base/index.lazy.tsx",
+      "parent": "/_base"
     }
   }
 }
