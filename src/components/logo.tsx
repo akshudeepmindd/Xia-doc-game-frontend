@@ -1,9 +1,11 @@
-import React from 'react'
+import { Link } from '@tanstack/react-router';
 
 const Logo = () => {
   return (
-    <img src="/logo.svg" className="w-16" />
-  )
-}
+    <Link to="/">
+      <img src="/logo.svg" className="w-16" />
+    </Link>
+  );
+};
 
-export default Logo
+export default Logo;

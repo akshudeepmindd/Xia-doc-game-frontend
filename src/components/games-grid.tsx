@@ -9,7 +9,7 @@ const GamesGrid = () => {
         <DialogTrigger asChild>
           <Card className="w-full h-[28rem]">
             <CardContent className="p-0 h-96 overflow-hidden rounded">
-              <img className="w-full" src="/img/xoc-dia-thumbnail.jpg" alt="xoc-dia" />
+              <img className="w-full" src="/xoc-dia-thumbnail.jpg" alt="xoc-dia" />
             </CardContent>
             <CardFooter className="py-4">
               <div className="flex items-center">

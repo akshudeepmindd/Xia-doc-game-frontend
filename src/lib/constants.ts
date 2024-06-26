@@ -1,0 +1,1 @@
+export const GET_ROOMS_BY_OWNER = 'GET_ROOMS_BY_OWNER';
