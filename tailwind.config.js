@@ -19,6 +19,11 @@ export default {
       },
     },
     extend: {
+      dropShadow: {
+        glow: [
+          "4px 3px 0px #ffffff",
+        ]
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

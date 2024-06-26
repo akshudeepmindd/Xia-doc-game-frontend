@@ -19,7 +19,7 @@ const GameComponent = () => {
         <div className="clip-path-horizontal w-64 h-44 absolute bg-foreground top-[33%] -translate-y-1/2 right-[20%]"></div>
         <div className="clip-path-tl w-64 h-44 absolute bg-foreground bottom-[40%] translate-y-1/2 rotate-180 right-[20%]"></div>
 
-        <div className="w-44 h-44 bg-foreground absolute bottom-[40%] translate-y-1/2 left-[38%]"></div>
+        <div className="w-44 h-44 bg-foreground absolute bottom-[40%] translate-y-1/2 left-[38%] drop-shadow-glow"></div>
         <div className="w-44 h-44 bg-foreground absolute bottom-[40%] translate-y-1/2 right-[38%]"></div>
 
         <div className="absolute bottom-2 w-[40rem] bg-foreground rounded shadow-sm h-20"></div>

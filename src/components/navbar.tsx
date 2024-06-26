@@ -1,14 +1,25 @@
 import Hint from './hint';
 import { Button } from './ui/button';
-import { Check, Signal, UserPlus, MessagesSquare, Users, UserCog, X, Plus, HandCoins, DollarSign, CircleDollarSign } from 'lucide-react';
+import {
+  Check,
+  Signal,
+  UserPlus,
+  MessagesSquare,
+  Users,
+  UserCog,
+  X,
+  Plus,
+  HandCoins,
+  CircleDollarSign,
+} from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 
 export default function Navbar() {
   return (
-    <div className="flex justify-between h-10">
-      <div className="flex px-4 item-center gap-2 mt-2">
+    <div className="flex items-center justify-between h-20 px-8 bg-background/50">
+      <div className="flex px-4 item-center gap-2">
         <Hint content="Signal">
           <Button size="icon" variant={'outline'} className="w-8 h-8">
             <Signal size={18} />
@@ -116,12 +127,13 @@ export default function Navbar() {
           </DropdownMenu>
         </Hint>
       </div>
-      <div className="flex px-4">
-        <div className='flex px-4 mt-2'>
-            <CircleDollarSign size={15} className='bg-white h-5 w-5'/>
-          <Input placeholder="Balance" className="w-40 h-8" disabled/>
+      <Button size="sm">Distribute coins</Button>
+      <div className="flex items-center px-4 gap-x-4">
+        <div className="flex items-center pl-6 bg-background rounded relative">
+          <CircleDollarSign className="h-5 w-5 absolute z-10 left-2" />
+          <Input placeholder="Balance" className="border-none" disabled />
         </div>
-        <Button size={'icon'} className="w-8 h-8 mt-2" variant={'outline'}>
+        <Button size={'icon'} className="w-8 h-8" variant={'outline'}>
           <HandCoins size={18} />
         </Button>
       </div>
