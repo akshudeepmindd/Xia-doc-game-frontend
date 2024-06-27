@@ -2,12 +2,16 @@ import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
-const GamesGrid = () => {
+interface GamesGridProps {
+  setEnable: (value: boolean) => void;
+  enabled: boolean;
+}
+const GamesGrid = ({ setEnable, enabled }: GamesGridProps) => {
   return (
     <div className="grid grid-cols-4 w-full">
-      <Dialog>
+      <Dialog open={enabled}>
         <DialogTrigger asChild>
-          <Card className="w-full h-[28rem]">
+          <Card className="w-full h-[28rem]" onClick={() => setEnable(!enabled)}>
             <CardContent className="p-0 h-96 overflow-hidden rounded">
               <img className="w-full" src="/xoc-dia-thumbnail.jpg" alt="xoc-dia" />
             </CardContent>
