@@ -1,25 +1,12 @@
 import Navbar from '@/components/navbar';
-import useProfile from '@/hooks/useProfile';
-import { GET_ROOMS_DETAILS } from '@/lib/constants';
-import { getRoomDetailService } from '@/services/room';
-import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
-  const { roomOwner } = useProfile();
-  const { isLoading, data } = useQuery({
-    queryKey: [GET_ROOMS_DETAILS, { id: roomId ?? '' }],
-    queryFn: () => getRoomDetailService(roomId ?? ''),
-    enabled: !!roomId,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-  });
-  console.log(data);
-  if (isLoading) return <div>Loading...</div>;
+
   return (
     <div className="flex flex-col h-screen bg-[url(/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
-      <Navbar roomOwner={roomOwner} playersInRoom={data.players || []} playersRequested={data.playersRequested || []} />
+      <Navbar roomId={roomId} />
 
       <div className="flex-1 flex item-center justify-center relative">
         <img className="h-[calc(100vh-5rem)]" src="/poker-table.png" />

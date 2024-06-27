@@ -4,39 +4,65 @@ import { Check, Signal, UserPlus, MessagesSquare, Users, UserCog, X, HandCoins, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { GET_REQUEST_STATUS, GET_ROOMS_DETAILS } from '@/lib/constants';
+import { getRoomDetailService, roomJoinRequestAccept, roomRequestStatus, updateRoom } from '@/services/room';
+import { isEmpty } from 'lodash';
+import useProfile from '@/hooks/useProfile';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 
 interface NavbarProps {
-  roomOwner: boolean;
-  playersRequested?:
-    | [
-        {
-          telegramusername: string;
-
-          _id?: string;
-        },
-      ]
-    | undefined;
-  playersInRoom?:
-    | [
-        {
-          telegramusername: string;
-
-          _id?: string;
-        },
-      ]
-    | undefined;
-  spoPlayersRequested?:
-    | [
-        {
-          telegramusername: string;
-
-          _id?: string;
-        },
-      ]
-    | undefined;
+  roomId: string | undefined;
 }
 
-export default function Navbar({ roomOwner, playersRequested, playersInRoom, spoPlayersRequested }: NavbarProps) {
+interface Player {
+  telegramusername: string;
+  _id: string;
+}
+
+export default function Navbar({ roomId }: NavbarProps) {
+  const { roomOwner, userId } = useProfile();
+  const navigate = useNavigate();
+
+  const { isLoading, data: roomDetails } = useQuery({
+    queryKey: [GET_ROOMS_DETAILS],
+    queryFn: async () => getRoomDetailService(roomId || ''),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  const { isLoading: isLoading2, data: requestStatus } = useQuery({
+    queryKey: [GET_REQUEST_STATUS],
+    queryFn: () => roomRequestStatus({ userId, roomId: roomDetails.message._id }),
+    enabled: !isLoading,
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+  });
+
+  useEffect(() => {
+    if (!isLoading2) {
+      if (requestStatus?.status === 'PENDING') {
+        toast.error('Your request has not been approved yet');
+        navigate({ to: '/' });
+      } else if (requestStatus?.status === 'REJECTED') {
+        toast.error('Your are kicked out of the room.');
+        navigate({ to: '/' });
+      }
+    }
+  }, [requestStatus?.status, isLoading2]);
+
+  const acceptUser = useMutation({
+    mutationFn: roomJoinRequestAccept,
+  });
+
+  const makeDealer = useMutation({
+    mutationFn: updateRoom,
+  });
+
+  if (isLoading) return <>Loading...</>;
+
   return (
     <div className="flex items-center justify-between h-20 px-8 bg-background/50">
       <div className="flex px-4 item-center gap-2">
@@ -50,7 +76,7 @@ export default function Navbar({ roomOwner, playersRequested, playersInRoom, spo
             <MessagesSquare size={18} />
           </Button>
         </Hint>
-        {roomOwner == false && (
+        {roomOwner && (
           <>
             <Hint content="Players Requested">
               <DropdownMenu>
@@ -62,14 +88,18 @@ export default function Navbar({ roomOwner, playersRequested, playersInRoom, spo
                 <DropdownMenuContent>
                   <Table>
                     <TableBody>
-                      {playersRequested?.length > 0 ? (
-                        playersRequested?.map((player, index: number) => (
+                      {!isEmpty(roomDetails.playersRequested) ? (
+                        roomDetails.playersRequested.map((player: Player, index: number) => (
                           <TableRow key={index}>
                             <TableCell>{player?.telegramusername ?? 'Username'}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">
                                 <Hint content="Accept">
-                                  <Button size={'icon'} className="h-8 w-8 bg-green-400 hover:bg-green-200 ">
+                                  <Button
+                                    size={'icon'}
+                                    className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                    onClick={() => acceptUser.mutate({ roomId: roomDetails._id, userId: player._id })}
+                                  >
                                     <Check size={18} className="h-4 w-4" />
                                   </Button>
                                 </Hint>
@@ -101,19 +131,40 @@ export default function Navbar({ roomOwner, playersRequested, playersInRoom, spo
                   <Table>
                     <TableBody>
                       <TableBody>
-                        {playersInRoom?.length > 0 ? (
-                          playersInRoom?.map((player, index: number) => (
+                        {!isEmpty(roomDetails.players) ? (
+                          roomDetails.players.map((player: Player, index: number) => (
                             <TableRow key={index}>
-                              <TableCell>{player?.telegramusername ?? 'Username'}</TableCell>
+                              <TableCell>{player.telegramusername ?? 'Username'}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  <Hint content="Accept">
-                                    <Button size={'icon'} className="h-8 w-8 bg-green-400 hover:bg-green-200 ">
-                                      <Check size={18} className="h-4 w-4" />
-                                    </Button>
-                                  </Hint>
-                                  <Hint content="Reject">
-                                    <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
+                                  {isEmpty(roomDetails.dealer) && (
+                                    <Hint content="Make dealer">
+                                      <Button
+                                        size={'icon'}
+                                        onClick={() =>
+                                          makeDealer.mutate({ id: roomDetails._id, game: { dealer: player._id } })
+                                        }
+                                        className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                      >
+                                        <Check size={18} className="h-4 w-4" />
+                                      </Button>
+                                    </Hint>
+                                  )}
+                                  <Hint content="Kick out">
+                                    <Button
+                                      size={'icon'}
+                                      onClick={() =>
+                                        makeDealer.mutate({
+                                          id: roomDetails._id,
+                                          game: {
+                                            players: roomDetails.players.filter(
+                                              (ply: Player) => ply._id !== player._id,
+                                            ),
+                                          },
+                                        })
+                                      }
+                                      className="h-8 w-8 bg-red-500 hover:bg-red-200 "
+                                    >
                                       <X size={18} className="h-4 w-4" />
                                     </Button>
                                   </Hint>
@@ -140,7 +191,7 @@ export default function Navbar({ roomOwner, playersRequested, playersInRoom, spo
                 <DropdownMenuContent>
                   <Table>
                     <TableBody>
-                      <TableBody>
+                      {/* <TableBody>
                         {playersRequested?.length > 0 ? (
                           playersRequested?.map((player, index: number) => (
                             <TableRow key={index}>
@@ -164,7 +215,7 @@ export default function Navbar({ roomOwner, playersRequested, playersInRoom, spo
                         ) : (
                           <TableRow>No Users Have Requested</TableRow>
                         )}
-                      </TableBody>
+                      </TableBody> */}
                     </TableBody>
                   </Table>
                 </DropdownMenuContent>

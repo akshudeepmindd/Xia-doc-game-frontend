@@ -1,3 +1,4 @@
 export const GET_ROOMS_BY_OWNER = 'GET_ROOMS_BY_OWNER';
 export const GET_ROOMS_DETAILS = 'GET_ROOMS_DETAILS';
 export const GET_ROOM = 'GET_ROOM';
+export const GET_REQUEST_STATUS = 'GET_REQUEST_STATUS';
