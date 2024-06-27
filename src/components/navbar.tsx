@@ -35,18 +35,21 @@ export default function Navbar({ roomId }: NavbarProps) {
 
   const { isLoading: isLoading2, data: requestStatus } = useQuery({
     queryKey: [GET_REQUEST_STATUS],
-    queryFn: () => roomRequestStatus({ userId, roomId: roomDetails.message._id }),
-    enabled: !isLoading,
+    queryFn: () => roomRequestStatus({ userId, roomId: roomId ?? '' }),
+    enabled: !!roomId && !!userId,
     refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
 
   useEffect(() => {
-    if (!isLoading2) {
+    if (!isLoading2 && !roomOwner) {
+      console.log('requestStatus?.status', requestStatus?.status);
       if (requestStatus?.status === 'PENDING') {
+        console.log('requestStatus?.status', requestStatus?.status);
         toast.error('Your request has not been approved yet');
         navigate({ to: '/' });
       } else if (requestStatus?.status === 'REJECTED') {
+        console.log('requestStatus?.status', requestStatus?.status);
         toast.error('Your are kicked out of the room.');
         navigate({ to: '/' });
       }
