@@ -1,6 +1,18 @@
 import Hint from './hint';
 import { Button } from './ui/button';
-import { Check, Signal, UserPlus, MessagesSquare, Users, UserCog, X, HandCoins, CircleDollarSign } from 'lucide-react';
+import {
+  Check,
+  Signal,
+  UserPlus,
+  MessagesSquare,
+  Users,
+  UserCog,
+  X,
+  HandCoins,
+  CircleDollarSign,
+  Drama,
+  Info,
+} from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -15,6 +27,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 interface NavbarProps {
   roomId: string | undefined;
+  isDealer?: boolean;
 }
 
 interface Player {
@@ -22,7 +35,7 @@ interface Player {
   _id: string;
 }
 
-export default function Navbar({ roomId }: NavbarProps) {
+export default function Navbar({ roomId, isDealer }: NavbarProps) {
   const { roomOwner, userId } = useProfile();
   const navigate = useNavigate();
 
@@ -42,19 +55,18 @@ export default function Navbar({ roomId }: NavbarProps) {
   });
 
   useEffect(() => {
-    if (!isLoading2 && !roomOwner) {
-      console.log('requestStatus?.status', requestStatus?.status);
-      if (requestStatus?.status === 'PENDING') {
-        console.log('requestStatus?.status', requestStatus?.status);
-        toast.error('Your request has not been approved yet');
-        navigate({ to: '/' });
-      } else if (requestStatus?.status === 'REJECTED') {
-        console.log('requestStatus?.status', requestStatus?.status);
-        toast.error('Your are kicked out of the room.');
-        navigate({ to: '/' });
+    if (!isLoading && !isLoading2 && !roomOwner) {
+      if (!isDealer) {
+        if (requestStatus?.status === 'PENDING') {
+          toast.error('Your request has not been approved yet');
+          navigate({ to: '/' });
+        } else if (requestStatus?.status === 'REJECTED') {
+          toast.error('Your are kicked out of the room.');
+          navigate({ to: '/' });
+        }
       }
     }
-  }, [requestStatus?.status, isLoading2]);
+  }, [requestStatus?.status, isLoading2, roomDetails?.message?.dealer?._id]);
 
   const acceptUser = useMutation({
     mutationFn: roomJoinRequestAccept,
@@ -69,6 +81,13 @@ export default function Navbar({ roomId }: NavbarProps) {
   return (
     <div className="flex items-center justify-between h-20 px-8 bg-background/50">
       <div className="flex px-4 item-center gap-2">
+        {isDealer && (
+          <Hint content="Info">
+            <Button size="icon" variant={'outline'} className="w-8 h-8">
+              <Info size={18} />
+            </Button>
+          </Hint>
+        )}
         <Hint content="Signal">
           <Button size="icon" variant={'outline'} className="w-8 h-8">
             <Signal size={18} />
@@ -79,7 +98,14 @@ export default function Navbar({ roomId }: NavbarProps) {
             <MessagesSquare size={18} />
           </Button>
         </Hint>
-        {roomOwner && (
+        {isDealer && (
+          <Hint content="Tip">
+            <Button size="icon" variant={'outline'} className="w-8 h-8">
+              <Drama size={18} />
+            </Button>
+          </Hint>
+        )}
+        {roomOwner && !isDealer && (
           <>
             <Hint content="Players Requested">
               <DropdownMenu>
