@@ -1,8 +1,49 @@
 import Navbar from '@/components/navbar';
+import useProfile from '@/hooks/useProfile';
+import { SOCKET_ROUND_START } from '@/lib/constants';
+import { cn } from '@/lib/utils';
+import { socket } from '@/services';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
+  const { isSbo } = useProfile();
+
+  const [selectedCard, setSelectedCard] = useState<number>();
+
+  const [countdown, setCountdown] = useState<number>(0);
+
+  useEffect(() => {
+    socket.on(SOCKET_ROUND_START, (data: any) => {
+      console.log('SOCKET DATA', data);
+      setCountdown(45);
+    });
+
+    return () => {
+      socket.off(SOCKET_ROUND_START);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        // const now = new Date().setSeconds(new Date().getSeconds() + 45) new Date().getTime();
+        setCountdown((prevCountdown) => prevCountdown - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
+
+  const handleSelection = (card: number) => {
+    if (countdown > 0) {
+      if (isSbo && (card === 6 || card === 4 || card === 3 || card === 2)) {
+        setSelectedCard(card);
+      } else if (!selectedCard) {
+        setSelectedCard(card);
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-[url(/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
@@ -11,19 +52,79 @@ const GameComponent = () => {
       <div className="flex-1 flex item-center justify-center relative">
         <img className="h-[calc(100vh-5rem)]" src="/poker-table.png" />
 
-        <div className="clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-foreground top-[33%] -translate-y-[55%] 2xl:left-[19%] left-[20%]"></div>
-        <div className="clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-foreground bottom-[40%] translate-y-[55%] rotate-180 2xl:left-[19%] left-[20%]"></div>
+        {countdown > 0 && (
+          <div className="absolute top-10 left-10">
+            <div className="w-24 h-24 flex items-center justify-center bg-foreground text-background border-2 rounded-full text-3xl font-medium font-[consolas]">
+              <span className="text-xl">Start</span>
+            </div>
+          </div>
+        )}
+
+        <div
+          onClick={() => handleSelection(1)}
+          className={cn(
+            'clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-950 top-[33%] -translate-y-[55%] 2xl:left-[19%] left-[18%]',
+            selectedCard === 1 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '',
+          )}
+        ></div>
+        <div
+          onClick={() => handleSelection(2)}
+          className={cn(
+            'clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-950 bottom-[40%] translate-y-[55%] rotate-180 2xl:left-[19%] left-[18%]',
+            selectedCard === 2 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '',
+          )}
+        ></div>
 
         <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2"></div>
 
-        <div className="clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-foreground top-[33%] -translate-y-[55%] 2xl:right-[19%] right-[20%]"></div>
-        <div className="clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-foreground bottom-[40%] translate-y-[55%] rotate-180 2xl:right-[19%] right-[20%]"></div>
+        <div
+          onClick={() => handleSelection(3)}
+          className={cn(
+            'clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-950 top-[33%] -translate-y-[55%] 2xl:right-[19%] right-[18%]',
+            selectedCard === 3 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '',
+          )}
+        ></div>
+        <div
+          onClick={() => handleSelection(4)}
+          className={cn(
+            'clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-950 bottom-[40%] translate-y-[55%] rotate-180 2xl:right-[19%] right-[18%]',
+            selectedCard === 4 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '',
+          )}
+        ></div>
 
-        <div className="2xl:w-44 2xl:h-44 w-40 h-40 bg-foreground absolute bottom-[40%] translate-y-[55%] 2xl:left-[38%] left-[37.5%]"></div>
-        <div className="2xl:w-44 2xl:h-44 w-40 h-40 bg-foreground absolute bottom-[40%] translate-y-[55%] 2xl:right-[38%] right-[37.5%]"></div>
+        <div
+          onClick={() => handleSelection(5)}
+          className={cn(
+            '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-950 absolute bottom-[40%] translate-y-[55%] 2xl:left-[38%] left-[37.5%]',
+            selectedCard === 5 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '',
+          )}
+        ></div>
+        <div
+          onClick={() => handleSelection(6)}
+          className={cn(
+            '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-950 absolute bottom-[40%] translate-y-[55%] 2xl:right-[38%] right-[37.5%]',
+            selectedCard === 6 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '',
+          )}
+        ></div>
 
-        <div className="absolute bottom-2 w-[40rem] bg-foreground rounded shadow-sm h-20"></div>
+        <div className="flex items-center justify-around absolute bottom-2 w-96 bg-background rounded shadow-sm h-20">
+          <CoinChips amount={500} />
+          <CoinChips amount={1000} />
+          <CoinChips amount={2000} />
+          <CoinChips amount={5000} />
+        </div>
       </div>
+    </div>
+  );
+};
+
+const CoinChips = ({ amount }: { amount: number }) => {
+  return (
+    <div className="w-20 h-20 relative hover:animate-bounce hover:transition-all">
+      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[56%] text-sm font-semibold font-[consolas]">
+        {amount}K
+      </span>
+      <img src="/chip-3.png" className="w-full h-full" />
     </div>
   );
 };

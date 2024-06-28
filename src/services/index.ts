@@ -1,5 +1,8 @@
 import config from '@/config';
 import axios from 'axios';
+import io from 'socket.io-client';
+
+export const socket = io(config.env.baseUrl);
 
 export const http = axios.create({
   baseURL: config.env.baseUrl,
@@ -21,11 +24,11 @@ export const setAuthToken = (token: string | null = null) => {
   }
 };
 
-export const setAuthUser = (payload: { username: string, roomOwner: boolean, userId: string }) => {
+export const setAuthUser = (payload: { username: string; roomOwner: boolean; userId: string }) => {
   localStorage.setItem('username', payload.username);
   localStorage.setItem('roomOwner', payload.roomOwner ? 'true' : 'false');
   localStorage.setItem('userId', payload.userId);
-}
+};
 
 http.interceptors.request.use((config) => {
   return config;
