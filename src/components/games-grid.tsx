@@ -32,6 +32,12 @@ const GamesGrid = () => {
   });
 
   useEffect(() => {
+    if (userId === roomDetail?.message?.dealer) {
+      console.log(roomDetail?.message?.dealer, 'DEALER');
+      navigate({ to: `/dealer/${roomDetail?.message?._id}` });
+      return;
+    }
+
     if (!isLoading2) {
       if (requestStatus?.status === 'ACCEPTED') {
         navigate({ to: `/play/${roomDetail.message._id}` });
@@ -39,7 +45,7 @@ const GamesGrid = () => {
         toast.error('Your request has been rejected. Please try again later');
       }
     }
-  }, [requestStatus?.status, isLoading2]);
+  }, [requestStatus?.status, isLoading2, roomDetail]);
 
   if (isLoading) return <>Loading...</>;
 
