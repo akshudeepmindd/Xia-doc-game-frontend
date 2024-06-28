@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import useProfile from '@/hooks/useProfile';
 import { getLiveStreamToken } from '@/services/auth';
+import MyParticipantView from '@/components/participant-view';
 
 const apiKey = 'cuvjbzq9jruc';
 
@@ -57,20 +58,7 @@ const GameComponent = () => {
 
           <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2">
             <StreamTheme className="w-full h-full rounded-none">
-              <StreamVideo client={client}>
-                {roomId && (
-                  <LivestreamPlayer
-                    callId={roomId}
-                    callType="livestream"
-                    layoutProps={{
-                      showSpeakerName: false,
-                      showParticipantCount: false,
-                      showDuration: false,
-                      showLiveBadge: false,
-                    }}
-                  />
-                )}
-              </StreamVideo>
+              <StreamVideo client={client}>{roomId && <MyParticipantView />}</StreamVideo>
             </StreamTheme>
           </div>
 
