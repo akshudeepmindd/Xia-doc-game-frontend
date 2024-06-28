@@ -1,9 +1,20 @@
+import ViewerScreenContainer from '@/components/livestream/participants';
 import Navbar from '@/components/navbar';
+import useProfile from '@/hooks/useProfile';
+import { GET_ROOMS_DETAILS } from '@/lib/constants';
+import { getRoomDetailService } from '@/services/room';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
-
+import ViewerContainer
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
-
+  const { username } = useProfile();
+  const { isLoading, data: roomDetails } = useQuery({
+    queryKey: [GET_ROOMS_DETAILS],
+    queryFn: async () => getRoomDetailService(roomId || ''),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
   return (
     <div className="flex flex-col h-screen bg-[url(/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
       <Navbar roomId={roomId} />
