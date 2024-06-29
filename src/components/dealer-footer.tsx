@@ -56,7 +56,7 @@ const DealerFooter = ({
 
   const handleRoundStart = () => {
     let roundId = 1;
-    if (round) {
+    if (round && round?.roundNumber) {
       roundId += round.roundNumber;
     }
     return socket.emit(SOCKET_ROUND_START, { roomId, round: { roundNumber: roundId, gameroom: roomId } });
@@ -71,6 +71,7 @@ const DealerFooter = ({
       // startHls(); // Commented out the startHls() function call
     },
   });
+
   const handleLive = () => {
     if (!startLive && meetingId == '') {
       progressLive.mutate({ roomId: roomId ?? '' });
@@ -82,6 +83,7 @@ const DealerFooter = ({
       startHls(config);
     }
   };
+
   return (
     <footer className="flex-1 bg-primary flex items-center justify-between px-8">
       <div className="flex items-center gap-x-2">

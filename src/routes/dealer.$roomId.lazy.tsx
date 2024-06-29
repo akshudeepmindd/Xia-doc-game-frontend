@@ -86,7 +86,7 @@ const DealerComponent = () => {
         <div className="flex items-center justify-between px-10 gap-x-4">
           {' '}
           <div className="w-1/4 h-80 flex items-center justify-center">
-            <div className="w-24 h-24 flex items-center justify-center text-background border-2 rounded-full text-3xl font-medium font-[consolas]">
+            <div className="w-24 h-24 flex items-center justify-center text-background border-2 rounded-full text-3xl font-medium font-mono">
               {countdown > 0 ? countdown : <span className="text-xl">Start</span>}
             </div>
           </div>
