@@ -10,6 +10,8 @@ import { createDealerLive } from '@/services/room';
 import { useParams } from '@tanstack/react-router';
 import { useMeeting } from '@videosdk.live/react-sdk';
 import { addRound } from '@/services/round';
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { useState } from 'react';
 const config: any = {
   // Layout Configuration
   layout: {
@@ -39,6 +41,10 @@ const DealerFooter = ({
   meetingId,
   roomId,
   round,
+  selectResult,
+  resultDeclare,
+  roundStatus,
+  countdown
 }: {
   setMeetingId: (meetingId: string) => void;
   setStartLive: (startLive: boolean) => void;
@@ -48,6 +54,10 @@ const DealerFooter = ({
   authToken: string;
   roomId: string;
   round: any;
+  selectResult: string | undefined,
+  resultDeclare: any;
+  roundStatus: 'inprogress' | 'completed',
+  countdown: number;
 }) => {
   const { username } = useProfile();
   const { startHls, stopHls, toggleWebcam } = useMeeting();
@@ -120,7 +130,9 @@ const DealerFooter = ({
           {startLive ? 'Stop live' : 'Start live'}
         </Button>
       </div>
-
+      {selectResult && countdown <= 0 && roundStatus === "inprogress" && <Button variant="outline" size="sm" onClick={() => resultDeclare(selectResult)}>
+        Result declare
+      </Button>}
       <div className="flex items-center gap-x-2">
         <span className="font-medium text-sm text-background mr-2">
           <span className="font-normal mr-2">Dealer :</span>

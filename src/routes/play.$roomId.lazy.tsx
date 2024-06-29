@@ -3,18 +3,38 @@ import Navbar from '@/components/navbar';
 import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { SOCKET_ROUND_START } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { socket } from '@/services';
 import { useEffect, useMemo, useState } from 'react';
-import { getRoundDetails } from '@/services/round';
+import { getRoundDetails, placeBetService } from '@/services/round';
 import { differenceInSeconds, parseISO } from 'date-fns';
+import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
+
+const getBetTypeBySelectionCard = (selectionCard: number) => {
+  switch (selectionCard) {
+    case 1:
+      return "EVEN";
+    case 2:
+      return "FOUR_WHITE"
+    case 3:
+      return "ODD"
+    case 4:
+      return "THREE_BLACK_ONE_WHITE"
+    case 5:
+      return "FOUR_BLACK"
+    case 6:
+      return "THREE_WHITE_ONE_BLACK"
+    default:
+      return "TWO_BLACK_TWO_WHITE"
+  }
+}
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
-  const { isSbo } = useProfile();
+  const { isSbo, userId } = useProfile();
 
   const [selectedCard, setSelectedCard] = useState<number>();
 
@@ -42,9 +62,8 @@ const GameComponent = () => {
   });
 
   useEffect(() => {
-    console.log("roundDetails", roundDetails)
-    if (roundDetails) {
-      const futureTime = parseISO(roundDetails.message.updatedAt);
+    if (roundDetails && roundDetails?.message?.data?.createdAt) {
+      const futureTime = parseISO(roundDetails?.message?.data?.createdAt);
 
       // Get current time
       const currentTime = new Date();
@@ -54,7 +73,7 @@ const GameComponent = () => {
 
       setCountdown(45 - secondsLeft);
     }
-  }, [roundDetails?.message?.updatedAt])
+  }, [roundDetails?.message?.data?.createdAt])
 
   useEffect(() => {
     if (countdown > 0) {
@@ -88,13 +107,19 @@ const GameComponent = () => {
     refetchIntervalInBackground: true,
   });
 
+  const { mutate: placeBet } = useMutation({
+    mutationFn: placeBetService
+  })
+
   const handleSelection = (card: number) => {
-    if (countDownSPOStatus === "BET_SPO" && (card === 6 || card === 4 || card === 3 || card === 2)) {
+    if (countDownSPOStatus === "BET_SPO" && (card === 6 || card === 4 || card === 5 || card === 2)) {
       setSelectedCard(card);
+      placeBet({ roundId: roundDetails?.message?.data?._id, userId: userId, betAmount: 1000, betType: getBetTypeBySelectionCard(card) })
     }
 
-    if (countDownStatus === "BET" && (card === 1 || card === 5)) {
+    if (countDownStatus === "BET" && (card === 1 || card === 3)) {
       setSelectedCard(card)
+      placeBet({ roundId: roundDetails?.message?.data?._id, userId: userId, betAmount: 1000, betType: getBetTypeBySelectionCard(card) })
     }
   };
 
@@ -129,17 +154,29 @@ const GameComponent = () => {
         <div
           onClick={() => handleSelection(1)}
           className={cn(
-            'clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 top-[33%] -translate-y-[55%] 2xl:left-[19%] left-[18%]',
-            selectedCard === 1 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownStatus === "BET_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
+            'flex items-center justify-center clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 top-[33%] -translate-y-[55%] 2xl:left-[19%] left-[18%]',
+            selectedCard === 1 ? 'ring-2 ring-amber-400 bg-amber-500' : '', countDownStatus === "BET_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
           )}
-        ></div>
+        >
+          <span className='text-background text-2xl'>Even</span>
+          <CoinChips className={cn(selectedCard === 1 ? 'animate__bounceInDown animate__delay-2s animate__slow' : 'hidden')} amount={500} />
+        </div>
         <div
           onClick={() => handleSelection(2)}
           className={cn(
             'clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 bottom-[40%] translate-y-[55%] rotate-180 2xl:left-[19%] left-[18%]',
             selectedCard === 2 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
           )}
-        ></div>
+        >
+          <div className="w-11/12 h-full flex flex-col gap-2 items-end justify-start w-full border-nonerounded p-2 -rotate-180">
+            <div className="w-full flex items-center justify-around mt-4">
+              <WhiteCircle />
+              <WhiteCircle />
+              <WhiteCircle />
+              <WhiteCircle />
+            </div>
+          </div>
+        </div>
 
         <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2">
           {meetingId !== '' && <ViewerScreenContainer meetingId={meetingId} authToken={authToken} />}
@@ -148,47 +185,76 @@ const GameComponent = () => {
         <div
           onClick={() => handleSelection(3)}
           className={cn(
-            'clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 top-[33%] -translate-y-[55%] 2xl:right-[19%] right-[18%]',
-            selectedCard === 3 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
+            'flex items-center justify-center clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 top-[33%] -translate-y-[55%] 2xl:right-[19%] right-[18%]',
+            selectedCard === 3 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownStatus === "BET_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
           )}
-        ></div>
+        >
+          <span className='text-background text-2xl'>Odd</span>
+        </div>
         <div
           onClick={() => handleSelection(4)}
           className={cn(
-            'clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 bottom-[40%] translate-y-[55%] rotate-180 2xl:right-[19%] right-[18%]',
+            'flex flex-col items-end clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 bottom-[40%] translate-y-[55%] rotate-180 2xl:right-[19%] right-[18%]',
             selectedCard === 4 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
           )}
-        ></div>
+        >
+          <div className="w-11/12 h-full flex flex-col gap-2 items-start justify-start w-full border-nonerounded p-2 -rotate-180">
+            <div className="w-full flex items-center justify-around mt-4">
+              <RedCircle />
+              <RedCircle />
+              <RedCircle />
+              <WhiteCircle />
+            </div>
+          </div>
+        </div>
 
         <div
           onClick={() => handleSelection(5)}
           className={cn(
             '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-800 absolute bottom-[40%] translate-y-[55%] 2xl:left-[38%] left-[37.5%]',
-            selectedCard === 5 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownStatus === "BET_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
+            selectedCard === 5 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
           )}
-        ></div>
+        >
+          <div className="w-full h-full flex flex-col gap-2 items-end justify-start w-full border-nonerounded p-2">
+            <div className="w-full flex items-center justify-around mt-4">
+              <RedCircle />
+              <RedCircle />
+              <RedCircle />
+              <RedCircle />
+            </div>
+          </div>
+        </div>
         <div
           onClick={() => handleSelection(6)}
           className={cn(
             '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-800 absolute bottom-[40%] translate-y-[55%] 2xl:right-[38%] right-[37.5%]',
             selectedCard === 6 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
           )}
-        ></div>
+        >
+          <div className="w-full h-full flex flex-col gap-2 items-end justify-start w-full border-nonerounded p-2">
+            <div className="w-full flex items-center justify-around mt-4">
+              <WhiteCircle />
+              <WhiteCircle />
+              <WhiteCircle />
+              <RedCircle />
+            </div>
+          </div>
+        </div>
 
         <div className="flex items-center justify-around absolute bottom-2 w-96 bg-background rounded shadow-sm h-20">
-          <CoinChips amount={500} />
-          <CoinChips amount={1000} />
-          <CoinChips amount={2000} />
-          <CoinChips amount={5000} />
+          <CoinChips className='hover:animate-bounce hover:transition-all' amount={500} />
+          <CoinChips className='hover:animate-bounce hover:transition-all' amount={1000} />
+          <CoinChips className='hover:animate-bounce hover:transition-all' amount={2000} />
+          <CoinChips className='hover:animate-bounce hover:transition-all' amount={5000} />
         </div>
       </div>
     </div>
   );
 };
 
-const CoinChips = ({ amount }: { amount: number }) => {
+const CoinChips = ({ amount, className }: { amount: number, className?: string }) => {
   return (
-    <div className="w-20 h-20 relative hover:animate-bounce hover:transition-all">
+    <div className={cn("w-20 h-20 relative", className)}>
       <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[56%] text-xs font-semibold font-mono">
         {amount}K
       </span>

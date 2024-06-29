@@ -3,20 +3,31 @@ import SpeakerScreen from '@/components/livestream/speaker';
 import Navbar from '@/components/navbar';
 import { GET_ROUND_DETAILS, SOCKET_ROUND_START } from '@/lib/constants';
 import { socket } from '@/services';
-import { getRoundDetails } from '@/services/round';
-import { useQuery } from '@tanstack/react-query';
+import { declareResultService, getRoundDetails } from '@/services/round';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
 import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+
+const BetType = {
+  FOUR_BLACK: 'FOUR_BLACK',
+  FOUR_WHITE: 'FOUR_WHITE',
+  THREE_BLACK_ONE_WHITE: 'THREE_BLACK_ONE_WHITE',
+  THREE_WHITE_ONE_BLACK: 'THREE_WHITE_ONE_BLACK',
+  TWO_BLACK_TWO_WHITE: 'TWO_BLACK_TWO_WHITE',
+  EVEN: 'EVEN',
+  ODD: 'ODD',
+}
 
 const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
-
+  const [selectResult, setSelectResult] = useState<string>();
 
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
@@ -39,7 +50,7 @@ const DealerComponent = () => {
 
   useEffect(() => {
     if (roundDetails) {
-      const futureTime = parseISO(roundDetails.message.updatedAt);
+      const futureTime = parseISO(roundDetails.message.data?.createdAt);
 
       // Get current time
       const currentTime = new Date();
@@ -49,7 +60,7 @@ const DealerComponent = () => {
 
       setCountdown(45 - secondsLeft);
     }
-  }, [roundDetails?.message?.updatedAt])
+  }, [roundDetails?.message?.data?.createdAt])
 
   useEffect(() => {
     if (countdown > 0 && roundDetails) {
@@ -58,7 +69,7 @@ const DealerComponent = () => {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [countdown, roundDetails?.message?.updatedAt]);
+  }, [countdown, roundDetails?.message?.data?.createdAt]);
 
   const [meetingId, setMeetingId] = useState('');
   const [startLive, setStartLive] = useState(false);
@@ -76,6 +87,16 @@ const DealerComponent = () => {
       setAuthToken(roomDetails?.streamingToken);
     }
   }, [roomDetails]);
+
+  const { mutateAsync: declareResult } = useMutation({
+    mutationFn: declareResultService
+  })
+
+  const handleDeclareResult = async (result: string) => {
+    if (roundDetails?.message?.data?._id) {
+      await declareResult({ roundId: roundDetails?.message?.data?._id, result })
+    }
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -102,9 +123,9 @@ const DealerComponent = () => {
           <div className="w-1/4 bg-slate-50">Table</div>
         </div>
         <div className="flex items-center justify-between px-10 gap-x-4">
-          <EvenSelectionBoard />
+          <EvenSelectionBoard selectResult={selectResult} setSelectResult={setSelectResult} />
           <div className="w-1/4 bg-slate-50 h-64"></div>
-          <OddSelectionBoard />
+          <OddSelectionBoard selectResult={selectResult} setSelectResult={setSelectResult} />
         </div>
         {roomId && (
           <>
@@ -130,6 +151,10 @@ const DealerComponent = () => {
                   setAuthToken={setAuthToken}
                   meetingId={meetingId}
                   authToken={authToken}
+                  selectResult={selectResult}
+                  resultDeclare={handleDeclareResult}
+                  roundStatus={roundDetails?.message?.data?.roundStatus}
+                  countdown={countdown}
                 />
               </MeetingProvider>
             )}
@@ -140,20 +165,20 @@ const DealerComponent = () => {
   );
 };
 
-const RedCircle = () => {
+export const RedCircle = () => {
   return <div className="w-8 h-8 bg-red-500 rounded-full"></div>;
 };
 
-const WhiteCircle = () => {
+export const WhiteCircle = () => {
   return <div className="w-8 h-8 bg-white rounded-full"></div>;
 };
 
-const EvenSelectionBoard = () => {
+const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
   return (
-    <div className="w-1/4 h-72 flex flex-col gap-y-6">
+    <div className="w-1/4 h-72 flex flex-col gap-y-6" >
       <h1 className="text-background text-2xl font-medium text-center">Even</h1>
       <div className="grid grid-cols-2 gap-6">
-        <div className="flex flex-col justify-around w-full border border-background h-24 rounded p-2">
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_WHITE ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.FOUR_WHITE)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 4</span>
             <span className="text-background">Red 0</span>
@@ -165,19 +190,7 @@ const EvenSelectionBoard = () => {
             <WhiteCircle />
           </div>
         </div>
-        <div className="flex flex-col justify-around w-full border border-background h-24 rounded p-2">
-          <h3 className="flex items-center justify-around w-full">
-            <span className="text-background">White 2</span>
-            <span className="text-background">Red 2</span>
-          </h3>
-          <div className="w-full flex items-center justify-around">
-            <WhiteCircle />
-            <WhiteCircle />
-            <RedCircle />
-            <RedCircle />
-          </div>
-        </div>
-        <div className="flex flex-col justify-around w-full border border-background h-24 rounded p-2">
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_BLACK ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.FOUR_BLACK)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 0</span>
             <span className="text-background">Red 4</span>
@@ -189,17 +202,22 @@ const EvenSelectionBoard = () => {
             <RedCircle />
           </div>
         </div>
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.EVEN ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.EVEN)}>
+          <div className="w-full flex items-center justify-around 4xl text-background">
+            EVEN
+          </div>
+        </div>
       </div>
-    </div>
+    </div >
   );
 };
 
-const OddSelectionBoard = () => {
+const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
   return (
     <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Odd</h1>
       <div className="grid grid-cols-2 gap-6">
-        <div className="flex flex-col justify-around w-full border border-background h-24 rounded p-2">
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.THREE_WHITE_ONE_BLACK ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.THREE_WHITE_ONE_BLACK)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 3</span>
             <span className="text-background">Red 1</span>
@@ -211,7 +229,7 @@ const OddSelectionBoard = () => {
             <RedCircle />
           </div>
         </div>
-        <div className="flex flex-col justify-around w-full border border-background h-24 rounded p-2">
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.THREE_BLACK_ONE_WHITE ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.THREE_BLACK_ONE_WHITE)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 1</span>
             <span className="text-background">Red 3</span>
@@ -221,6 +239,11 @@ const OddSelectionBoard = () => {
             <RedCircle />
             <RedCircle />
             <RedCircle />
+          </div>
+        </div>
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.ODD ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.ODD)}>
+          <div className="w-full flex items-center justify-around 4xl text-background">
+            ODD
           </div>
         </div>
       </div>
