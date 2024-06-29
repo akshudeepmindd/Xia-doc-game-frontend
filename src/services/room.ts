@@ -44,3 +44,13 @@ export const roomRequestStatus = async (payload: { roomId: string; userId: strin
   const { data } = await http.get(`/gameroom/${payload.roomId}/${payload.userId}`);
   return data;
 };
+
+
+export const createDealerLive = async (payload: { roomId: string }) => {
+  const { data } = await http.post(`/livestream/room/`, { roomId: payload.roomId });
+  await updateRoom({
+    id: payload.roomId,
+    game: { dealerLiveStreamId: data.message.roomId, streamingToken: data.message.token },
+  });
+  return data;
+};

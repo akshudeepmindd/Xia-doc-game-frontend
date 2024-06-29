@@ -1,10 +1,16 @@
 import DealerFooter from '@/components/dealer-footer';
+import SpeakerScreen from '@/components/livestream/speaker';
 import Navbar from '@/components/navbar';
 import { GET_ROUND_DETAILS, SOCKET_ROUND_START } from '@/lib/constants';
 import { socket } from '@/services';
 import { getRoundDetails } from '@/services/round';
 import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
+import useProfile from '@/hooks/useProfile';
+import { GET_ROOMS_DETAILS } from '@/lib/constants';
+import { getRoomDetailService } from '@/services/room';
+import { MeetingProvider } from '@videosdk.live/react-sdk';
+
 import { useEffect, useState } from 'react';
 
 const DealerComponent = () => {
@@ -25,7 +31,7 @@ const DealerComponent = () => {
 
     return () => {
       socket.off(SOCKET_ROUND_START);
-    }
+    };
   }, []);
 
   useEffect(() => {
@@ -38,8 +44,25 @@ const DealerComponent = () => {
     }
   }, [countdown]);
 
-  if(isLoading) {
-    return <div>Loading...</div>
+  const [meetingId, setMeetingId] = useState('');
+  const [startLive, setStartLive] = useState(false);
+  const [authToken, setAuthToken] = useState('');
+  const { username } = useProfile();
+
+  const { data: roomDetails } = useQuery({
+    queryKey: [GET_ROOMS_DETAILS],
+    queryFn: async () => getRoomDetailService(roomId || ''),
+  });
+
+  useEffect(() => {
+    if (roomDetails) {
+      setMeetingId(roomDetails?.dealerLiveStreamId);
+      setAuthToken(roomDetails?.streamingToken);
+    }
+  }, [roomDetails]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -47,12 +70,19 @@ const DealerComponent = () => {
       <Navbar roomId={roomId} isDealer={true} />
       <div className="flex-1 flex flex-col gap-y-2">
         <div className="flex items-center justify-between px-10 gap-x-4">
+          {' '}
           <div className="w-1/4 h-80 flex items-center justify-center">
             <div className="w-24 h-24 flex items-center justify-center text-background border-2 rounded-full text-3xl font-medium font-[consolas]">
               {countdown > 0 ? countdown : <span className="text-xl">Start</span>}
             </div>
           </div>
-          <div className="w-[43rem] h-80 overflow-hidden"></div>
+          <div className="w-[43rem] h-96 overflow-hidden">
+            {startLive ? (
+              <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} />
+            ) : (
+              <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
+            )}
+          </div>
           <div className="w-1/4 bg-slate-50">Table</div>
         </div>
         <div className="flex items-center justify-between px-10 gap-x-4">
@@ -60,7 +90,35 @@ const DealerComponent = () => {
           <div className="w-1/4 bg-slate-50 h-64"></div>
           <OddSelectionBoard />
         </div>
-        {roomId && <DealerFooter roomId={roomId} round={roundDetails?.message} />}
+        {roomId && (
+          <>
+            {meetingId !== '' && (
+              <MeetingProvider
+                config={{
+                  meetingId: meetingId,
+                  mode: 'CONFERENCE',
+                  name: 'Name',
+                  micEnabled: true,
+                  webcamEnabled: true,
+                  debugMode: false,
+                }}
+                token={authToken}
+                joinWithoutUserInteraction
+              >
+                <DealerFooter
+                  roomId={roomId}
+                  round={roundDetails?.message}
+                  setMeetingId={setMeetingId}
+                  setStartLive={setStartLive}
+                  startLive={startLive}
+                  setAuthToken={setAuthToken}
+                  meetingId={meetingId}
+                  authToken={authToken}
+                />
+              </MeetingProvider>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

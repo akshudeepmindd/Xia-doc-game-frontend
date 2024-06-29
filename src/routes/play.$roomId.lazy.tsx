@@ -1,9 +1,13 @@
+import ViewerScreenContainer from '@/components/livestream/participants';
 import Navbar from '@/components/navbar';
 import useProfile from '@/hooks/useProfile';
+import { GET_ROOMS_DETAILS } from '@/lib/constants';
+import { getRoomDetailService } from '@/services/room';
+import { useQuery } from '@tanstack/react-query';
+import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { SOCKET_ROUND_START } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { socket } from '@/services';
-import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
 const GameComponent = () => {
@@ -35,6 +39,13 @@ const GameComponent = () => {
     }
   }, [countdown]);
 
+  const { isLoading, data: roomDetails } = useQuery({
+    queryKey: [GET_ROOMS_DETAILS],
+    queryFn: async () => getRoomDetailService(roomId || ''),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
   const handleSelection = (card: number) => {
     if (countdown > 0) {
       if (isSbo && (card === 6 || card === 4 || card === 3 || card === 2)) {
@@ -44,6 +55,10 @@ const GameComponent = () => {
       }
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[url(/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
@@ -55,7 +70,7 @@ const GameComponent = () => {
         {countdown > 0 && (
           <div className="absolute top-10 left-10">
             <div className="w-24 h-24 flex items-center justify-center bg-foreground text-background border-2 rounded-full text-3xl font-medium font-[consolas]">
-              <span className="text-xl">Start</span>
+              <span className="text-xl">{countdown}</span>
             </div>
           </div>
         )}

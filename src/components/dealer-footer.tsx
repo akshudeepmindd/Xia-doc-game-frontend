@@ -1,18 +1,55 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Camera, CameraOff, Mic, MicOff, PlaySquare, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import useProfile from '@/hooks/useProfile';
 import { socket } from '@/services';
 import { SOCKET_ROUND_START } from '@/lib/constants';
+import { useMutation } from '@tanstack/react-query';
+import { createDealerLive } from '@/services/room';
+import { useParams } from '@tanstack/react-router';
+import { useMeeting } from '@videosdk.live/react-sdk';
+const config: any = {
+  // Layout Configuration
+  layout: {
+    type: 'SPOTLIGHT', // "SPOTLIGHT" | "SIDEBAR",  Default : "GRID"
+    priority: 'SPEAKER', // "PIN", Default : "SPEAKER"
+    gridSize: 4, // MAX : 25
+  },
 
-interface DealerFooterProps {
+  // Theme of livestream
+  theme: 'DARK', //  "LIGHT" | "DEFAULT"
+
+  // `mode` is used to either interactive livestream video & audio both or only audio.
+  mode: 'video-and-audio', // "audio", Default : "video-and-audio"
+
+  // Quality of livestream and is only applicable to `video-and-audio` type mode.
+  quality: 'high', // "low" | "med",  Default : "med"
+
+  // This mode refers to orientation of recording.
+  // landscape : Livestream the meeting in horizontally
+  // portrait : Livestream the meeting in vertically (Best for mobile view)
+};
+const DealerFooter = ({
+  setMeetingId,
+  setStartLive,
+  setAuthToken,
+  startLive,
+  meetingId,
+  roomId,
+  round,
+}: {
+  setMeetingId: (meetingId: string) => void;
+  setStartLive: (startLive: boolean) => void;
+  setAuthToken: (authToken: string) => void;
+  startLive: boolean;
+  meetingId: string;
+  authToken: string;
   roomId: string;
   round: any;
-}
-
-const DealerFooter = ({ roomId, round }: DealerFooterProps) => {
+}) => {
   const { username } = useProfile();
-
+  const { startHls, stopHls, toggleWebcam } = useMeeting();
   const isLive = true;
   const isMuted = true;
   const isCameraOn = true;
@@ -25,6 +62,26 @@ const DealerFooter = ({ roomId, round }: DealerFooterProps) => {
     return socket.emit(SOCKET_ROUND_START, { roomId, round: { roundNumber: roundId, gameroom: roomId } });
   };
 
+  const progressLive = useMutation({
+    mutationFn: createDealerLive,
+    onSuccess: (data) => {
+      setMeetingId(data.message.roomId);
+      setAuthToken(data.message.token);
+      setStartLive(true);
+      // startHls(); // Commented out the startHls() function call
+    },
+  });
+  const handleLive = () => {
+    if (!startLive && meetingId == '') {
+      progressLive.mutate({ roomId: roomId ?? '' });
+    } else if (startLive) {
+      setStartLive(false);
+      stopHls();
+    } else {
+      setStartLive(true);
+      startHls(config);
+    }
+  };
   return (
     <footer className="flex-1 bg-primary flex items-center justify-between px-8">
       <div className="flex items-center gap-x-2">
@@ -36,7 +93,7 @@ const DealerFooter = ({ roomId, round }: DealerFooterProps) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => toggleWebcam()}>
               {!isCameraOn ? <Camera className="w-4 h-4 mr-1" /> : <CameraOff className="w-4 h-4 mr-1" />}
               {!isCameraOn ? 'Turn on camera' : 'Turn off camera'}
             </DropdownMenuItem>
@@ -46,9 +103,13 @@ const DealerFooter = ({ roomId, round }: DealerFooterProps) => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => (!startLive && meetingId == '' ? progressLive.mutate({ roomId: roomId ?? '' }) : handleLive())}
+        >
           <PlaySquare className="w-4 h-4 mr-1" />
-          {isLive ? 'Stop live' : 'Start live'}
+          {startLive ? 'Stop live' : 'Start live'}
         </Button>
       </div>
 
