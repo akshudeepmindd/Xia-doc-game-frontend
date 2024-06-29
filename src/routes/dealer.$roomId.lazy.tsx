@@ -33,6 +33,8 @@ const DealerComponent = () => {
     queryKey: [GET_ROUND_DETAILS],
     queryFn: () => getRoundDetails(roomId ? roomId : ''),
     enabled: !!roomId,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true
   });
 
   useEffect(() => {
