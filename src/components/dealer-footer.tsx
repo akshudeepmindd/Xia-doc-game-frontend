@@ -9,6 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { createDealerLive } from '@/services/room';
 import { useParams } from '@tanstack/react-router';
 import { useMeeting } from '@videosdk.live/react-sdk';
+import { addRound } from '@/services/round';
 const config: any = {
   // Layout Configuration
   layout: {
@@ -54,12 +55,17 @@ const DealerFooter = ({
   const isMuted = true;
   const isCameraOn = true;
 
+  const createRound = useMutation({
+    mutationFn: addRound
+  })
+
   const handleRoundStart = () => {
     let roundId = 1;
     if (round && round?.roundNumber) {
       roundId += round.roundNumber;
     }
-    return socket.emit(SOCKET_ROUND_START, { roomId, round: { roundNumber: roundId, gameroom: roomId } });
+
+    return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId } });
   };
 
   const progressLive = useMutation({

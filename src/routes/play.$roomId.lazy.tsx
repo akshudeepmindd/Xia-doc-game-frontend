@@ -40,6 +40,7 @@ const GameComponent = () => {
   });
 
   useEffect(() => {
+    console.log("roundDetails", roundDetails)
     if (roundDetails) {
       const futureTime = parseISO(roundDetails.message.updatedAt);
 
@@ -56,8 +57,6 @@ const GameComponent = () => {
   useEffect(() => {
     if (countdown > 0) {
       const timer = setInterval(() => {
-        const now = new Date().setSeconds(new Date().getSeconds() + 45) - new Date().getTime();
-        console.log("NOW", now)
         setCountdown((prevCountdown) => prevCountdown - 1);
       }, 1000);
       return () => clearInterval(timer);
