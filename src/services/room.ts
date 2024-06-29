@@ -41,7 +41,7 @@ export const rejectjoinrequestservice = async (id: string, game: unknown) => {
 };
 
 export const roomRequestStatus = async (payload: { roomId: string; userId: string }) => {
-  const { data } = await http.get(`/gameroom/${payload.roomId}/${payload.userId}`);
+  const { data } = await http.get(`/gameroom/userrequest/${payload.roomId}/${payload.userId}`);
   return data;
 };
 

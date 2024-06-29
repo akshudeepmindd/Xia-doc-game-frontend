@@ -10,18 +10,13 @@ import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
 import { MeetingProvider } from '@videosdk.live/react-sdk';
-
+import { differenceInSeconds, parseISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
 
-  const { isLoading, data: roundDetails } = useQuery({
-    queryKey: [GET_ROUND_DETAILS],
-    queryFn: () => getRoundDetails(roomId ? roomId : ''),
-    enabled: !!roomId,
-  });
 
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
@@ -34,15 +29,34 @@ const DealerComponent = () => {
     };
   }, []);
 
+  const { isLoading, data: roundDetails } = useQuery({
+    queryKey: [GET_ROUND_DETAILS],
+    queryFn: () => getRoundDetails(roomId ? roomId : ''),
+    enabled: !!roomId,
+  });
+
   useEffect(() => {
-    if (countdown > 0) {
+    if (roundDetails) {
+      const futureTime = parseISO(roundDetails.message.updatedAt);
+
+      // Get current time
+      const currentTime = new Date();
+
+      // Calculate difference in seconds
+      const secondsLeft = differenceInSeconds(currentTime, futureTime);
+
+      setCountdown(45 - secondsLeft);
+    }
+  }, [roundDetails?.message?.updatedAt])
+
+  useEffect(() => {
+    if (countdown > 0 && roundDetails) {
       const timer = setInterval(() => {
-        // const now = new Date().setSeconds(new Date().getSeconds() + 45) new Date().getTime();
         setCountdown((prevCountdown) => prevCountdown - 1);
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [countdown]);
+  }, [countdown, roundDetails?.message?.updatedAt]);
 
   const [meetingId, setMeetingId] = useState('');
   const [startLive, setStartLive] = useState(false);

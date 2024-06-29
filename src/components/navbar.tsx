@@ -76,6 +76,28 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
     mutationFn: updateRoom,
   });
 
+  const handleMakeSpo = () => {
+    const players = roomDetails.players;
+    const requestedPlayer = players.find((player: { _id: string }) => player._id === userId)
+
+    console.log("Players", players, requestedPlayer, userId)
+    const spoRequested = [...roomDetails.SpoRequested];
+    spoRequested.push(requestedPlayer._id);
+
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoRequested: spoRequested } })
+  }
+
+  const handleAcceptSPO = (userId: string) => {
+    const spoRequested = roomDetails.SpoRequested;
+
+    const requestedPlayer = spoRequested.find((player: { _id: string }) => player._id === userId)
+    const newSpoRequested = spoRequested.filter((player: { _id: string }) => player._id !== userId)
+    const spoAccepted = [...roomDetails.SpoAccepted];
+
+    spoAccepted.push(requestedPlayer._id);
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoAccepted: spoAccepted, SpoRequested: newSpoRequested } })
+  }
+
   if (isLoading) return <>Loading...</>;
 
   return (
@@ -220,31 +242,33 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
                 <DropdownMenuContent>
                   <Table>
                     <TableBody>
-                      {/* <TableBody>
-                        {playersRequested?.length > 0 ? (
-                          playersRequested?.map((player, index: number) => (
-                            <TableRow key={index}>
-                              <TableCell>{player?.telegramusername ?? 'Username'}</TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                  <Hint content="Accept">
-                                    <Button size={'icon'} className="h-8 w-8 bg-green-400 hover:bg-green-200 ">
-                                      <Check size={18} className="h-4 w-4" />
-                                    </Button>
-                                  </Hint>
-                                  <Hint content="Reject">
-                                    <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
-                                      <X size={18} className="h-4 w-4" />
-                                    </Button>
-                                  </Hint>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>No Users Have Requested</TableRow>
-                        )}
-                      </TableBody> */}
+                      {!isEmpty(roomDetails.SpoRequested) ? (
+                        roomDetails.SpoRequested.map((player: Player, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>{player?.telegramusername ?? 'Username'}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Hint content="Accept">
+                                  <Button
+                                    size={'icon'}
+                                    className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                    onClick={() => handleAcceptSPO(player._id)}
+                                  >
+                                    <Check size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                                <Hint content="Reject">
+                                  <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
+                                    <X size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>No Users Have Requested</TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </DropdownMenuContent>
@@ -253,7 +277,8 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
           </>
         )}
       </div>
-      <Button size="sm">Distribute coins</Button>
+      {/* <Button size="sm">Distribute coins</Button> */}
+      <Button size="sm" onClick={handleMakeSpo}>Request for SPO</Button>
       <div className="flex items-center px-4 gap-x-4">
         <div className="flex items-center pl-6 bg-background rounded relative">
           <CircleDollarSign className="h-5 w-5 absolute z-10 left-2" />
