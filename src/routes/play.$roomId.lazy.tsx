@@ -1,7 +1,7 @@
 import ViewerScreenContainer from '@/components/livestream/participants';
 import Navbar from '@/components/navbar';
 import useProfile from '@/hooks/useProfile';
-import { GET_ROOMS_DETAILS } from '@/lib/constants';
+import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
 import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
@@ -9,6 +9,8 @@ import { SOCKET_ROUND_START } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { socket } from '@/services';
 import { useEffect, useState } from 'react';
+import { getRoundDetails } from '@/services/round';
+import { differenceInSeconds, parseISO } from 'date-fns';
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
@@ -31,10 +33,31 @@ const GameComponent = () => {
     };
   }, []);
 
+  const { isLoading: isLoading2, data: roundDetails } = useQuery({
+    queryKey: [GET_ROUND_DETAILS],
+    queryFn: () => getRoundDetails(roomId ? roomId : ''),
+    enabled: !!roomId,
+  });
+
+  useEffect(() => {
+    if (roundDetails) {
+      const futureTime = parseISO(roundDetails.message.updatedAt);
+
+      // Get current time
+      const currentTime = new Date();
+
+      // Calculate difference in seconds
+      const secondsLeft = differenceInSeconds(currentTime, futureTime);
+
+      setCountdown(45 - secondsLeft);
+    }
+  }, [roundDetails?.message?.updatedAt])
+
   useEffect(() => {
     if (countdown > 0) {
       const timer = setInterval(() => {
-        // const now = new Date().setSeconds(new Date().getSeconds() + 45) new Date().getTime();
+        const now = new Date().setSeconds(new Date().getSeconds() + 45) - new Date().getTime();
+        console.log("NOW", now)
         setCountdown((prevCountdown) => prevCountdown - 1);
       }, 1000);
       return () => clearInterval(timer);
