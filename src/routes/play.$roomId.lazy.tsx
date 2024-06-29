@@ -17,6 +17,8 @@ const GameComponent = () => {
   const [selectedCard, setSelectedCard] = useState<number>();
 
   const [countdown, setCountdown] = useState<number>(0);
+  const [meetingId, setMeetingId] = useState<string>('');
+  const [authToken, setAuthToken] = useState<string>('');
 
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
@@ -55,11 +57,18 @@ const GameComponent = () => {
       }
     }
   };
-
+  useEffect(() => {
+    if (!isLoading) {
+      if (roomDetails) {
+        setMeetingId(roomDetails?.dealerLiveStreamId);
+        setAuthToken(roomDetails?.streamingToken);
+      }
+    }
+  }, [roomDetails, isLoading]);
   if (isLoading) {
     return <div>Loading...</div>;
   }
-
+  console.log(roomDetails, meetingId, authToken);
   return (
     <div className="flex flex-col h-screen bg-[url(/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
       <Navbar roomId={roomId} />
@@ -90,7 +99,9 @@ const GameComponent = () => {
           )}
         ></div>
 
-        <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2"></div>
+        <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2">
+          {meetingId !== '' && <ViewerScreenContainer meetingId={meetingId} authToken={authToken} />}
+        </div>
 
         <div
           onClick={() => handleSelection(3)}
