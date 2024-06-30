@@ -132,14 +132,17 @@ const DealerComponent = () => {
             {meetingId !== '' && (
               <MeetingProvider
                 config={{
-                  meetingId: meetingId,
+                  meetingId: meetingId ?? 'qovc-ryn6-y2dk',
                   mode: 'CONFERENCE',
                   name: 'Name',
                   micEnabled: true,
                   webcamEnabled: true,
                   debugMode: false,
                 }}
-                token={authToken}
+                token={
+                  authToken ??
+                  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiIwZWMyYWVkOC03Mzc2LTRjODEtYjc4YS1kMTU0ZTk3ZmU4MDMiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sInZlcnNpb24iOjIsImV4cGlyZXNJbiI6IjI0aCIsImlhdCI6MTcxOTcwNzc1MSwiZXhwIjoxNzE5Nzk0MTUxfQ.AcD8vOjAoLUpScH3y1Rjs3QU-ThH4nAY5eeHoikifcQ'
+                }
                 joinWithoutUserInteraction
               >
                 <DealerFooter
