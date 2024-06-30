@@ -8,18 +8,108 @@ import {
   Users,
   UserCog,
   X,
-  Plus,
   HandCoins,
   CircleDollarSign,
+  Drama,
+  Info,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { GET_REQUEST_STATUS, GET_ROOMS_DETAILS } from '@/lib/constants';
+import { getRoomDetailService, roomJoinRequestAccept, roomRequestStatus, updateRoom } from '@/services/room';
+import { isEmpty } from 'lodash';
+import useProfile from '@/hooks/useProfile';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 
-export default function Navbar() {
+interface NavbarProps {
+  roomId: string | undefined;
+  isDealer?: boolean;
+}
+
+interface Player {
+  telegramusername: string;
+  _id: string;
+}
+
+export default function Navbar({ roomId, isDealer }: NavbarProps) {
+  const { roomOwner, userId } = useProfile();
+  const navigate = useNavigate();
+
+  const { isLoading, data: roomDetails } = useQuery({
+    queryKey: [GET_ROOMS_DETAILS],
+    queryFn: async () => getRoomDetailService(roomId || ''),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  const { isLoading: isLoading2, data: requestStatus } = useQuery({
+    queryKey: [GET_REQUEST_STATUS],
+    queryFn: () => roomRequestStatus({ userId, roomId: roomId ?? '' }),
+    enabled: !!roomId && !!userId,
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+  });
+
+  useEffect(() => {
+    if (!isLoading && !isLoading2 && !roomOwner) {
+      if (!isDealer) {
+        if (requestStatus?.status === 'PENDING') {
+          toast.error('Your request has not been approved yet');
+          navigate({ to: '/' });
+        } else if (requestStatus?.status === 'REJECTED') {
+          toast.error('Your are kicked out of the room.');
+          navigate({ to: '/' });
+        }
+      }
+    }
+  }, [requestStatus?.status, isLoading2, roomDetails?.message?.dealer?._id]);
+
+  const acceptUser = useMutation({
+    mutationFn: roomJoinRequestAccept,
+  });
+
+  const makeDealer = useMutation({
+    mutationFn: updateRoom,
+  });
+
+  const handleMakeSpo = () => {
+    const players = roomDetails.players;
+    const requestedPlayer = players.find((player: { _id: string }) => player._id === userId)
+
+    console.log("Players", players, requestedPlayer, userId)
+    const spoRequested = [...roomDetails.SpoRequested];
+    spoRequested.push(requestedPlayer._id);
+
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoRequested: spoRequested } })
+  }
+
+  const handleAcceptSPO = (userId: string) => {
+    const spoRequested = roomDetails.SpoRequested;
+
+    const requestedPlayer = spoRequested.find((player: { _id: string }) => player._id === userId)
+    const newSpoRequested = spoRequested.filter((player: { _id: string }) => player._id !== userId)
+    const spoAccepted = [...roomDetails.SpoAccepted];
+
+    spoAccepted.push(requestedPlayer._id);
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoAccepted: spoAccepted, SpoRequested: newSpoRequested } })
+  }
+
+  if (isLoading) return <>Loading...</>;
+
   return (
     <div className="flex items-center justify-between h-20 px-8 bg-background/50">
       <div className="flex px-4 item-center gap-2">
+        {isDealer && (
+          <Hint content="Info">
+            <Button size="icon" variant={'outline'} className="w-8 h-8">
+              <Info size={18} />
+            </Button>
+          </Hint>
+        )}
         <Hint content="Signal">
           <Button size="icon" variant={'outline'} className="w-8 h-8">
             <Signal size={18} />
@@ -30,104 +120,165 @@ export default function Navbar() {
             <MessagesSquare size={18} />
           </Button>
         </Hint>
-        <Hint content="Players Requested">
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button size="icon" variant={'outline'} className="w-8 h-8">
-                <UserPlus size={18} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Username</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Hint content="Accept">
-                          <Button size={'icon'} className="h-8 w-8 bg-green-400 hover:bg-green-200 ">
-                            <Check size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint>
-                        <Hint content="Reject">
-                          <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
-                            <X size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </Hint>
-        <Hint content="Players in Room">
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button size="icon" variant={'outline'} className="w-8 h-8">
-                <Users size={18} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Username</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Hint content="Make Dealer">
-                          <Button size={'icon'} className="h-8 w-8 bg-green-400 hover:bg-green-200 ">
-                            <Plus size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint>
-                        <Hint content="Kick Out">
-                          <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
-                            <X size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </Hint>
-        <Hint content="SPO Players and Request">
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button size="icon" variant={'outline'} className="w-8 h-8">
-                <UserCog size={18} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Username</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Hint content="Accept">
-                          <Button size={'icon'} className="h-8 w-8 bg-green-400 hover:bg-green-200 ">
-                            <Check size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint>
-                        <Hint content="Reject">
-                          <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
-                            <X size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </Hint>
+        {isDealer && (
+          <Hint content="Tip">
+            <Button size="icon" variant={'outline'} className="w-8 h-8">
+              <Drama size={18} />
+            </Button>
+          </Hint>
+        )}
+        {roomOwner && !isDealer && (
+          <>
+            <Hint content="Players Requested">
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button size="icon" variant={'outline'} className="w-8 h-8">
+                    <UserPlus size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <Table>
+                    <TableBody>
+                      {!isEmpty(roomDetails.playersRequested) ? (
+                        roomDetails.playersRequested.map((player: Player, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>{player?.telegramusername ?? 'Username'}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Hint content="Accept">
+                                  <Button
+                                    size={'icon'}
+                                    className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                    onClick={() => acceptUser.mutate({ roomId: roomDetails._id, userId: player._id })}
+                                  >
+                                    <Check size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                                <Hint content="Reject">
+                                  <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
+                                    <X size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>No Users Have Requested</TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Hint>
+            <Hint content="Players in Room">
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button size="icon" variant={'outline'} className="w-8 h-8">
+                    <Users size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <Table>
+                    <TableBody>
+                      <TableBody>
+                        {!isEmpty(roomDetails.players) ? (
+                          roomDetails.players.map((player: Player, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{player.telegramusername ?? 'Username'}</TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  {isEmpty(roomDetails.dealer) && (
+                                    <Hint content="Make dealer">
+                                      <Button
+                                        size={'icon'}
+                                        onClick={() =>
+                                          makeDealer.mutate({ id: roomDetails._id, game: { dealer: player._id } })
+                                        }
+                                        className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                      >
+                                        <Check size={18} className="h-4 w-4" />
+                                      </Button>
+                                    </Hint>
+                                  )}
+                                  <Hint content="Kick out">
+                                    <Button
+                                      size={'icon'}
+                                      onClick={() =>
+                                        makeDealer.mutate({
+                                          id: roomDetails._id,
+                                          game: {
+                                            players: roomDetails.players.filter(
+                                              (ply: Player) => ply._id !== player._id,
+                                            ),
+                                          },
+                                        })
+                                      }
+                                      className="h-8 w-8 bg-red-500 hover:bg-red-200 "
+                                    >
+                                      <X size={18} className="h-4 w-4" />
+                                    </Button>
+                                  </Hint>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>No Users Have Requested</TableRow>
+                        )}
+                      </TableBody>
+                    </TableBody>
+                  </Table>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Hint>
+            <Hint content="SPO Players and Request">
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button size="icon" variant={'outline'} className="w-8 h-8">
+                    <UserCog size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <Table>
+                    <TableBody>
+                      {!isEmpty(roomDetails.SpoRequested) ? (
+                        roomDetails.SpoRequested.map((player: Player, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>{player?.telegramusername ?? 'Username'}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Hint content="Accept">
+                                  <Button
+                                    size={'icon'}
+                                    className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                    onClick={() => handleAcceptSPO(player._id)}
+                                  >
+                                    <Check size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                                <Hint content="Reject">
+                                  <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
+                                    <X size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>No Users Have Requested</TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Hint>
+          </>
+        )}
       </div>
-      <Button size="sm">Distribute coins</Button>
+      {/* <Button size="sm">Distribute coins</Button> */}
+      <Button size="sm" onClick={handleMakeSpo}>Request for SPO</Button>
       <div className="flex items-center px-4 gap-x-4">
         <div className="flex items-center pl-6 bg-background rounded relative">
           <CircleDollarSign className="h-5 w-5 absolute z-10 left-2" />

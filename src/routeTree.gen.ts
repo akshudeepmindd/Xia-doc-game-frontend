@@ -19,6 +19,7 @@ import { Route as BaseImport } from './routes/_base'
 
 const BaseIndexLazyImport = createFileRoute('/_base/')()
 const PlayRoomIdLazyImport = createFileRoute('/play/$roomId')()
+const DealerRoomIdLazyImport = createFileRoute('/dealer/$roomId')()
 const BaseRoomLazyImport = createFileRoute('/_base/room')()
 
 // Create/Update Routes
@@ -37,6 +38,13 @@ const PlayRoomIdLazyRoute = PlayRoomIdLazyImport.update({
   path: '/play/$roomId',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/play.$roomId.lazy').then((d) => d.Route))
+
+const DealerRoomIdLazyRoute = DealerRoomIdLazyImport.update({
+  path: '/dealer/$roomId',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/dealer.$roomId.lazy').then((d) => d.Route),
+)
 
 const BaseRoomLazyRoute = BaseRoomLazyImport.update({
   path: '/room',
@@ -61,6 +69,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BaseRoomLazyImport
       parentRoute: typeof BaseImport
     }
+    '/dealer/$roomId': {
+      id: '/dealer/$roomId'
+      path: '/dealer/$roomId'
+      fullPath: '/dealer/$roomId'
+      preLoaderRoute: typeof DealerRoomIdLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/play/$roomId': {
       id: '/play/$roomId'
       path: '/play/$roomId'
@@ -82,6 +97,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren({
   BaseRoute: BaseRoute.addChildren({ BaseRoomLazyRoute, BaseIndexLazyRoute }),
+  DealerRoomIdLazyRoute,
   PlayRoomIdLazyRoute,
 })
 
@@ -94,6 +110,7 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "__root.tsx",
       "children": [
         "/_base",
+        "/dealer/$roomId",
         "/play/$roomId"
       ]
     },
@@ -107,6 +124,9 @@ export const routeTree = rootRoute.addChildren({
     "/_base/room": {
       "filePath": "_base/room.lazy.tsx",
       "parent": "/_base"
+    },
+    "/dealer/$roomId": {
+      "filePath": "dealer.$roomId.lazy.tsx"
     },
     "/play/$roomId": {
       "filePath": "play.$roomId.lazy.tsx"

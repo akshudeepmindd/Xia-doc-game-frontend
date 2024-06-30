@@ -4,10 +4,12 @@ const useProfile = () => {
   const [userId, setUserId] = useState('');
   const [roomOwner, setRoomOwner] = useState(false);
   const [username, setUsername] = useState('');
+  const [isSbo, setIsSbo] = useState(false);
 
   useEffect(() => {
     setUserId(localStorage.getItem('userId') || '');
     setRoomOwner(localStorage.getItem('roomOwner') === 'true');
+    setIsSbo(localStorage.getItem('sbo') === 'true');
     setUsername(localStorage.getItem('username') || '');
   }, []);
 
@@ -15,6 +17,7 @@ const useProfile = () => {
     userId,
     roomOwner,
     username,
+    isSbo,
   };
 };
 
