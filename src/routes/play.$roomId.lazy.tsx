@@ -1,6 +1,8 @@
 import ViewerScreenContainer from '@/components/livestream/participants';
 import Navbar from '@/components/navbar';
 import useProfile from '@/hooks/useProfile';
+import { Button } from "@/components/ui/button";
+
 import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -16,21 +18,21 @@ import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
 const getBetTypeBySelectionCard = (selectionCard: number) => {
   switch (selectionCard) {
     case 1:
-      return "EVEN";
+      return 'EVEN';
     case 2:
-      return "FOUR_WHITE"
+      return 'FOUR_WHITE';
     case 3:
-      return "ODD"
+      return 'ODD';
     case 4:
-      return "THREE_BLACK_ONE_WHITE"
+      return 'THREE_BLACK_ONE_WHITE';
     case 5:
-      return "FOUR_BLACK"
+      return 'FOUR_BLACK';
     case 6:
-      return "THREE_WHITE_ONE_BLACK"
+      return 'THREE_WHITE_ONE_BLACK';
     default:
-      return "TWO_BLACK_TWO_WHITE"
+      return 'TWO_BLACK_TWO_WHITE';
   }
-}
+};
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
@@ -58,7 +60,7 @@ const GameComponent = () => {
     queryFn: () => getRoundDetails(roomId ? roomId : ''),
     enabled: !!roomId,
     refetchInterval: 1000,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
   });
 
   useEffect(() => {
@@ -73,7 +75,7 @@ const GameComponent = () => {
 
       setCountdown(45 - secondsLeft);
     }
-  }, [roundDetails?.message?.data?.createdAt])
+  }, [roundDetails?.message?.data?.createdAt]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -86,19 +88,19 @@ const GameComponent = () => {
 
   const countDownStatus = useMemo(() => {
     if (countdown <= 25 && countdown > 0) {
-      return "BET"
+      return 'BET';
     }
 
-    return "BET_LOCK"
-  }, [countdown])
+    return 'BET_LOCK';
+  }, [countdown]);
 
   const countDownSPOStatus = useMemo(() => {
     if (countdown <= 40 && countdown > 0 && isSbo) {
-      return "BET_SPO"
+      return 'BET_SPO';
     }
 
-    return "BET_SPO_LOCK"
-  }, [countdown, isSbo])
+    return 'BET_SPO_LOCK';
+  }, [countdown, isSbo]);
 
   const { isLoading, data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
@@ -108,18 +110,28 @@ const GameComponent = () => {
   });
 
   const { mutate: placeBet } = useMutation({
-    mutationFn: placeBetService
-  })
+    mutationFn: placeBetService,
+  });
 
   const handleSelection = (card: number) => {
-    if (countDownSPOStatus === "BET_SPO" && (card === 6 || card === 4 || card === 5 || card === 2)) {
+    if (countDownSPOStatus === 'BET_SPO' && (card === 6 || card === 4 || card === 5 || card === 2)) {
       setSelectedCard(card);
-      placeBet({ roundId: roundDetails?.message?.data?._id, userId: userId, betAmount: 1000, betType: getBetTypeBySelectionCard(card) })
+      placeBet({
+        roundId: roundDetails?.message?.data?._id,
+        userId: userId,
+        betAmount: 1000,
+        betType: getBetTypeBySelectionCard(card),
+      });
     }
 
-    if (countDownStatus === "BET" && (card === 1 || card === 3)) {
-      setSelectedCard(card)
-      placeBet({ roundId: roundDetails?.message?.data?._id, userId: userId, betAmount: 1000, betType: getBetTypeBySelectionCard(card) })
+    if (countDownStatus === 'BET' && (card === 1 || card === 3)) {
+      setSelectedCard(card);
+      placeBet({
+        roundId: roundDetails?.message?.data?._id,
+        userId: userId,
+        betAmount: 1000,
+        betType: getBetTypeBySelectionCard(card),
+      });
     }
   };
 
@@ -137,19 +149,41 @@ const GameComponent = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[url(/casino-bg.jpg)] bg-no-repeat bg-cover bg-center">
+    <div className="flex flex-col h-screen bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
 
-      <div className="flex-1 flex item-center justify-center relative">
-        <img className="h-[calc(100vh-5rem)]" src="/poker-table.png" />
+      <div className="flex-1 ">
+        {/* <img className="h-[calc(100vh-5rem)]" src="/poker-table.png" /> */}
 
-        {countdown > 0 && (
-          <div className="absolute top-10 left-10">
-            <div className="w-24 h-24 flex items-center justify-center bg-foreground text-background border-2 rounded-full text-3xl font-medium font-mono">
+        {/* {countdown > 0 && ( */}
+        
+        {/* )} */}
+        <div className="flex justify-between">
+         
+           <div className='flex justify-between border-[#243c5a] border-x-4 border-y-4 w-20'>
+           <div className='flex justify-between'>
+           <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
+             <img src="/Info.svg"/>
+
+        </Button>
+        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
+             <img src="/Info.svg"/>
+
+        </Button>
+           </div>
+
+
+         
+            
+           </div>
+          
+           <div className="border-[#ffffff]">
+            <div className="w-24 h-24 flex items-center justify-center bg-[red] text-background border-2 rounded-full text-3xl font-medium font-mono">
               <span className="text-xl">{countdown}</span>
             </div>
           </div>
-        )}
+        </div>
+        {/* 
 
         <div
           onClick={() => handleSelection(1)}
@@ -176,9 +210,9 @@ const GameComponent = () => {
               <WhiteCircle />
             </div>
           </div>
-        </div>
+        </div> */}
 
-        <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2">
+        {/* <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2">
           {meetingId !== '' && <ViewerScreenContainer meetingId={meetingId} authToken={authToken} />}
         </div>
 
@@ -206,9 +240,9 @@ const GameComponent = () => {
               <WhiteCircle />
             </div>
           </div>
-        </div>
+        </div> */}
 
-        <div
+        {/* <div
           onClick={() => handleSelection(5)}
           className={cn(
             '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-800 absolute bottom-[40%] translate-y-[55%] 2xl:left-[38%] left-[37.5%]',
@@ -239,22 +273,22 @@ const GameComponent = () => {
               <RedCircle />
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex items-center justify-around absolute bottom-2 w-96 bg-background rounded shadow-sm h-20">
-          <CoinChips className='hover:animate-bounce hover:transition-all' amount={500} />
-          <CoinChips className='hover:animate-bounce hover:transition-all' amount={1000} />
-          <CoinChips className='hover:animate-bounce hover:transition-all' amount={2000} />
-          <CoinChips className='hover:animate-bounce hover:transition-all' amount={5000} />
+          <CoinChips className="hover:animate-bounce hover:transition-all" amount={500} />
+          <CoinChips className="hover:animate-bounce hover:transition-all" amount={1000} />
+          <CoinChips className="hover:animate-bounce hover:transition-all" amount={2000} />
+          <CoinChips className="hover:animate-bounce hover:transition-all" amount={5000} />
         </div>
       </div>
     </div>
   );
 };
 
-const CoinChips = ({ amount, className }: { amount: number, className?: string }) => {
+const CoinChips = ({ amount, className }: { amount: number; className?: string }) => {
   return (
-    <div className={cn("w-20 h-20 relative", className)}>
+    <div className={cn('w-20 h-20 relative', className)}>
       <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[56%] text-xs font-semibold font-mono">
         {amount}K
       </span>
