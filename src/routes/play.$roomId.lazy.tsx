@@ -1,20 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import ViewerScreenContainer from '@/components/livestream/participants';
 import Navbar from '@/components/navbar';
 import useProfile from '@/hooks/useProfile';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
-import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS } from '@/lib/constants';
+import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS, GET_USER_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { SOCKET_ROUND_START } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { socket } from '@/services';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { getRoundDetails, placeBetService } from '@/services/round';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
-
+import Hint from '@/components/hint';
+import { CircleDollarSign } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { gsap } from 'gsap';
+import { round, set } from 'lodash';
+import DepositDiaglog from '@/components/Deposit-dialog';
+import { updateUser, userProfile } from '@/services/auth';
 const getBetTypeBySelectionCard = (selectionCard: number) => {
   switch (selectionCard) {
     case 1:
@@ -29,21 +36,57 @@ const getBetTypeBySelectionCard = (selectionCard: number) => {
       return 'FOUR_BLACK';
     case 6:
       return 'THREE_WHITE_ONE_BLACK';
+    case 7:
+      return 'EVEN_NINE_TEN';
+    case 8:
+      return 'EVEN_TEN_NINE';
+    case 9:
+      return 'ODD_NINE_TEN';
+    case 10:
+      return 'ODD_TEN_NINE';
     default:
       return 'TWO_BLACK_TWO_WHITE';
+  }
+};
+const getBetTypeByCardName = (cardName: string) => {
+  switch (cardName) {
+    case 'EVEN':
+      return 1;
+    case 'FOUR_WHITE':
+      return 2;
+    case 'ODD':
+      return 3;
+    case 'THREE_BLACK_ONE_WHITE':
+      return 4;
+    case 'FOUR_BLACK':
+      return 5;
+    case 'THREE_WHITE_ONE_BLACK':
+      return 6;
+    case 'EVEN_NINE_TEN':
+      return 7;
+    case 'EVEN_TEN_NINE':
+      return 8;
+    case 'ODD_NINE_TEN':
+      return 9;
+    case 'ODD_TEN_NINE':
+      return 10;
+    default:
+      return 0;
   }
 };
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
-  const { isSbo, userId } = useProfile();
-
+  const { isSbo, userId, roomOwner } = useProfile();
   const [selectedCard, setSelectedCard] = useState<number>();
-
+  const [coins, setCoins] = useState<any[]>([]);
   const [countdown, setCountdown] = useState<number>(0);
   const [meetingId, setMeetingId] = useState<string>('');
   const [authToken, setAuthToken] = useState<string>('');
-
+  const [currentSelectedAmount, setCurrentSelectedAmount] = useState<number>(0);
+  const [currentBet, setCurrentBet] = useState<number>(0);
+  const [userBet, setUserBet] = useState<number>(0);
+  const coinId = useRef(0);
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
       console.log('SOCKET DATA', data);
@@ -62,7 +105,13 @@ const GameComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
-
+  const { isLoading: isUserLoading, data: userDetails } = useQuery({
+    queryKey: [GET_USER_DETAILS],
+    queryFn: () => userProfile(userId),
+    enabled: !!userId,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
+  });
   useEffect(() => {
     if (roundDetails && roundDetails?.message?.data?.createdAt) {
       const futureTime = parseISO(roundDetails?.message?.data?.createdAt);
@@ -77,6 +126,40 @@ const GameComponent = () => {
     }
   }, [roundDetails?.message?.data?.createdAt]);
 
+  const ConfirmBet = () => {
+    const body = { balance: userBet };
+    placeBet({
+      roundId: roundDetails?.message?.data?._id,
+      userId: userId,
+      betAmount: currentBet,
+      betType: getBetTypeBySelectionCard(selectedCard),
+    });
+
+    // setUserBet((prev) => prev + currentBet);
+    updateUserbalance({
+      userId,
+      body,
+    });
+  };
+  const addNewCoin = (cardId: number, amount: number) => {
+    const newCoinId = coinId.current++;
+    const newCoin = { id: newCoinId, cardId, amount: amount };
+
+    setCoins((prevCoins) => [...prevCoins, newCoin]);
+
+    setTimeout(() => {
+      const newCoinElement = document.getElementById(`coin-${newCoinId}`);
+      const cardElement = document.getElementById(`card-${cardId}`);
+      const cardWidth = cardElement?.offsetWidth;
+      const randomX = Math.random() * (cardWidth - 150); // Ensure coin stays within bounds of the card
+
+      gsap.fromTo(
+        newCoinElement,
+        { y: -50, x: randomX, opacity: 0, rotation: 0 },
+        { y: 470, opacity: 1, rotation: 360, duration: 1, ease: 'bounce' },
+      );
+    }, 0);
+  };
   useEffect(() => {
     if (countdown > 0) {
       const timer = setInterval(() => {
@@ -95,12 +178,22 @@ const GameComponent = () => {
   }, [countdown]);
 
   const countDownSPOStatus = useMemo(() => {
-    if (countdown <= 40 && countdown > 0 && isSbo) {
+    if (countdown <= 40 && countdown > 0) {
       return 'BET_SPO';
     }
 
     return 'BET_SPO_LOCK';
-  }, [countdown, isSbo]);
+  }, [countdown]);
+
+  useEffect(() => {
+    if (roundDetails?.message?.data?.roundResult && roundDetails?.message?.data?.roundStatus === 'roundStarted') {
+      console.log('roundDetails?.message?.data?.roundResult', roundDetails?.message?.data?.roundResult);
+      const cardElement = document.getElementById(
+        `card-${getBetTypeByCardName(roundDetails?.message?.data?.roundResult)}`,
+      );
+      cardElement?.classList.add('glow');
+    }
+  }, [roundDetails?.message?.data]);
 
   const { isLoading, data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
@@ -112,26 +205,40 @@ const GameComponent = () => {
   const { mutate: placeBet } = useMutation({
     mutationFn: placeBetService,
   });
-
+  const { mutate: updateUserbalance } = useMutation({
+    mutationFn: updateUser,
+  });
+  const resetBet = () => {
+    const cardElement = document.getElementById(`card-${selectedCard}`);
+    cardElement?.classList.remove('glow');
+    setCoins([]);
+    setCurrentBet(0);
+    setUserBet(0);
+  };
   const handleSelection = (card: number) => {
     if (countDownSPOStatus === 'BET_SPO' && (card === 6 || card === 4 || card === 5 || card === 2)) {
+      const cardElement = document.getElementById(`card-${card}`);
+      cardElement?.classList.add('glow');
       setSelectedCard(card);
-      placeBet({
-        roundId: roundDetails?.message?.data?._id,
-        userId: userId,
-        betAmount: 1000,
-        betType: getBetTypeBySelectionCard(card),
-      });
+      if (selectedCard !== card && selectedCard !== 6 && selectedCard !== 4 && selectedCard !== 5 && selectedCard !== 2) {
+        const cardElement = document.getElementById(`card-${card}`);
+        const previousCardElement = document.getElementById(`card-${selectedCard}`);
+        cardElement?.classList.add('glow');
+        previousCardElement?.classList.remove('glow');
+      }
     }
 
-    if (countDownStatus === 'BET' && (card === 1 || card === 3)) {
+    if (
+      countDownStatus === 'BET' &&
+      (card === 1 || card === 3 || card === 7 || card === 8 || card === 9 || card === 10)
+    ) {
+      if (selectedCard !== card && selectedCard !== 1 && selectedCard !== 3 && selectedCard !== 7 && selectedCard !== 8 && selectedCard !== 9 && selectedCard !== 10) {
+        const cardElement = document.getElementById(`card-${card}`);
+        const previousCardElement = document.getElementById(`card-${selectedCard}`);
+        cardElement?.classList.add('glow');
+        previousCardElement?.classList.remove('glow');
+      }
       setSelectedCard(card);
-      placeBet({
-        roundId: roundDetails?.message?.data?._id,
-        userId: userId,
-        betAmount: 1000,
-        betType: getBetTypeBySelectionCard(card),
-      });
     }
   };
 
@@ -147,153 +254,549 @@ const GameComponent = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
-
   return (
-    <div className="flex flex-col h-screen bg-[#040816] bg-center">
+    <div className="flex flex-col h-full bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
 
-      <div className="flex-1 ">
+      <div className="flex flex-row w-full">
         {/* <img className="h-[calc(100vh-5rem)]" src="/poker-table.png" /> */}
 
         {/* {countdown > 0 && ( */}
-        
+
         {/* )} */}
-        <div className="flex justify-between">
-         
-           <div className='flex justify-between border-[#243c5a] border-x-4 border-y-4 w-20'>
-           <div className='flex justify-between'>
-           <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-             <img src="/Info.svg"/>
-
-        </Button>
-        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-             <img src="/Info.svg"/>
-
-        </Button>
-           </div>
-
-
-         
-            
-           </div>
-          
-           <div className="border-[#ffffff]">
-            <div className="w-24 h-24 flex items-center justify-center bg-[red] text-background border-2 rounded-full text-3xl font-medium font-mono">
-              <span className="text-xl">{countdown}</span>
+        <div className="flex-col w-3/12">
+          <div className="flex justify-between mx-6 my-6 w-full ">
+            <div className="flex justify-between flex-col bg-[#D9D9D9] customBorder border-x-4 border-y-4  w-32">
+              <div className="flex justify-around border-custom-gradient w-full py-2">
+                <Hint content="Info">
+                  <Button size={'icon'} className="w-10 h-10" variant={'ghost'}>
+                    <img src="/Info.svg" className="w-10 h-10" />
+                  </Button>
+                </Hint>
+                <Hint content="Signal">
+                  <Button size={'icon'} className="w-10 h-10" variant={'ghost'}>
+                    <img src="/Signal.svg" className="w-10 h-10" />
+                  </Button>
+                </Hint>
+              </div>
+              <div className="flex justify-around border-custom-gradient w-full py-2">
+                <Hint content="Chat">
+                  <Button size={'icon'} className="w-10 h-10" variant={'ghost'}>
+                    <img src="/chat.svg" className="w-10 h-10" />
+                  </Button>
+                </Hint>
+                <Hint content="Tip">
+                  <Button size={'icon'} className="w-10 h-10" variant={'ghost'}>
+                    <img src="/tip.svg" className="w-10 h-10" />
+                  </Button>
+                </Hint>
+              </div>
+            </div>
+            <div className="flex justify-between items-center py-2 flex-col bg-[#D9D9D9] customBorder border-x-4 border-y-4  w-32">
+              <div className="w-20 py-4 h-20 flex items-center flex-col justify-center bg-[#040816] text-background border-2 rounded-full text-3xl font-medium font-mono">
+                {countdown && roundDetails?.message?.data?.roundStatus === 'roundStarted' && (
+                  <span className="text-sm font-semibold">{countdown}</span>
+                )}
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-[#040816] uppercase">Start Betting</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex  flex-col mx-14 ">
+            <div className=" text-white relative ">
+              <CircleDollarSign size={20} className="text-black absolute top-1 left-1 " />
+              <p className="text-black text-sm absolute left-6 top-1 px-0.5">Bet</p>
+              <Input
+                placeholder=""
+                className="w-42 rounded-sm px-6 h-7  border-10 customBorderInput text-black text-right"
+                value={userBet}
+              />
+            </div>
+            <div className=" text-white relative my-4">
+              <CircleDollarSign size={20} className="text-black absolute  top-1 left-1 " />
+              <p className="text-black text-sm absolute left-6 top-1 px-0.5">Win</p>
+              <Input
+                placeholder=""
+                className="w-42 rounded-sm px-6 h-7 border-10 customBorderInput text-black text-right"
+              />
             </div>
           </div>
         </div>
-        {/* 
-
-        <div
-          onClick={() => handleSelection(1)}
-          className={cn(
-            'flex items-center justify-center clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 top-[33%] -translate-y-[55%] 2xl:left-[19%] left-[18%]',
-            selectedCard === 1 ? 'ring-2 ring-amber-400 bg-amber-500' : '', countDownStatus === "BET_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
-          )}
-        >
-          <span className='text-background text-2xl'>Even</span>
-          <CoinChips className={cn(selectedCard === 1 ? 'animate__bounceInDown animate__delay-2s animate__slow' : 'hidden')} amount={500} />
-        </div>
-        <div
-          onClick={() => handleSelection(2)}
-          className={cn(
-            'clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 bottom-[40%] translate-y-[55%] rotate-180 2xl:left-[19%] left-[18%]',
-            selectedCard === 2 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
-          )}
-        >
-          <div className="w-11/12 h-full flex flex-col gap-2 items-end justify-start w-full border-nonerounded p-2 -rotate-180">
-            <div className="w-full flex items-center justify-around mt-4">
-              <WhiteCircle />
-              <WhiteCircle />
-              <WhiteCircle />
-              <WhiteCircle />
-            </div>
+        <div className="relative w-[45%] mx-8 h-full my-2">
+          <div className="w-full border cameraCustomBorder h-[22rem] text-white">
+            {meetingId !== '' && <ViewerScreenContainer meetingId={meetingId} authToken={authToken} />}
           </div>
-        </div> */}
 
-        {/* <div className="w-[25%] h-64 2xl:w-[30%] 2xl:h-80 absolute top-[23%] -translate-y-[50%] left-[50%] -translate-x-1/2">
-          {meetingId !== '' && <ViewerScreenContainer meetingId={meetingId} authToken={authToken} />}
-        </div>
-
-        <div
-          onClick={() => handleSelection(3)}
-          className={cn(
-            'flex items-center justify-center clip-path-horizontal 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 top-[33%] -translate-y-[55%] 2xl:right-[19%] right-[18%]',
-            selectedCard === 3 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownStatus === "BET_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
-          )}
-        >
-          <span className='text-background text-2xl'>Odd</span>
-        </div>
-        <div
-          onClick={() => handleSelection(4)}
-          className={cn(
-            'flex flex-col items-end clip-path-tl 2xl:w-64 2xl:h-44 w-56 h-40 absolute bg-blue-800 bottom-[40%] translate-y-[55%] rotate-180 2xl:right-[19%] right-[18%]',
-            selectedCard === 4 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
-          )}
-        >
-          <div className="w-11/12 h-full flex flex-col gap-2 items-start justify-start w-full border-nonerounded p-2 -rotate-180">
-            <div className="w-full flex items-center justify-around mt-4">
-              <RedCircle />
-              <RedCircle />
-              <RedCircle />
-              <WhiteCircle />
-            </div>
-          </div>
-        </div> */}
-
-        {/* <div
-          onClick={() => handleSelection(5)}
-          className={cn(
-            '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-800 absolute bottom-[40%] translate-y-[55%] 2xl:left-[38%] left-[37.5%]',
-            selectedCard === 5 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
-          )}
-        >
-          <div className="w-full h-full flex flex-col gap-2 items-end justify-start w-full border-nonerounded p-2">
-            <div className="w-full flex items-center justify-around mt-4">
-              <RedCircle />
-              <RedCircle />
-              <RedCircle />
-              <RedCircle />
-            </div>
+          <div className="border cameraCustomBorder h-1/3 width-1/3 text-white absolute left-0 top-0 mx-2 my-2">
+            Waiting for live from Dealer
           </div>
         </div>
-        <div
-          onClick={() => handleSelection(6)}
-          className={cn(
-            '2xl:w-44 2xl:h-44 w-40 h-40 bg-blue-800 absolute bottom-[40%] translate-y-[55%] 2xl:right-[38%] right-[37.5%]',
-            selectedCard === 6 ? 'animate-pulse ring-2 ring-amber-400 bg-amber-500' : '', countDownSPOStatus === "BET_SPO_LOCK" ? "bg-blue-950 cursor-not-allowed" : ""
-          )}
-        >
-          <div className="w-full h-full flex flex-col gap-2 items-end justify-start w-full border-nonerounded p-2">
-            <div className="w-full flex items-center justify-around mt-4">
-              <WhiteCircle />
-              <WhiteCircle />
-              <WhiteCircle />
-              <RedCircle />
+        <div className="flex flex-col w-[28%]">
+          <div>
+            <h5 className="text-white">History</h5>
+          </div>
+          <div>History</div>
+        </div>
+      </div>
+      <div className="w-full flex justify-between flex-row ">
+        <div className="w-[25%] px-4 flex flex-col justify-end items-end my-20">
+          {' '}
+          <div
+            id="card-8"
+            className={cn(
+              'w-full h-20 ml-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
+              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '',
+            )}
+            onClick={() => handleSelection(8)}
+          >
+            {selectedCard === 8 &&
+              coins.map((coin) => (
+                <div
+                  key={coin.id}
+                  id={`coin-${coin.id}`}
+                  className="flex justify-center items-center coin gradient-gold text-[10px]"
+                >
+                  {currentSelectedAmount === 500000
+                    ? '500k'
+                    : currentSelectedAmount === 1000000
+                      ? '1000k'
+                      : currentSelectedAmount === 2000000
+                        ? '2000k'
+                        : '5000k'}
+                </div>
+              ))}
+            <p className="absolute top-[0%] right-2 font-bold text-xl">
+              ${' '}
+              {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(8)]
+                ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(8)]
+                : 0}
+            </p>
+            <p className="text-2xl">Even 10:9</p>
+          </div>
+          <div
+            id="card-7"
+            className={cn(
+              'w-full h-20 ml-4 flex my-5 justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
+              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '',
+            )}
+            onClick={() => handleSelection(7)}
+          >
+            {selectedCard === 7 &&
+              coins.map((coin) => (
+                <div
+                  key={coin.id}
+                  id={`coin-${coin.id}`}
+                  className="flex justify-center items-center coin gradient-gold text-[10px]"
+                >
+                  {coin.amount === 500000
+                    ? '500k'
+                    : coin.amount === 1000000
+                      ? '1000k'
+                      : coin.amount === 2000000
+                        ? '2000k'
+                        : '5000k'}
+                </div>
+              ))}
+            <p className="absolute top-[0%] right-2 font-bold text-xl">
+              $
+              {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(7)]
+                ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(7)]
+                : 0}
+            </p>
+            <p className="text-2xl">Even 9:10</p>
+          </div>
+        </div>
+        <div className="w-[45%]">
+          <div className="flex flex-col">
+            <div className="flex flex-row mx-2">
+              <div
+                id="card-1"
+                className={cn(
+                  'w-full h-32 mx-2 flex justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
+                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer',
+                )}
+                onClick={() => handleSelection(1)}
+              >
+                {selectedCard === 1 &&
+                  coins.map((coin) => (
+                    <div
+                      key={coin.id}
+                      id={`coin-${coin.id}`}
+                      className="flex justify-center items-center coin gradient-gold text-[10px]"
+                    >
+                      {currentSelectedAmount === 500000
+                        ? '500k'
+                        : currentSelectedAmount === 1000000
+                          ? '1000k'
+                          : currentSelectedAmount === 2000000
+                            ? '2000k'
+                            : '5000k'}
+                      M
+                    </div>
+                  ))}
+                <p className="absolute top-[0%] left-2 font-bold text-xl">
+                  ${' '}
+                  {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(1)]
+                    ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(1)]
+                    : 0}
+                </p>
+                <p className="text-2xl">Even</p>
+              </div>
+              <div
+                id="card-3"
+                className={cn(
+                  'w-full h-20 mx-2 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative',
+                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer',
+                )}
+                onClick={() => handleSelection(3)}
+              >
+                {selectedCard === 3 &&
+                  coins.map((coin) => (
+                    <div
+                      key={coin.id}
+                      id={`coin-${coin.id}`}
+                      className="flex justify-center items-center coin gradient-gold text-[10px]"
+                    >
+                      {currentSelectedAmount === 500000
+                        ? '500k'
+                        : currentSelectedAmount === 1000000
+                          ? '1000k'
+                          : currentSelectedAmount === 2000000
+                            ? '2000k'
+                            : '5000k'}
+                    </div>
+                  ))}
+                <p className="absolute top-[0%] left-2 font-bold text-xl">
+                  ${' '}
+                  {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(3)]
+                    ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(3)]
+                    : 0}
+                </p>
+                <p className="text-2xl">Odd</p>
+              </div>
+            </div>
+            <div className="flex flex-col mx-2">
+              <div className="flex flex-row mx-2">
+                <div
+                  id="card-2"
+                  onClick={() => handleSelection(2)}
+                  className={cn(
+                    'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                  )}
+                >
+                  {selectedCard === 2 &&
+                    coins.map((coin) => (
+                      <div
+                        key={coin.id}
+                        id={`coin-${coin.id}`}
+                        className="flex justify-center items-center coin gradient-gold text-[10px]"
+                      >
+                        {currentSelectedAmount === 500000
+                          ? '500k'
+                          : currentSelectedAmount === 1000000
+                            ? '1000k'
+                            : currentSelectedAmount === 2000000
+                              ? '2000k'
+                              : '5000k'}
+                      </div>
+                    ))}
+                  <p className="text-sm font-bold px-1 py-1"> 4 White</p>
+                  <p className="absolute top-[0%] right-2 font-bold text-xl">
+                    ${' '}
+                    {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(2)]
+                      ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(2)]
+                      : 0}
+                  </p>
+                  <div className="flex justify-around py-14">
+                    <WhiteCircle />
+                    <WhiteCircle />
+                    <WhiteCircle />
+                    <WhiteCircle />
+                  </div>
+                </div>
+                <div
+                  id="card-5"
+                  onClick={() => handleSelection(5)}
+                  className={cn(
+                    'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                  )}
+                >
+                  {selectedCard === 5 &&
+                    coins.map((coin) => (
+                      <div
+                        key={coin.id}
+                        id={`coin-${coin.id}`}
+                        className="flex justify-center items-center coin gradient-gold text-[10px]"
+                      >
+                        {coin.amount === 500000
+                          ? '500k'
+                          : coin.amount === 1000000
+                            ? '1000k'
+                            : coin.amount === 2000000
+                              ? '2000k'
+                              : '5000k'}
+                        M
+                      </div>
+                    ))}
+                  <p className="absolute top-[0%] right-2 font-bold text-xl">
+                    $
+                    {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(5)]
+                      ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(5)]
+                      : 0}
+                  </p>
+                  <p className="text-sm font-bold px-1 py-1"> 4 Red</p>
+                  <div className="flex justify-around py-14">
+                    <RedCircle />
+                    <RedCircle />
+                    <RedCircle />
+                    <RedCircle />
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-row mx-2">
+                <div
+                  id="card-6"
+                  className={cn(
+                    'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                  )}
+                  onClick={() => handleSelection(6)}
+                >
+                  {selectedCard === 6 &&
+                    coins.map((coin) => (
+                      <div
+                        key={coin.id}
+                        id={`coin-${coin.id}`}
+                        className="flex justify-center items-center coin gradient-gold text-[10px]"
+                      >
+                        {coin.amount === 500000
+                          ? '500k'
+                          : coin.amount === 1000000
+                            ? '1000k'
+                            : coin.amount === 2000000
+                              ? '2000k'
+                              : '5000k'}
+                      </div>
+                    ))}
+                  <p className="absolute top-[0%] right-2 font-bold text-xl">
+                    ${' '}
+                    {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(6)]
+                      ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(6)]
+                      : 0}
+                  </p>
+                  <p className="text-sm font-bold px-1 py-1"> 3 White 1 Red</p>
+                  <div className="flex justify-around py-14">
+                    <WhiteCircle />
+                    <WhiteCircle />
+                    <WhiteCircle />
+                    <RedCircle />
+                  </div>
+                </div>
+                <div
+                  id="card-4"
+                  className={cn(
+                    'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                  )}
+                  onClick={() => handleSelection(4)}
+                >
+                  {selectedCard === 4 &&
+                    coins.map((coin) => (
+                      <div
+                        key={coin.id}
+                        id={`coin-${coin.id}`}
+                        className="flex justify-center items-center coin gradient-gold text-[10px]"
+                      >
+                        {coin.amount === 500000
+                          ? '500k'
+                          : coin.amount === 1000000
+                            ? '1000k'
+                            : coin.amount === 2000000
+                              ? '2000k'
+                              : '5000k'}
+                        M
+                      </div>
+                    ))}
+                  <p className="absolute top-[0%] right-2 font-bold text-xl">
+                    ${' '}
+                    {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(4)]
+                      ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(4)]
+                      : 0}
+                  </p>
+                  <p className="text-sm font-bold px-1 py-1"> 1 White 3 Red</p>
+                  <div className="flex justify-around py-14">
+                    <WhiteCircle />
+                    <RedCircle />
+                    <RedCircle />
+                    <RedCircle />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div> */}
-
-        <div className="flex items-center justify-around absolute bottom-2 w-96 bg-background rounded shadow-sm h-20">
-          <CoinChips className="hover:animate-bounce hover:transition-all" amount={500} />
-          <CoinChips className="hover:animate-bounce hover:transition-all" amount={1000} />
-          <CoinChips className="hover:animate-bounce hover:transition-all" amount={2000} />
-          <CoinChips className="hover:animate-bounce hover:transition-all" amount={5000} />
+        </div>
+        <div className="w-[25%] px-4 flex-col flex justify-end items-end my-20">
+          <div
+            id="card-10"
+            className="w-full h-20 mx-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative"
+            onClick={() => handleSelection(10)}
+          >
+            {selectedCard === 9 &&
+              coins.map((coin) => (
+                <div
+                  key={coin.id}
+                  id={`coin-${coin.id}`}
+                  className="flex justify-center items-center coin gradient-gold text-[10px]"
+                >
+                  {coin.amount === 500000
+                    ? '500k'
+                    : coin.amount === 1000000
+                      ? '1000k'
+                      : coin.amount === 2000000
+                        ? '2000k'
+                        : '5000k'}
+                  M
+                </div>
+              ))}
+            <p className="absolute top-[0%] right-2 font-bold text-xl">
+              ${' '}
+              {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(10)]
+                ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(10)]
+                : 0}
+            </p>
+            <p className="text-2xl">Odd 10:9</p>
+          </div>{' '}
+          <div
+            id="card-9"
+            className="w-full h-20 mx-4 flex my-4 justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative"
+            onClick={() => handleSelection(9)}
+          >
+            {selectedCard === 9 &&
+              coins.map((coin) => (
+                <div
+                  key={coin.id}
+                  id={`coin-${coin.id}`}
+                  className="flex justify-center items-center coin gradient-gold text-[10px]"
+                >
+                  {coin.amount === 500000
+                    ? '500k'
+                    : coin.amount === 1000000
+                      ? '1000k'
+                      : coin.amount === 2000000
+                        ? '2000k'
+                        : '5000k'}
+                  M
+                </div>
+              ))}
+            <p className="absolute top-[0%] right-2 font-bold text-xl">
+              ${' '}
+              {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(9)]
+                ? roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(9)]
+                : 0}
+            </p>
+            <p className="text-2xl">Odd 9:10</p>
+          </div>
+        </div>
+      </div>
+      <div className="w-full px-2 py-2 h-14 bg-[#D9D9D9] flex justify-between">
+        <div>
+          <div className=" text-white relative">
+            <CircleDollarSign size={20} className="text-black absolute  top-1 left-1 " />
+            <p className="text-black text-sm absolute left-6 top-1 px-0.5">Bal</p>
+            <Input
+              placeholder=""
+              className="w-[14rem] rounded-sm px-6 h-7 border-10 customBorderInput text-black px-12"
+              disabled
+              value={userDetails?.user?.balance}
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-around w-96 bg-background rounded shadow-sm h-15">
+          <CoinChips
+            className="hover:animate-bounce hover:transition-all"
+            amount={500}
+            handleCoin={() => {
+              addNewCoin(selectedCard, 500000);
+              setCurrentSelectedAmount(500000);
+              setCurrentBet((prevBet) => prevBet + 500000);
+            }}
+          />
+          <CoinChips
+            className="hover:animate-bounce hover:transition-all"
+            amount={1000}
+            handleCoin={() => {
+              addNewCoin(selectedCard, 1000000);
+              setCurrentSelectedAmount(1000000);
+              setCurrentBet((prevBet) => prevBet + 1000000);
+            }}
+          />
+          <CoinChips
+            className="hover:animate-bounce hover:transition-all"
+            amount={2000}
+            handleCoin={() => {
+              addNewCoin(selectedCard, 2000000);
+              setCurrentSelectedAmount(2000000);
+              setCurrentBet((prevBet) => prevBet + 2000000);
+            }}
+          />
+          <CoinChips
+            className="hover:animate-bounce hover:transition-all"
+            amount={5000}
+            handleCoin={() => {
+              addNewCoin(selectedCard, 5000000);
+              setCurrentSelectedAmount(5000000);
+              setCurrentBet((prevBet) => prevBet + 5000000);
+            }}
+          />
+        </div>
+        <div className="px-4 pl-4">
+          <DepositDiaglog>
+            <Button size={'lg'} variant={'destructive'}>
+              Deposit
+            </Button>
+          </DepositDiaglog>
+          <Button size={'lg'} variant={'default'} className="mx-2">
+            {roomOwner === true ? 'Distrubute Coins' : 'Request for SPO'}
+          </Button>
+          <Button size={'lg'} variant={'default'} className="mx-2" onClick={() => ConfirmBet()}>
+            Confirm Bet
+          </Button>
+          <Button
+            size={'lg'}
+            variant={'default'}
+            className="mx-2"
+            disabled={countDownStatus === 'BET_LOCK' || 'CONFIRMED'}
+            onClick={() => resetBet()}
+          >
+            Rebet
+          </Button>
         </div>
       </div>
     </div>
   );
 };
 
-const CoinChips = ({ amount, className }: { amount: number; className?: string }) => {
+const CoinChips = ({
+  amount,
+  className,
+  handleCoin,
+}: {
+  amount: number;
+  className?: string;
+  handleCoin?: () => void;
+}) => {
   return (
-    <div className={cn('w-20 h-20 relative', className)}>
-      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[56%] text-xs font-semibold font-mono">
-        {amount}K
-      </span>
-      <img src="/chip-3.png" className="w-full h-full" />
-    </div>
+    <Hint content={`${amount} k`}>
+      <div className={cn('w-10 h-10 relative', className)} onClick={() => handleCoin()}>
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[56%] text-[.5rem] font-semibold font-mono">
+          {amount}K
+        </span>
+        <img src="/chip-3.png" className="w-full h-full" />
+      </div>
+    </Hint>
   );
 };
 

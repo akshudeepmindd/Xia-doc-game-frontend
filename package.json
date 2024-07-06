@@ -28,6 +28,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "gsap": "^3.12.5",
     "hls.js": "^1.5.11",
     "lodash": "^4.17.21",
     "lucide-react": "^0.397.0",
@@ -40,8 +41,8 @@
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.23.8",
-    "tsc-silent": "^1.2.2"
+    "tsc-silent": "^1.2.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.47.0",

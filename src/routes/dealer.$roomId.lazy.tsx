@@ -3,12 +3,12 @@ import SpeakerScreen from '@/components/livestream/speaker';
 import Navbar from '@/components/navbar';
 import { GET_ROUND_DETAILS, SOCKET_ROUND_START } from '@/lib/constants';
 import { socket } from '@/services';
-import { declareResultService, getRoundDetails } from '@/services/round';
+import { declareResultService, getRoundDetails, updateRound } from '@/services/round';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
-import { getRoomDetailService } from '@/services/room';
+import { createDealerLive, getRoomDetailService } from '@/services/room';
 import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
@@ -22,30 +22,37 @@ const BetType = {
   TWO_BLACK_TWO_WHITE: 'TWO_BLACK_TWO_WHITE',
   EVEN: 'EVEN',
   ODD: 'ODD',
-}
+};
 
 const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
-
+  const progressLive = useMutation({
+    mutationFn: createDealerLive,
+    onSuccess: (data) => {
+      setMeetingId(data.message.roomId);
+      setAuthToken(data.message.token);
+      // startHls(); // Commented out the startHls() function call
+    },
+  });
   useEffect(() => {
-    socket.on(SOCKET_ROUND_START, (data: any) => {
-      console.log('SOCKET DATA', data);
-      setCountdown(45);
-    });
-
-    return () => {
-      socket.off(SOCKET_ROUND_START);
-    };
-  }, []);
+    progressLive.mutate({ roomId: roomId ?? '' });
+  }, [roomId]);
+  const { mutateAsync: updateResult } = useMutation({
+    mutationFn: updateRound,
+  });
+  const handleResultSelect = (result: string) => {
+    setSelectResult(result);
+    updateResult({ roundId: roundDetails?.message?.data?._id, round: { roundResult: result } });
+  };
 
   const { isLoading, data: roundDetails } = useQuery({
     queryKey: [GET_ROUND_DETAILS],
     queryFn: () => getRoundDetails(roomId ? roomId : ''),
     enabled: !!roomId,
     refetchInterval: 1000,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
   });
 
   useEffect(() => {
@@ -60,7 +67,7 @@ const DealerComponent = () => {
 
       setCountdown(45 - secondsLeft);
     }
-  }, [roundDetails?.message?.data?.createdAt])
+  }, [roundDetails?.message?.data?.createdAt]);
 
   useEffect(() => {
     if (countdown > 0 && roundDetails) {
@@ -79,6 +86,8 @@ const DealerComponent = () => {
   const { data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
     queryFn: async () => getRoomDetailService(roomId || ''),
+    enabled: !!roomId,
+    refetchInterval: 1000,
   });
 
   useEffect(() => {
@@ -89,14 +98,14 @@ const DealerComponent = () => {
   }, [roomDetails]);
 
   const { mutateAsync: declareResult } = useMutation({
-    mutationFn: declareResultService
-  })
+    mutationFn: declareResultService,
+  });
 
   const handleDeclareResult = async (result: string) => {
     if (roundDetails?.message?.data?._id) {
-      await declareResult({ roundId: roundDetails?.message?.data?._id, result })
+      await declareResult({ roundId: roundDetails?.message?.data?._id, result });
     }
-  }
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -123,44 +132,44 @@ const DealerComponent = () => {
           <div className="w-1/4 bg-slate-50">Table</div>
         </div>
         <div className="flex items-center justify-between px-10 gap-x-4">
-          <EvenSelectionBoard selectResult={selectResult} setSelectResult={setSelectResult} />
+          <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
           <div className="w-1/4 bg-slate-50 h-64"></div>
-          <OddSelectionBoard selectResult={selectResult} setSelectResult={setSelectResult} />
+          <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
         </div>
         {roomId && (
           <>
-            {meetingId !== '' && (
-              <MeetingProvider
-                config={{
-                  meetingId: meetingId ?? 'qovc-ryn6-y2dk',
-                  mode: 'CONFERENCE',
-                  name: 'Name',
-                  micEnabled: true,
-                  webcamEnabled: true,
-                  debugMode: false,
-                }}
-                token={
-                  authToken ??
-                  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiIwZWMyYWVkOC03Mzc2LTRjODEtYjc4YS1kMTU0ZTk3ZmU4MDMiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sInZlcnNpb24iOjIsImV4cGlyZXNJbiI6IjI0aCIsImlhdCI6MTcxOTcwNzc1MSwiZXhwIjoxNzE5Nzk0MTUxfQ.AcD8vOjAoLUpScH3y1Rjs3QU-ThH4nAY5eeHoikifcQ'
-                }
-                joinWithoutUserInteraction
-              >
-                <DealerFooter
-                  roomId={roomId}
-                  round={roundDetails?.message}
-                  setMeetingId={setMeetingId}
-                  setStartLive={setStartLive}
-                  startLive={startLive}
-                  setAuthToken={setAuthToken}
-                  meetingId={meetingId}
-                  authToken={authToken}
-                  selectResult={selectResult}
-                  resultDeclare={handleDeclareResult}
-                  roundStatus={roundDetails?.message?.data?.roundStatus}
-                  countdown={countdown}
-                />
-              </MeetingProvider>
-            )}
+            <MeetingProvider
+              config={{
+                meetingId: meetingId ? meetingId : 'qovc-ryn6-y2dk',
+                mode: 'CONFERENCE',
+                name: 'Name',
+                micEnabled: true,
+                webcamEnabled: true,
+                debugMode: false,
+              }}
+              token={
+                authToken
+                  ? authToken
+                  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiIwZWMyYWVkOC03Mzc2LTRjODEtYjc4YS1kMTU0ZTk3ZmU4MDMiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sInZlcnNpb24iOjIsImV4cGlyZXNJbiI6IjI0aCIsImlhdCI6MTcxOTcwNzc1MSwiZXhwIjoxNzE5Nzk0MTUxfQ.AcD8vOjAoLUpScH3y1Rjs3QU-ThH4nAY5eeHoikifcQ'
+              }
+              joinWithoutUserInteraction
+            >
+              <DealerFooter
+                roomId={roomId}
+                round={roundDetails?.message}
+                setMeetingId={setMeetingId}
+                setStartLive={setStartLive}
+                startLive={startLive}
+                setAuthToken={setAuthToken}
+                meetingId={meetingId}
+                authToken={authToken}
+                selectResult={selectResult}
+                resultDeclare={handleDeclareResult}
+                roundStatus={roundDetails?.message?.data?.roundStatus}
+                countdown={countdown}
+                setCountDown={setCountdown}
+              />
+            </MeetingProvider>
           </>
         )}
       </div>
@@ -173,15 +182,27 @@ export const RedCircle = () => {
 };
 
 export const WhiteCircle = () => {
-  return <div className="w-8 h-8 bg-white rounded-full"></div>;
+  return <div className="w-8 h-8 bg-white rounded-full customBorder box-border"></div>;
 };
 
-const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
+const EvenSelectionBoard = ({
+  selectResult,
+  setSelectResult,
+}: {
+  selectResult: string | undefined;
+  setSelectResult: Dispatch<SetStateAction<string | undefined>>;
+}) => {
   return (
-    <div className="w-1/4 h-72 flex flex-col gap-y-6" >
+    <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Even</h1>
       <div className="grid grid-cols-2 gap-6">
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_WHITE ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.FOUR_WHITE)}>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.FOUR_WHITE ? 'bg-white/10' : '',
+          )}
+          onClick={() => setSelectResult(BetType.FOUR_WHITE)}
+        >
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 4</span>
             <span className="text-background">Red 0</span>
@@ -193,7 +214,13 @@ const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: s
             <WhiteCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_BLACK ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.FOUR_BLACK)}>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.FOUR_BLACK ? 'bg-white/10' : '',
+          )}
+          onClick={() => setSelectResult(BetType.FOUR_BLACK)}
+        >
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 0</span>
             <span className="text-background">Red 4</span>
@@ -205,13 +232,35 @@ const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: s
             <RedCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.EVEN ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.EVEN)}>
-          <div className="w-full flex items-center justify-around 4xl text-background">
-            EVEN
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.FOUR_BLACK ? 'bg-white/10' : '',
+          )}
+          onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}
+        >
+          <h3 className="flex items-center justify-around w-full">
+            <span className="text-background">White 0</span>
+            <span className="text-background">Red 4</span>
+          </h3>
+          <div className="w-full flex items-center justify-around">
+            <RedCircle />
+            <RedCircle />
+            <WhiteCircle />
+            <WhiteCircle />
           </div>
         </div>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.EVEN ? 'bg-white/10' : '',
+          )}
+          onClick={() => setSelectResult(BetType.EVEN)}
+        >
+          <div className="w-full flex items-center justify-around 4xl text-background">EVEN</div>
+        </div>
       </div>
-    </div >
+    </div>
   );
 };
 

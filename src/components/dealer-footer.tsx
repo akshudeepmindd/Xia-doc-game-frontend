@@ -9,7 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { createDealerLive } from '@/services/room';
 import { useParams } from '@tanstack/react-router';
 import { useMeeting } from '@videosdk.live/react-sdk';
-import { addRound } from '@/services/round';
+import { addRound, updateRound } from '@/services/round';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 import { useState } from 'react';
 const config: any = {
@@ -44,7 +44,8 @@ const DealerFooter = ({
   selectResult,
   resultDeclare,
   roundStatus,
-  countdown
+  countdown,
+  setCountDown,
 }: {
   setMeetingId: (meetingId: string) => void;
   setStartLive: (startLive: boolean) => void;
@@ -54,10 +55,11 @@ const DealerFooter = ({
   authToken: string;
   roomId: string;
   round: any;
-  selectResult: string | undefined,
+  selectResult: string | undefined;
   resultDeclare: any;
-  roundStatus: 'inprogress' | 'completed',
+  roundStatus: 'inprogress' | 'completed' | 'roundend';
   countdown: number;
+  setCountDown: (countdown: number) => void;
 }) => {
   const { username } = useProfile();
   const { startHls, stopHls, toggleWebcam } = useMeeting();
@@ -66,9 +68,11 @@ const DealerFooter = ({
   const isCameraOn = true;
 
   const createRound = useMutation({
-    mutationFn: addRound
-  })
-
+    mutationFn: addRound,
+  });
+  const updateRoundStatus = useMutation({
+    mutationFn: updateRound,
+  });
   const handleRoundStart = () => {
     let roundId = 1;
     if (round && round?.roundNumber) {
@@ -77,7 +81,10 @@ const DealerFooter = ({
 
     return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId } });
   };
-
+  const handleUpdateRoundStatus = () => {
+    const roundId = round?.data?._id;
+    return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
+  };
   const progressLive = useMutation({
     mutationFn: createDealerLive,
     onSuccess: (data) => {
@@ -90,7 +97,7 @@ const DealerFooter = ({
 
   const handleLive = () => {
     if (!startLive && meetingId == '') {
-      progressLive.mutate({ roomId: roomId ?? '' });
+      startHls(config);
     } else if (startLive) {
       setStartLive(false);
       stopHls();
@@ -130,9 +137,11 @@ const DealerFooter = ({
           {startLive ? 'Stop live' : 'Start live'}
         </Button>
       </div>
-      {selectResult && countdown <= 0 && roundStatus === "inprogress" && <Button variant="outline" size="sm" onClick={() => resultDeclare(selectResult)}>
-        Result declare
-      </Button>}
+      {selectResult && countdown <= 0 && roundStatus === 'roundend' && (
+        <Button variant="outline" size="sm" onClick={() => resultDeclare(selectResult)}>
+          Result declare
+        </Button>
+      )}
       <div className="flex items-center gap-x-2">
         <span className="font-medium text-sm text-background mr-2">
           <span className="font-normal mr-2">Dealer :</span>
@@ -141,7 +150,7 @@ const DealerFooter = ({
         <Button variant="outline" size="sm" onClick={handleRoundStart}>
           Start round
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleUpdateRoundStatus}>
           End round
         </Button>
       </div>

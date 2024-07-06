@@ -1,6 +1,7 @@
 import { MeetingConsumer, Constants, MeetingProvider, useMeeting } from '@videosdk.live/react-sdk';
 import React, { useEffect, useMemo, useRef } from 'react';
 import Hls from 'hls.js';
+import { Loader2 } from 'lucide-react';
 
 const HLSPlayer = () => {
   const { hlsUrls, hlsState } = useMeeting();
@@ -61,7 +62,9 @@ const ViewerScreenContainer = ({ meetingId, authToken }) => {
           hlsState === Constants.hlsEvents.HLS_PLAYABLE ? (
             <HLSPlayer style={{ width: '100%' }} />
           ) : (
-            <p>Waiting for host to start stream...</p>
+            <div className='flex justify-center items-center h-full'>
+              <Loader2 size={100} className="animate-spin text-white" />
+            </div>
           )
         }
       </MeetingConsumer>
