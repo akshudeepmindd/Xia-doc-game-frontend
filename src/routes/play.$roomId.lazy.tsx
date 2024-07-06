@@ -125,7 +125,14 @@ const GameComponent = () => {
       setCountdown(45 - secondsLeft);
     }
   }, [roundDetails?.message?.data?.createdAt]);
-
+  useEffect(() => {
+    console.log('countdown', countdown);
+    if (countdown < 0 && roundDetails?.message?.data?.roundStatus === 'roundend') {
+      setCoins([]);
+      setUserBet(0);
+      setCurrentBet(0);
+    }
+  }, [countdown, roundDetails?.message?.data?.roundStatus]);
   const ConfirmBet = () => {
     const body = { balance: userBet };
     placeBet({
@@ -213,6 +220,7 @@ const GameComponent = () => {
     cardElement?.classList.remove('glow');
     setCoins([]);
     setCurrentBet(0);
+    setCurrentSelectedAmount(0);
     setUserBet(0);
   };
   const handleSelection = (card: number) => {
@@ -220,7 +228,7 @@ const GameComponent = () => {
       const cardElement = document.getElementById(`card-${card}`);
       cardElement?.classList.add('glow');
       setSelectedCard(card);
-      if (selectedCard !== card && selectedCard !== 6 && selectedCard !== 4 && selectedCard !== 5 && selectedCard !== 2) {
+      if (selectedCard !== card && selectedCard == 6 && selectedCard == 4 && selectedCard == 5 && selectedCard == 2) {
         const cardElement = document.getElementById(`card-${card}`);
         const previousCardElement = document.getElementById(`card-${selectedCard}`);
         cardElement?.classList.add('glow');
@@ -232,7 +240,15 @@ const GameComponent = () => {
       countDownStatus === 'BET' &&
       (card === 1 || card === 3 || card === 7 || card === 8 || card === 9 || card === 10)
     ) {
-      if (selectedCard !== card && selectedCard !== 1 && selectedCard !== 3 && selectedCard !== 7 && selectedCard !== 8 && selectedCard !== 9 && selectedCard !== 10) {
+      if (
+        selectedCard !== card &&
+        selectedCard == 1 &&
+        selectedCard == 3 &&
+        selectedCard == 7 &&
+        selectedCard == 8 &&
+        selectedCard == 9 &&
+        selectedCard == 10
+      ) {
         const cardElement = document.getElementById(`card-${card}`);
         const previousCardElement = document.getElementById(`card-${selectedCard}`);
         cardElement?.classList.add('glow');
@@ -432,7 +448,6 @@ const GameComponent = () => {
                           : currentSelectedAmount === 2000000
                             ? '2000k'
                             : '5000k'}
-                      M
                     </div>
                   ))}
                 <p className="absolute top-[0%] left-2 font-bold text-xl">
@@ -538,7 +553,6 @@ const GameComponent = () => {
                             : coin.amount === 2000000
                               ? '2000k'
                               : '5000k'}
-                        M
                       </div>
                     ))}
                   <p className="absolute top-[0%] right-2 font-bold text-xl">
@@ -617,7 +631,6 @@ const GameComponent = () => {
                             : coin.amount === 2000000
                               ? '2000k'
                               : '5000k'}
-                        M
                       </div>
                     ))}
                   <p className="absolute top-[0%] right-2 font-bold text-xl">
@@ -688,7 +701,6 @@ const GameComponent = () => {
                       : coin.amount === 2000000
                         ? '2000k'
                         : '5000k'}
-                  M
                 </div>
               ))}
             <p className="absolute top-[0%] right-2 font-bold text-xl">
