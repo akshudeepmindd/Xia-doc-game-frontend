@@ -65,7 +65,9 @@ const DealerComponent = () => {
       // Calculate difference in seconds
       const secondsLeft = differenceInSeconds(currentTime, futureTime);
 
-      setCountdown(45 - secondsLeft);
+      if (secondsLeft <= 45) {
+        setCountdown(45 - secondsLeft);
+      }
     }
   }, [roundDetails?.message?.data?.createdAt]);
 
@@ -190,7 +192,7 @@ const EvenSelectionBoard = ({
   setSelectResult,
 }: {
   selectResult: string | undefined;
-  setSelectResult: Dispatch<SetStateAction<string | undefined>>;
+  setSelectResult: (result: string) => void
 }) => {
   return (
     <div className="w-1/4 h-72 flex flex-col gap-y-6">
@@ -264,7 +266,7 @@ const EvenSelectionBoard = ({
   );
 };
 
-const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
+const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: (result: string) => void }) => {
   return (
     <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Odd</h1>

@@ -19,7 +19,6 @@ import Hint from '@/components/hint';
 import { CircleDollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { gsap } from 'gsap';
-import { round, set } from 'lodash';
 import DepositDiaglog from '@/components/Deposit-dialog';
 import { updateUser, userProfile } from '@/services/auth';
 const getBetTypeBySelectionCard = (selectionCard: number) => {
@@ -79,6 +78,7 @@ const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
   const { isSbo, userId, roomOwner } = useProfile();
   const [selectedCard, setSelectedCard] = useState<number>();
+  const [selectedSPOCard, setSelectedSPOCard] = useState<number>();
   const [coins, setCoins] = useState<any[]>([]);
   const [countdown, setCountdown] = useState<number>(0);
   const [meetingId, setMeetingId] = useState<string>('');
@@ -122,7 +122,9 @@ const GameComponent = () => {
       // Calculate difference in seconds
       const secondsLeft = differenceInSeconds(currentTime, futureTime);
 
-      setCountdown(45 - secondsLeft);
+      if (secondsLeft <= 45) {
+        setCountdown(45 - secondsLeft);
+      }
     }
   }, [roundDetails?.message?.data?.createdAt]);
   useEffect(() => {
@@ -148,6 +150,16 @@ const GameComponent = () => {
       body,
     });
   };
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown((prevCountdown) => prevCountdown - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
+
   const addNewCoin = (cardId: number, amount: number) => {
     const newCoinId = coinId.current++;
     const newCoin = { id: newCoinId, cardId, amount: amount };
@@ -167,14 +179,6 @@ const GameComponent = () => {
       );
     }, 0);
   };
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setInterval(() => {
-        setCountdown((prevCountdown) => prevCountdown - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [countdown]);
 
   const countDownStatus = useMemo(() => {
     if (countdown <= 25 && countdown > 0) {
@@ -225,35 +229,13 @@ const GameComponent = () => {
   };
   const handleSelection = (card: number) => {
     if (countDownSPOStatus === 'BET_SPO' && (card === 6 || card === 4 || card === 5 || card === 2)) {
-      const cardElement = document.getElementById(`card-${card}`);
-      cardElement?.classList.add('glow');
-      setSelectedCard(card);
-      if (selectedCard !== card && selectedCard == 6 && selectedCard == 4 && selectedCard == 5 && selectedCard == 2) {
-        const cardElement = document.getElementById(`card-${card}`);
-        const previousCardElement = document.getElementById(`card-${selectedCard}`);
-        cardElement?.classList.add('glow');
-        previousCardElement?.classList.remove('glow');
-      }
+      setSelectedSPOCard(card);
     }
 
     if (
       countDownStatus === 'BET' &&
       (card === 1 || card === 3 || card === 7 || card === 8 || card === 9 || card === 10)
     ) {
-      if (
-        selectedCard !== card &&
-        selectedCard == 1 &&
-        selectedCard == 3 &&
-        selectedCard == 7 &&
-        selectedCard == 8 &&
-        selectedCard == 9 &&
-        selectedCard == 10
-      ) {
-        const cardElement = document.getElementById(`card-${card}`);
-        const previousCardElement = document.getElementById(`card-${selectedCard}`);
-        cardElement?.classList.add('glow');
-        previousCardElement?.classList.remove('glow');
-      }
       setSelectedCard(card);
     }
   };
@@ -357,12 +339,11 @@ const GameComponent = () => {
       </div>
       <div className="w-full flex justify-between flex-row ">
         <div className="w-[25%] px-4 flex flex-col justify-end items-end my-20">
-          {' '}
           <div
             id="card-8"
             className={cn(
-              'w-full h-20 ml-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
-              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '',
+              'w-full ml-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
+              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '', selectedCard === 8 ? 'glow' : ''
             )}
             onClick={() => handleSelection(8)}
           >
@@ -393,8 +374,8 @@ const GameComponent = () => {
           <div
             id="card-7"
             className={cn(
-              'w-full h-20 ml-4 flex my-5 justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
-              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '',
+              'w-full ml-4 flex my-5 justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
+              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '', selectedCard === 7 ? 'glow' : ''
             )}
             onClick={() => handleSelection(7)}
           >
@@ -429,8 +410,8 @@ const GameComponent = () => {
               <div
                 id="card-1"
                 className={cn(
-                  'w-full h-32 mx-2 flex justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
-                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer',
+                  'w-full mx-2 flex justify-center items-center  h-1/3 text-white text-center even-container relative',
+                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer', selectedCard === 1 ? 'glow' : ''
                 )}
                 onClick={() => handleSelection(1)}
               >
@@ -462,7 +443,7 @@ const GameComponent = () => {
                 id="card-3"
                 className={cn(
                   'w-full h-20 mx-2 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative',
-                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer',
+                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer', selectedCard === 3 ? 'glow' : ''
                 )}
                 onClick={() => handleSelection(3)}
               >
@@ -498,7 +479,7 @@ const GameComponent = () => {
                   onClick={() => handleSelection(2)}
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 2 ? 'glow' : ''
                   )}
                 >
                   {selectedCard === 2 &&
@@ -536,7 +517,7 @@ const GameComponent = () => {
                   onClick={() => handleSelection(5)}
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 5 ? 'glow' : ''
                   )}
                 >
                   {selectedCard === 5 &&
@@ -575,7 +556,7 @@ const GameComponent = () => {
                   id="card-6"
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 6 ? 'glow' : ''
                   )}
                   onClick={() => handleSelection(6)}
                 >
@@ -613,7 +594,7 @@ const GameComponent = () => {
                   id="card-4"
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 4 ? 'glow' : ''
                   )}
                   onClick={() => handleSelection(4)}
                 >
@@ -654,7 +635,7 @@ const GameComponent = () => {
         <div className="w-[25%] px-4 flex-col flex justify-end items-end my-20">
           <div
             id="card-10"
-            className="w-full h-20 mx-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative"
+            className={cn("w-full mx-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative", countDownStatus === 'BET_LOCK' ? ' cursor-not-allowed' : '', selectedCard === 10 ? 'glow' : '')}
             onClick={() => handleSelection(10)}
           >
             {selectedCard === 9 &&
@@ -684,7 +665,7 @@ const GameComponent = () => {
           </div>{' '}
           <div
             id="card-9"
-            className="w-full h-20 mx-4 flex my-4 justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative"
+            className={cn("w-full mx-4 flex my-4 justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative", countDownStatus === 'BET_LOCK' ? ' cursor-not-allowed' : '', selectedCard === 9 ? 'glow' : '')}
             onClick={() => handleSelection(9)}
           >
             {selectedCard === 9 &&
