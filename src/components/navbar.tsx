@@ -90,12 +90,12 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
   const handleAcceptSPO = (userId: string) => {
     const spoRequested = roomDetails.SpoRequested;
 
-    const requestedPlayer = spoRequested.find((player: { _id: string }) => player._id === userId)
-    const newSpoRequested = spoRequested.filter((player: { _id: string }) => player._id !== userId)
-    const spoAccepted = [...roomDetails.SpoAccepted];
+    const requestedPlayer = spoRequested.find((player: { _id: string }) => player._id === userId);
+    const newSpoRequested = spoRequested.filter((player: { _id: string }) => player._id !== userId);
+    // const spoAccepted = [...roomDetails.SpoAccepted];
 
-    spoAccepted.push(requestedPlayer._id);
-    makeDealer.mutate({ id: roomDetails._id, game: { SpoAccepted: spoAccepted, SpoRequested: newSpoRequested } })
+    const spoAccepted = requestedPlayer._id;
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoAccepted: spoAccepted, SpoRequested: newSpoRequested } });
   }
 
   if (isLoading) return <>Loading...</>;
@@ -106,20 +106,18 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
         {isDealer && (
           <Hint content="Info">
             <Button size="icon" variant={'ghost'} className="w-8 h-8">
-              <img src='/Signal.svg'/>
+              <img src="/Signal.svg" />
             </Button>
           </Hint>
         )}
         <Hint content="Signal">
           <Button size="icon" variant={'ghost'} className="w-8 h-8">
-          <img src='/Signal.svg'/>
-
+            <img src="/Signal.svg" />
           </Button>
         </Hint>
         <Hint content="Your Chats">
           <Button size="icon" variant={'ghost'} className="w-8 h-8">
-          <img src='/members.svg'/>
-
+            <img src="/members.svg" />
           </Button>
         </Hint>
         {isDealer && (
@@ -135,8 +133,7 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Button size="icon" variant={'ghost'} className="w-8 h-8">
-                  <img src='/People.svg'/>
-
+                    <img src="/People.svg" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -178,7 +175,7 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Button size="icon" variant={'ghost'} className="w-8 h-8">
-                    <img src="/admin.svg"/>
+                    <img src="/admin.svg" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -235,7 +232,7 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </Hint>
-            {/* <Hint content="SPO Players and Request">
+            <Hint content="SPO Players and Request">
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Button size="icon" variant={'outline'} className="w-8 h-8">
@@ -276,28 +273,24 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
                   </Table>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </Hint> */}
+            </Hint>
           </>
         )}
       </div>
-      {/* <Button size="sm">Distribute coins</Button> */}
+      {/* {roomOwner && <Button size="sm">Distribute coins</Button>} */}
       {/* <Button size="sm" onClick={handleMakeSpo}>Request for SPO</Button> */}
       <div className="flex items-center px-4 gap-x-4">
-      <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-      <img src="/Resize.svg"/>
-
+        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
+          <img src="/Resize.svg" />
         </Button>
         <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-        <img src="/note.svg"/>
-
+          <img src="/note.svg" />
         </Button>
         <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-        <img src="/Sound.svg"/>
-
+          <img src="/Sound.svg" />
         </Button>
         <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-        <img src="/Logout.svg"/>
-
+          <img src="/Logout.svg" />
         </Button>
       </div>
     </div>

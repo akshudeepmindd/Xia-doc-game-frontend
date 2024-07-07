@@ -63,7 +63,7 @@ const ViewerScreenContainer = ({ meetingId, authToken }) => {
             <HLSPlayer style={{ width: '100%' }} />
           ) : (
             <div className='flex justify-center items-center h-full'>
-              <Loader2 size={100} className="animate-spin text-white" />
+              <Loader2 size={120} color='white' className="w-8 h-8 animate-spin" />
             </div>
           )
         }

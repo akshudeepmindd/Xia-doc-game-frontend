@@ -8,7 +8,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
-import { createDealerLive, getRoomDetailService } from '@/services/room';
+import { getRoomDetailService } from '@/services/room';
 import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
@@ -28,17 +28,17 @@ const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
-  const progressLive = useMutation({
-    mutationFn: createDealerLive,
-    onSuccess: (data) => {
-      setMeetingId(data.message.roomId);
-      setAuthToken(data.message.token);
-      // startHls(); // Commented out the startHls() function call
-    },
-  });
+
   useEffect(() => {
-    progressLive.mutate({ roomId: roomId ?? '' });
-  }, [roomId]);
+    socket.on(SOCKET_ROUND_START, (data: any) => {
+      console.log('SOCKET DATA', data);
+      setCountdown(45);
+    });
+
+    return () => {
+      socket.off(SOCKET_ROUND_START);
+    };
+  }, []);
   const { mutateAsync: updateResult } = useMutation({
     mutationFn: updateRound,
   });
@@ -65,9 +65,7 @@ const DealerComponent = () => {
       // Calculate difference in seconds
       const secondsLeft = differenceInSeconds(currentTime, futureTime);
 
-      if (secondsLeft <= 45) {
-        setCountdown(45 - secondsLeft);
-      }
+      setCountdown(45 - secondsLeft);
     }
   }, [roundDetails?.message?.data?.createdAt]);
 
@@ -88,8 +86,6 @@ const DealerComponent = () => {
   const { data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
     queryFn: async () => getRoomDetailService(roomId || ''),
-    enabled: !!roomId,
-    refetchInterval: 1000,
   });
 
   useEffect(() => {
@@ -138,42 +134,44 @@ const DealerComponent = () => {
           <div className="w-1/4 bg-slate-50 h-64"></div>
           <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
         </div>
-        {roomId && (
-          <>
-            <MeetingProvider
-              config={{
-                meetingId: meetingId ? meetingId : 'qovc-ryn6-y2dk',
-                mode: 'CONFERENCE',
-                name: 'Name',
-                micEnabled: true,
-                webcamEnabled: true,
-                debugMode: false,
-              }}
-              token={
-                authToken
-                  ? authToken
-                  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiIwZWMyYWVkOC03Mzc2LTRjODEtYjc4YS1kMTU0ZTk3ZmU4MDMiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sInZlcnNpb24iOjIsImV4cGlyZXNJbiI6IjI0aCIsImlhdCI6MTcxOTcwNzc1MSwiZXhwIjoxNzE5Nzk0MTUxfQ.AcD8vOjAoLUpScH3y1Rjs3QU-ThH4nAY5eeHoikifcQ'
-              }
-              joinWithoutUserInteraction
-            >
-              <DealerFooter
-                roomId={roomId}
-                round={roundDetails?.message}
-                setMeetingId={setMeetingId}
-                setStartLive={setStartLive}
-                startLive={startLive}
-                setAuthToken={setAuthToken}
-                meetingId={meetingId}
-                authToken={authToken}
-                selectResult={selectResult}
-                resultDeclare={handleDeclareResult}
-                roundStatus={roundDetails?.message?.data?.roundStatus}
-                countdown={countdown}
-                setCountDown={setCountdown}
-              />
-            </MeetingProvider>
-          </>
-        )}
+        {roomId &&
+          roomDetails?.dealerLiveStreamId &&
+          roomDetails?.streamingToken && (
+            <>
+              {meetingId !== '' && (
+                <MeetingProvider
+                  config={{
+                    meetingId: roomDetails?.dealerLiveStreamId,
+                    mode: 'CONFERENCE',
+                    name: 'Name',
+                    micEnabled: true,
+                    webcamEnabled: true,
+                    debugMode: false,
+                  }}
+                  token={
+                   roomDetails?.streamingToken
+                  }
+                  joinWithoutUserInteraction
+                >
+                  <DealerFooter
+                    roomId={roomId}
+                    round={roundDetails?.message}
+                    setMeetingId={setMeetingId}
+                    setStartLive={setStartLive}
+                    startLive={startLive}
+                    setAuthToken={setAuthToken}
+                    meetingId={meetingId}
+                    authToken={authToken}
+                    selectResult={selectResult}
+                    setSelectResult={setSelectResult}
+                    resultDeclare={handleDeclareResult}
+                    roundStatus={roundDetails?.message?.data?.roundStatus}
+                    countdown={countdown}
+                  />
+                </MeetingProvider>
+              )}
+            </>,
+          )}
       </div>
     </div>
   );
@@ -187,24 +185,12 @@ export const WhiteCircle = () => {
   return <div className="w-8 h-8 bg-white rounded-full customBorder box-border"></div>;
 };
 
-const EvenSelectionBoard = ({
-  selectResult,
-  setSelectResult,
-}: {
-  selectResult: string | undefined;
-  setSelectResult: (result: string) => void
-}) => {
+const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
   return (
-    <div className="w-1/4 h-72 flex flex-col gap-y-6">
+    <div className="w-1/4 h-72 flex flex-col gap-y-6" >
       <h1 className="text-background text-2xl font-medium text-center">Even</h1>
       <div className="grid grid-cols-2 gap-6">
-        <div
-          className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
-            selectResult === BetType.FOUR_WHITE ? 'bg-white/10' : '',
-          )}
-          onClick={() => setSelectResult(BetType.FOUR_WHITE)}
-        >
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_WHITE ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.FOUR_WHITE)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 4</span>
             <span className="text-background">Red 0</span>
@@ -216,13 +202,7 @@ const EvenSelectionBoard = ({
             <WhiteCircle />
           </div>
         </div>
-        <div
-          className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
-            selectResult === BetType.FOUR_BLACK ? 'bg-white/10' : '',
-          )}
-          onClick={() => setSelectResult(BetType.FOUR_BLACK)}
-        >
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_BLACK ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.FOUR_BLACK)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 0</span>
             <span className="text-background">Red 4</span>
@@ -234,13 +214,7 @@ const EvenSelectionBoard = ({
             <RedCircle />
           </div>
         </div>
-        <div
-          className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
-            selectResult === BetType.FOUR_BLACK ? 'bg-white/10' : '',
-          )}
-          onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}
-        >
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_BLACK ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 0</span>
             <span className="text-background">Red 4</span>
@@ -252,26 +226,22 @@ const EvenSelectionBoard = ({
             <WhiteCircle />
           </div>
         </div>
-        <div
-          className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
-            selectResult === BetType.EVEN ? 'bg-white/10' : '',
-          )}
-          onClick={() => setSelectResult(BetType.EVEN)}
-        >
-          <div className="w-full flex items-center justify-around 4xl text-background">EVEN</div>
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.EVEN ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.EVEN)}>
+          <div className="w-full flex items-center justify-around 4xl text-background">
+            EVEN
+          </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
-const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: (result: string) => void }) => {
+const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
   return (
     <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Odd</h1>
       <div className="grid grid-cols-2 gap-6">
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.THREE_WHITE_ONE_BLACK ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.THREE_WHITE_ONE_BLACK)}>
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.THREE_WHITE_ONE_BLACK ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.THREE_WHITE_ONE_BLACK)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 3</span>
             <span className="text-background">Red 1</span>
@@ -283,7 +253,7 @@ const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: st
             <RedCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.THREE_BLACK_ONE_WHITE ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.THREE_BLACK_ONE_WHITE)}>
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.THREE_BLACK_ONE_WHITE ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.THREE_BLACK_ONE_WHITE)}>
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 1</span>
             <span className="text-background">Red 3</span>
@@ -295,7 +265,7 @@ const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: st
             <RedCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.ODD ? "bg-white/10" : "")} onClick={() => setSelectResult(BetType.ODD)}>
+        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.ODD ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.ODD)}>
           <div className="w-full flex items-center justify-around 4xl text-background">
             ODD
           </div>

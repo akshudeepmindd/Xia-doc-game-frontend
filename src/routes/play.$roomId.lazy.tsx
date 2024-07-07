@@ -5,7 +5,7 @@ import useProfile from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 
 import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS, GET_USER_DETAILS } from '@/lib/constants';
-import { getRoomDetailService } from '@/services/room';
+import { distributeBalance, getRoomDetailService, updateRoom } from '@/services/room';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { SOCKET_ROUND_START } from '@/lib/constants';
@@ -16,11 +16,15 @@ import { getRoundDetails, placeBetService } from '@/services/round';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
 import Hint from '@/components/hint';
-import { CircleDollarSign } from 'lucide-react';
+import { CircleDollarSign, TrophyIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { gsap } from 'gsap';
+import { distribute, gsap } from 'gsap';
 import DepositDiaglog from '@/components/Deposit-dialog';
 import { updateUser, userProfile } from '@/services/auth';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import ConfettiExplosion from 'react-confetti-explosion';
+import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
 const getBetTypeBySelectionCard = (selectionCard: number) => {
   switch (selectionCard) {
     case 1:
@@ -87,6 +91,7 @@ const GameComponent = () => {
   const [currentBet, setCurrentBet] = useState<number>(0);
   const [userBet, setUserBet] = useState<number>(0);
   const coinId = useRef(0);
+  const [winnermodal, setwinnerModal] = useState(false);
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
       console.log('SOCKET DATA', data);
@@ -127,28 +132,43 @@ const GameComponent = () => {
       }
     }
   }, [roundDetails?.message?.data?.createdAt]);
+
   useEffect(() => {
-    console.log('countdown', countdown);
+    if (countdown === 0 && roundDetails?.message?.data?.roundStatus === 'completed') {
+      setwinnerModal(true);
+    }
+  }, [roundDetails?.message?.data?.roundStatus]);
+  useEffect(() => {
     if (countdown < 0 && roundDetails?.message?.data?.roundStatus === 'roundend') {
       setCoins([]);
       setUserBet(0);
       setCurrentBet(0);
     }
   }, [countdown, roundDetails?.message?.data?.roundStatus]);
+  useEffect(() => {
+    if (countdown == 45 && roundDetails?.message?.data?.roundStatus === 'roundStarted') {
+      toast.success('Round Started');
+    }
+  }, [countdown, roundDetails?.message?.data?.roundStatus]);
   const ConfirmBet = () => {
-    const body = { balance: userBet };
-    placeBet({
-      roundId: roundDetails?.message?.data?._id,
-      userId: userId,
-      betAmount: currentBet,
-      betType: getBetTypeBySelectionCard(selectedCard),
-    });
+    if (userDetails?.user?.balance < currentBet) {
+      toast.error('Insufficient balance');
+    } else {
+      placeBet({
+        roundId: roundDetails?.message?.data?._id,
+        userId: userId,
+        betAmount: currentBet,
+        betType: getBetTypeBySelectionCard(selectedCard),
+      });
 
-    // setUserBet((prev) => prev + currentBet);
-    updateUserbalance({
-      userId,
-      body,
-    });
+      setUserBet((prev) => prev + currentBet);
+      const updatedBalance = userDetails?.user?.balance - currentBet;
+      const body = { balance: updatedBalance };
+      updateUserbalance({
+        userId,
+        body,
+      });
+    }
   };
 
   useEffect(() => {
@@ -197,12 +217,26 @@ const GameComponent = () => {
   }, [countdown]);
 
   useEffect(() => {
-    if (roundDetails?.message?.data?.roundResult && roundDetails?.message?.data?.roundStatus === 'roundStarted') {
+    if (roundDetails?.message?.data?.roundResult && roundDetails?.message?.data?.roundStatus === 'roundend') {
       console.log('roundDetails?.message?.data?.roundResult', roundDetails?.message?.data?.roundResult);
       const cardElement = document.getElementById(
         `card-${getBetTypeByCardName(roundDetails?.message?.data?.roundResult)}`,
       );
+      const spocardElement = document.getElementById(
+        `card-${getBetTypeByCardName(roundDetails?.message?.data?.roundResult)}`,
+      );
+      spocardElement?.classList.add('glow');
       cardElement?.classList.add('glow');
+    } else if (roundDetails?.message?.data?.roundStatus === 'roundend') {
+      resetBet();
+      const cardElement = document.getElementById(
+        `card-${getBetTypeByCardName(roundDetails?.message?.data?.roundResult)}`,
+      );
+      const spocardElement = document.getElementById(
+        `card-${getBetTypeByCardName(roundDetails?.message?.data?.roundResult)}`,
+      );
+      spocardElement?.classList.remove('glow');
+      cardElement?.classList.remove('glow');
     }
   }, [roundDetails?.message?.data]);
 
@@ -216,30 +250,62 @@ const GameComponent = () => {
   const { mutate: placeBet } = useMutation({
     mutationFn: placeBetService,
   });
+
+  const { mutate: distributeamount } = useMutation({
+    mutationFn: distributeBalance,
+  });
   const { mutate: updateUserbalance } = useMutation({
     mutationFn: updateUser,
   });
   const resetBet = () => {
     const cardElement = document.getElementById(`card-${selectedCard}`);
+    const spocardElement = document.getElementById(`card-${selectedCard}`);
     cardElement?.classList.remove('glow');
+    spocardElement?.classList.remove('glow');
     setCoins([]);
     setCurrentBet(0);
     setCurrentSelectedAmount(0);
     setUserBet(0);
   };
-  const handleSelection = (card: number) => {
+  const handleSelection = ({ card, type }: { card: number; type: string }) => {
     if (countDownSPOStatus === 'BET_SPO' && (card === 6 || card === 4 || card === 5 || card === 2)) {
-      setSelectedSPOCard(card);
+      const cardElement = document.getElementById(`card-${card}`);
+      cardElement?.classList.add('glow');
+      setSelectedCard(card);
+      if (selectedCard !== card && type === 'SPO') {
+        const cardElement = document.getElementById(`card-${card}`);
+        const previousCardElement = document.getElementById(`card-${selectedCard}`);
+        cardElement?.classList.add('glow');
+        previousCardElement?.classList.remove('glow');
+      }
     }
 
     if (
       countDownStatus === 'BET' &&
       (card === 1 || card === 3 || card === 7 || card === 8 || card === 9 || card === 10)
     ) {
+      if (selectedCard !== card && type === 'NON_SPO') {
+        const cardElement = document.getElementById(`card-${card}`);
+        const previousCardElement = document.getElementById(`card-${selectedCard}`);
+        cardElement?.classList.add('glow');
+        previousCardElement?.classList.remove('glow');
+      }
       setSelectedCard(card);
     }
   };
+  const makeDealer = useMutation({
+    mutationFn: updateRoom,
+  });
+  const handleMakeSpo = () => {
+    const players = roomDetails.players;
+    const requestedPlayer = players.find((player: { _id: string }) => player._id === userId);
 
+    console.log('Players', players, requestedPlayer, userId);
+    const spoRequested = [...roomDetails.SpoRequested];
+    spoRequested.push(requestedPlayer._id);
+
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoRequested: spoRequested } });
+  };
   useEffect(() => {
     if (!isLoading) {
       if (roomDetails) {
@@ -252,6 +318,7 @@ const GameComponent = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
+  console.log(userDetails);
   return (
     <div className="flex flex-col h-full bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
@@ -330,11 +397,21 @@ const GameComponent = () => {
             Waiting for live from Dealer
           </div>
         </div>
-        <div className="flex flex-col w-[28%]">
-          <div>
+        <div className="h-40 flex flex-col w-[28%] justify-between">
+          <div className="h-20">
             <h5 className="text-white">History</h5>
+            <div>History</div>
           </div>
-          <div>History</div>
+          <div className="flex justify-between items-center py-2 flex-col bg-[#D9D9D9] customBorder border-x-4 border-y-4  w-32">
+            <div className="w-20 py-4 h-20 flex items-center flex-col justify-center bg-[#040816] text-background border-2 rounded-full text-3xl font-medium font-mono">
+              <img src="/maleuser.png" className="w-20 h-20" />
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-[#040816] uppercase">
+                SPO - {roomDetails?.SpoAccepted?.telegramusername}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
       <div className="w-full flex justify-between flex-row ">
@@ -343,9 +420,15 @@ const GameComponent = () => {
             id="card-8"
             className={cn(
               'w-full ml-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
-              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '', selectedCard === 8 ? 'glow' : ''
+              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '',
+              selectedCard === 8 ? 'glow' : '',
             )}
-            onClick={() => handleSelection(8)}
+            onClick={() =>
+              handleSelection({
+                card: 8,
+                type: 'NON_SPO',
+              })
+            }
           >
             {selectedCard === 8 &&
               coins.map((coin) => (
@@ -375,9 +458,15 @@ const GameComponent = () => {
             id="card-7"
             className={cn(
               'w-full ml-4 flex my-5 justify-center items-center  h-1/3 width-1/3 text-white text-center even-container relative',
-              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '', selectedCard === 7 ? 'glow' : ''
+              countDownStatus === 'BET_LOCK' ? 'h-20 cursor-not-allowed' : '',
+              selectedCard === 7 ? 'glow' : '',
             )}
-            onClick={() => handleSelection(7)}
+            onClick={() =>
+              handleSelection({
+                card: 7,
+                type: 'NON_SPO',
+              })
+            }
           >
             {selectedCard === 7 &&
               coins.map((coin) => (
@@ -411,9 +500,15 @@ const GameComponent = () => {
                 id="card-1"
                 className={cn(
                   'w-full mx-2 flex justify-center items-center  h-1/3 text-white text-center even-container relative',
-                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer', selectedCard === 1 ? 'glow' : ''
+                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer',
+                  selectedCard === 1 ? 'glow' : '',
                 )}
-                onClick={() => handleSelection(1)}
+                onClick={() =>
+                  handleSelection({
+                    card: 1,
+                    type: 'NON_SPO',
+                  })
+                }
               >
                 {selectedCard === 1 &&
                   coins.map((coin) => (
@@ -443,9 +538,15 @@ const GameComponent = () => {
                 id="card-3"
                 className={cn(
                   'w-full h-20 mx-2 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative',
-                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer', selectedCard === 3 ? 'glow' : ''
+                  countDownStatus === 'BET_LOCK' ? 'h-32 cursor-not-allowed' : 'h-32 cursor-pointer',
+                  selectedCard === 3 ? 'glow' : '',
                 )}
-                onClick={() => handleSelection(3)}
+                onClick={() =>
+                  handleSelection({
+                    card: 3,
+                    type: 'NON_SPO',
+                  })
+                }
               >
                 {selectedCard === 3 &&
                   coins.map((coin) => (
@@ -476,10 +577,16 @@ const GameComponent = () => {
               <div className="flex flex-row mx-2">
                 <div
                   id="card-2"
-                  onClick={() => handleSelection(2)}
+                  onClick={() =>
+                    handleSelection({
+                      card: 2,
+                      type: 'SPO',
+                    })
+                  }
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 2 ? 'glow' : ''
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    selectedCard === 2 ? 'glow' : '',
                   )}
                 >
                   {selectedCard === 2 &&
@@ -514,10 +621,16 @@ const GameComponent = () => {
                 </div>
                 <div
                   id="card-5"
-                  onClick={() => handleSelection(5)}
+                  onClick={() =>
+                    handleSelection({
+                      card: 5,
+                      type: 'SPO',
+                    })
+                  }
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 5 ? 'glow' : ''
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    selectedCard === 5 ? 'glow' : '',
                   )}
                 >
                   {selectedCard === 5 &&
@@ -556,9 +669,15 @@ const GameComponent = () => {
                   id="card-6"
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 6 ? 'glow' : ''
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    selectedCard === 6 ? 'glow' : '',
                   )}
-                  onClick={() => handleSelection(6)}
+                  onClick={() =>
+                    handleSelection({
+                      card: 6,
+                      type: 'SPO',
+                    })
+                  }
                 >
                   {selectedCard === 6 &&
                     coins.map((coin) => (
@@ -594,9 +713,15 @@ const GameComponent = () => {
                   id="card-4"
                   className={cn(
                     'w-full  mx-2 h-[8rem] width-1/3 bg-blend-overlay text-white sepecial-bet-container my-2 relative',
-                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '', selectedSPOCard === 4 ? 'glow' : ''
+                    countDownSPOStatus === 'BET_SPO_LOCK' ? ' cursor-not-allowed' : '',
+                    selectedCard === 4 ? 'glow' : '',
                   )}
-                  onClick={() => handleSelection(4)}
+                  onClick={() =>
+                    handleSelection({
+                      card: 4,
+                      type: 'SPO',
+                    })
+                  }
                 >
                   {selectedCard === 4 &&
                     coins.map((coin) => (
@@ -635,8 +760,17 @@ const GameComponent = () => {
         <div className="w-[25%] px-4 flex-col flex justify-end items-end my-20">
           <div
             id="card-10"
-            className={cn("w-full mx-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative", countDownStatus === 'BET_LOCK' ? ' cursor-not-allowed' : '', selectedCard === 10 ? 'glow' : '')}
-            onClick={() => handleSelection(10)}
+            className={cn(
+              'w-full mx-4 flex justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative',
+              countDownStatus === 'BET_LOCK' ? ' cursor-not-allowed' : '',
+              selectedCard === 10 ? 'glow' : '',
+            )}
+            onClick={() =>
+              handleSelection({
+                card: 10,
+                type: 'NON_SPO',
+              })
+            }
           >
             {selectedCard === 9 &&
               coins.map((coin) => (
@@ -665,8 +799,17 @@ const GameComponent = () => {
           </div>{' '}
           <div
             id="card-9"
-            className={cn("w-full mx-4 flex my-4 justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative", countDownStatus === 'BET_LOCK' ? ' cursor-not-allowed' : '', selectedCard === 9 ? 'glow' : '')}
-            onClick={() => handleSelection(9)}
+            className={cn(
+              'w-full mx-4 flex my-4 justify-center items-center  h-1/3 width-1/3 text-white text-center odd-container relative',
+              countDownStatus === 'BET_LOCK' ? ' cursor-not-allowed' : '',
+              selectedCard === 9 ? 'glow' : '',
+            )}
+            onClick={() =>
+              handleSelection({
+                card: 9,
+                type: 'NON_SPO',
+              })
+            }
           >
             {selectedCard === 9 &&
               coins.map((coin) => (
@@ -751,7 +894,12 @@ const GameComponent = () => {
               Deposit
             </Button>
           </DepositDiaglog>
-          <Button size={'lg'} variant={'default'} className="mx-2">
+          <Button
+            size={'lg'}
+            variant={'default'}
+            className="mx-2"
+            onClick={() => (roomOwner ? distributeamount({ roomId }) : handleMakeSpo())}
+          >
             {roomOwner === true ? 'Distrubute Coins' : 'Request for SPO'}
           </Button>
           <Button size={'lg'} variant={'default'} className="mx-2" onClick={() => ConfirmBet()}>
@@ -761,13 +909,22 @@ const GameComponent = () => {
             size={'lg'}
             variant={'default'}
             className="mx-2"
-            disabled={countDownStatus === 'BET_LOCK' || 'CONFIRMED'}
+            disabled={countDownStatus === 'BET_LOCK' || countDownStatus === 'BET_SPO_LOCK'}
             onClick={() => resetBet()}
           >
             Rebet
           </Button>
         </div>
       </div>
+      {winnermodal && (
+        <>
+          <ConfettiExplosion force={0.8} duration={3000} particleCount={1500} width={1600} className='w-full h-full'/>
+          <WinnersModal open={winnermodal} onClose={() => {
+            setwinnerModal(false)
+            resetBet()
+          }} winners={roundDetails?.message?.data?.winners} />
+        </>
+      )}
     </div>
   );
 };
@@ -792,7 +949,35 @@ const CoinChips = ({
     </Hint>
   );
 };
-
+const WinnersModal = ({ winners, open, onClose }: { open: boolean; winners: any[]; onClose: () => void }) => {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+      <DialogHeader>
+        <DialogTitle className='flex items-center '><TrophyIcon size={30} className='px-1'/> Winners of this Round</DialogTitle>
+      </DialogHeader>
+        {/* <div className="flex flex-col"> */}
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Player</TableCell>
+              <TableCell>Amount</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {winners?.map((winner) => (
+              <TableRow key={winner._id}>
+                <TableCell>{winner.userId.telegramusername}</TableCell>
+                <TableCell>{winner.winnings}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {/* </div> */}
+      </DialogContent>
+    </Dialog>
+  );
+};
 export const Route = createLazyFileRoute('/play/$roomId')({
   component: GameComponent,
 });

@@ -45,6 +45,10 @@ export const roomRequestStatus = async (payload: { roomId: string; userId: strin
   return data;
 };
 
+export const distributeBalance = async (payload: { roomId: string }) => {
+  const { data } = await http.patch(`/gameroom/distributeBalance/${payload.roomId}`);
+  return data;
+}
 
 export const createDealerLive = async (payload: { roomId: string }) => {
   const { data } = await http.post(`/livestream/room/`, { roomId: payload.roomId });

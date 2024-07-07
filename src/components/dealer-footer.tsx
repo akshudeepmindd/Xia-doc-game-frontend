@@ -1,38 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Camera, CameraOff, Mic, MicOff, PlaySquare, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import useProfile from '@/hooks/useProfile';
-import { socket } from '@/services';
-import { SOCKET_ROUND_START } from '@/lib/constants';
 import { useMutation } from '@tanstack/react-query';
 import { createDealerLive } from '@/services/room';
-import { useParams } from '@tanstack/react-router';
-import { useMeeting } from '@videosdk.live/react-sdk';
 import { addRound, updateRound } from '@/services/round';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
-import { useState } from 'react';
+import { useMeeting } from '@videosdk.live/react-sdk';
+import { useEffect } from 'react';
+
 const config: any = {
-  // Layout Configuration
   layout: {
-    type: 'SPOTLIGHT', // "SPOTLIGHT" | "SIDEBAR",  Default : "GRID"
-    priority: 'SPEAKER', // "PIN", Default : "SPEAKER"
-    gridSize: 4, // MAX : 25
+    type: 'SPOTLIGHT',
+    priority: 'SPEAKER',
+    gridSize: 4,
   },
-
-  // Theme of livestream
-  theme: 'DARK', //  "LIGHT" | "DEFAULT"
-
-  // `mode` is used to either interactive livestream video & audio both or only audio.
-  mode: 'video-and-audio', // "audio", Default : "video-and-audio"
-
-  // Quality of livestream and is only applicable to `video-and-audio` type mode.
-  quality: 'high', // "low" | "med",  Default : "med"
-
-  // This mode refers to orientation of recording.
-  // landscape : Livestream the meeting in horizontally
-  // portrait : Livestream the meeting in vertically (Best for mobile view)
+  theme: 'DARK',
+  mode: 'video-and-audio',
+  quality: 'high',
 };
+
 const DealerFooter = ({
   setMeetingId,
   setStartLive,
@@ -45,6 +31,7 @@ const DealerFooter = ({
   resultDeclare,
   roundStatus,
   countdown,
+  setSelectResult,
   setCountDown,
 }: {
   setMeetingId: (meetingId: string) => void;
@@ -60,9 +47,15 @@ const DealerFooter = ({
   roundStatus: 'inprogress' | 'completed' | 'roundend';
   countdown: number;
   setCountDown: (countdown: number) => void;
+  setSelectResult: (selectResult: string) => void;
 }) => {
   const { username } = useProfile();
-  const { startHls, stopHls, toggleWebcam } = useMeeting();
+  const { startHls, stopHls, toggleWebcam, hlsState } = useMeeting();
+
+  useEffect(() => {
+    console.log('useMeeting properties:', { startHls, stopHls, toggleWebcam, hlsState });
+  }, []);
+
   const isLive = true;
   const isMuted = true;
   const isCameraOn = true;
@@ -70,9 +63,11 @@ const DealerFooter = ({
   const createRound = useMutation({
     mutationFn: addRound,
   });
+
   const updateRoundStatus = useMutation({
     mutationFn: updateRound,
   });
+
   const handleRoundStart = () => {
     let roundId = 1;
     if (round && round?.roundNumber) {
@@ -81,31 +76,45 @@ const DealerFooter = ({
 
     return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId } });
   };
+
   const handleUpdateRoundStatus = () => {
     const roundId = round?.data?._id;
+    setSelectResult('');
     return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
   };
+
   const progressLive = useMutation({
     mutationFn: createDealerLive,
     onSuccess: (data) => {
       setMeetingId(data.message.roomId);
       setAuthToken(data.message.token);
       setStartLive(true);
-      // startHls(); // Commented out the startHls() function call
+      console.log('Dealer live created, meeting ID:', data.message.roomId);
     },
   });
 
-  const handleLive = () => {
-    if (!startLive && meetingId == '') {
-      startHls(config);
-    } else if (startLive) {
-      setStartLive(false);
-      stopHls();
-    } else {
-      setStartLive(true);
-      startHls(config);
+  const handleLive = async () => {
+    try {
+      if (!startLive && meetingId === '') {
+        await startHls(config);
+        console.log('HLS started');
+      } else if (startLive) {
+        await stopHls();
+        console.log('HLS stopped');
+        setStartLive(false);
+      } else {
+        await startHls(config);
+        console.log('HLS started');
+        setStartLive(true);
+      }
+    } catch (error) {
+      console.error('Error handling live state:', error);
     }
   };
+
+  useEffect(() => {
+    console.log('HLS state changed:', hlsState);
+  }, [hlsState]);
 
   return (
     <footer className="flex-1 bg-primary flex items-center justify-between px-8">
@@ -131,7 +140,9 @@ const DealerFooter = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => (!startLive && meetingId == '' ? progressLive.mutate({ roomId: roomId ?? '' }) : handleLive())}
+          onClick={() =>
+            !startLive && meetingId === '' ? progressLive.mutate({ roomId: roomId ?? '' }) : handleLive()
+          }
         >
           <PlaySquare className="w-4 h-4 mr-1" />
           {startLive ? 'Stop live' : 'Start live'}
