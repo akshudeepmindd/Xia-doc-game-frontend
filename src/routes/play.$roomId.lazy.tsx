@@ -135,12 +135,12 @@ const GameComponent = () => {
 
   useEffect(() => {
     if (
-      roundDetails?.message?.data?.roundStatus === 'completed' &&
-      localStorage.getItem('roundstatus') === 'completed'
+      roundDetails?.message?.data?.roundStatus === 'completed'
+      && roundDetails?.message?.data?.roundResult
     ) {
       setwinnerModal(true);
     }
-  }, [roundDetails?.message?.data?.roundStatus]);
+  }, [roundDetails?.message?.data?.roundStatus, localStorage.getItem('roundstatus')]);
   useEffect(() => {
     if (countdown < 0 && roundDetails?.message?.data?.roundStatus === 'roundend') {
       setCoins([]);
@@ -923,7 +923,7 @@ const GameComponent = () => {
       </div>
       {winnermodal && (
         <>
-          <ConfettiExplosion force={0.8} duration={3000} particleCount={1500} width={1600} className='w-full h-full'/>
+         
           <WinnersModal open={winnermodal} onClose={() => {
             setwinnerModal(false)
             resetBet()
@@ -958,9 +958,12 @@ const WinnersModal = ({ winners, open, onClose }: { open: boolean; winners: any[
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
-      <DialogHeader>
-        <DialogTitle className='flex items-center '><TrophyIcon size={30} className='px-1'/> Winners of this Round</DialogTitle>
-      </DialogHeader>
+        <ConfettiExplosion force={0.8} duration={3000} particleCount={1500} width={1600} height={1000} />
+        <DialogHeader>
+          <DialogTitle className="flex items-center ">
+            <TrophyIcon size={30} className="px-1" /> Winners of this Round
+          </DialogTitle>
+        </DialogHeader>
         {/* <div className="flex flex-col"> */}
         <Table>
           <TableHead>
