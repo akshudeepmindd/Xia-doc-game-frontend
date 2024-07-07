@@ -134,7 +134,11 @@ const GameComponent = () => {
   }, [roundDetails?.message?.data?.createdAt]);
 
   useEffect(() => {
-    if (countdown === 0 && roundDetails?.message?.data?.roundStatus === 'completed') {
+    if (
+      countdown === 0 &&
+      roundDetails?.message?.data?.roundStatus === 'completed' &&
+      localStorage.getItem('roundstatus') === 'completed'
+    ) {
       setwinnerModal(true);
     }
   }, [roundDetails?.message?.data?.roundStatus]);
@@ -149,6 +153,7 @@ const GameComponent = () => {
     if (countdown == 45 && roundDetails?.message?.data?.roundStatus === 'roundStarted') {
       toast.success('Round Started');
     }
+    localStorage.setItem('roundstatus', roundDetails?.message?.data?.roundStatus);
   }, [countdown, roundDetails?.message?.data?.roundStatus]);
   const ConfirmBet = () => {
     if (userDetails?.user?.balance < currentBet) {
@@ -266,6 +271,7 @@ const GameComponent = () => {
     setCurrentBet(0);
     setCurrentSelectedAmount(0);
     setUserBet(0);
+    localStorage.removeItem('roundstatus');
   };
   const handleSelection = ({ card, type }: { card: number; type: string }) => {
     if (countDownSPOStatus === 'BET_SPO' && (card === 6 || card === 4 || card === 5 || card === 2)) {
@@ -318,7 +324,7 @@ const GameComponent = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  console.log(userDetails);
+
   return (
     <div className="flex flex-col h-full bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
