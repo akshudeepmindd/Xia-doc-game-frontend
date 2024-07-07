@@ -170,7 +170,7 @@ const DealerComponent = () => {
                   />
                 </MeetingProvider>
               )}
-            </>,
+            </>
           )}
       </div>
     </div>
