@@ -135,7 +135,6 @@ const GameComponent = () => {
 
   useEffect(() => {
     if (
-      countdown === 0 &&
       roundDetails?.message?.data?.roundStatus === 'completed' &&
       localStorage.getItem('roundstatus') === 'completed'
     ) {
