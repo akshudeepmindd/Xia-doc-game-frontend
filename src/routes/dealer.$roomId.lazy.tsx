@@ -187,10 +187,16 @@ export const WhiteCircle = () => {
 
 const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
   return (
-    <div className="w-1/4 h-72 flex flex-col gap-y-6" >
+    <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Even</h1>
       <div className="grid grid-cols-2 gap-6">
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_WHITE ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.FOUR_WHITE)}>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.FOUR_WHITE ? 'bg-white/10 glow' : '',
+          )}
+          onClick={() => setSelectResult(BetType.FOUR_WHITE)}
+        >
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 4</span>
             <span className="text-background">Red 0</span>
@@ -202,7 +208,13 @@ const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: s
             <WhiteCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_BLACK ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.FOUR_BLACK)}>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.FOUR_BLACK ? 'bg-white/10 glow' : '',
+          )}
+          onClick={() => setSelectResult(BetType.FOUR_BLACK)}
+        >
           <h3 className="flex items-center justify-around w-full">
             <span className="text-background">White 0</span>
             <span className="text-background">Red 4</span>
@@ -214,10 +226,16 @@ const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: s
             <RedCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.FOUR_BLACK ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.TWO_BLACK_TWO_WHITE ? 'bg-white/10 glow' : '',
+          )}
+          onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}
+        >
           <h3 className="flex items-center justify-around w-full">
-            <span className="text-background">White 0</span>
-            <span className="text-background">Red 4</span>
+            <span className="text-background">White 2</span>
+            <span className="text-background">Red 2</span>
           </h3>
           <div className="w-full flex items-center justify-around">
             <RedCircle />
@@ -226,13 +244,17 @@ const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: s
             <WhiteCircle />
           </div>
         </div>
-        <div className={cn("flex flex-col justify-around w-full border border-background h-24 rounded p-2", selectResult === BetType.EVEN ? "bg-white/10 glow" : "")} onClick={() => setSelectResult(BetType.EVEN)}>
-          <div className="w-full flex items-center justify-around 4xl text-background">
-            EVEN
-          </div>
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            selectResult === BetType.EVEN ? 'bg-white/10 glow' : '',
+          )}
+          onClick={() => setSelectResult(BetType.EVEN)}
+        >
+          <div className="w-full flex items-center justify-around 4xl text-background">EVEN</div>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 
