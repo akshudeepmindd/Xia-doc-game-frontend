@@ -80,7 +80,7 @@ const DealerFooter = ({
   const handleUpdateRoundStatus = () => {
     const roundId = round?.data?._id;
     setSelectResult('');
-    setCountDown(0);
+
     return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
   };
 

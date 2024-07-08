@@ -1,5 +1,6 @@
 import LoginDialog from '@/components/login-dialog';
 import Logo from '@/components/logo';
+import Register from '@/components/register-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import useProfile from '@/hooks/useProfile';
 import { setAuthToken } from '@/services';
@@ -23,7 +24,9 @@ const BaseLayoutComponent = () => {
                     Login
                   </Button>
                 </LoginDialog>
-                <Button size="sm">Register</Button>
+                <Register>
+                  <Button size="sm">Register</Button>
+                </Register>
               </>
             ) : (
               <>
@@ -31,7 +34,11 @@ const BaseLayoutComponent = () => {
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
-                {roomOwner && <Link to="/room" className={buttonVariants({ size: 'sm' })}>Rooms</Link>}
+                {roomOwner && (
+                  <Link to="/room" className={buttonVariants({ size: 'sm' })}>
+                    Rooms
+                  </Link>
+                )}
               </>
             )}
           </div>

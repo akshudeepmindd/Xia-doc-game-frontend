@@ -12,7 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { setAuthToken, setAuthUser } from '@/services';
 import { useNavigate } from '@tanstack/react-router';
 
-interface LoginDialogProps {
+interface RegisterProps {
   children: ReactNode;
 }
 
@@ -21,7 +21,7 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-const LoginDialog = ({ children }: LoginDialogProps) => {
+const Register = ({ children }: RegisterProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -43,8 +43,8 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
         username: response.message.user.telegramusername,
         roomOwner: response.message.user.roomowner,
       });
-      navigate({ to: response.message.user.roomowner ? '/room' : '/' });
-      toast.success('Login successful');
+      navigate({ to: '/' });
+      toast.success('Register successfully. Please login to continue');
     } catch (error: unknown | any) {
       toast.error(error.message || 'Failed to login');
     } finally {
@@ -59,8 +59,8 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Login</DialogTitle>
-          <DialogDescription>Enter your details to login to your account</DialogDescription>
+          <DialogTitle>Create an Account</DialogTitle>
+          <DialogDescription>Enter your details to create your account</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -98,7 +98,7 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
                   Please wait
                 </span>
               ) : (
-                'Login'
+                'Register'
               )}
             </Button>
           </form>
@@ -108,4 +108,4 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
   );
 };
 
-export default LoginDialog;
+export default Register;

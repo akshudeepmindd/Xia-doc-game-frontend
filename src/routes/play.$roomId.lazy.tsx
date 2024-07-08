@@ -235,7 +235,7 @@ const GameComponent = () => {
       );
       spocardElement?.classList.add('glow');
       cardElement?.classList.add('glow');
-    } else if (roundDetails?.message?.data?.roundStatus === 'roundend') {
+    } else if (roundDetails?.message?.data?.roundStatus === 'resultdeclare') {
       resetBet();
       const cardElement = document.getElementById(
         `card-${getBetTypeByCardName(roundDetails?.message?.data?.roundResult)}`,

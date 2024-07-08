@@ -4,10 +4,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import useProfile from '@/hooks/useProfile';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getRooms, roomJoinRequest, roomRequestStatus } from '@/services/room';
-import { GET_REQUEST_STATUS, GET_ROOM } from '@/lib/constants';
+import { GET_REQUEST_STATUS, GET_ROOM, USER_PROFILE } from '@/lib/constants';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
+import { userProfile } from '@/services/auth';
 
 const GamesGrid = () => {
   const { userId } = useProfile();
@@ -26,20 +27,30 @@ const GamesGrid = () => {
     refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
-
+  const { isLoading: isLoading3, data: userDetail } = useQuery({
+    queryKey: [USER_PROFILE],
+    queryFn: () => userProfile(userId),
+    enabled: !userId,
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+  });
   const joinRequest = useMutation({
     mutationFn: roomJoinRequest,
   });
-
+  // console.log(userDetail, 'userDetail');
   useEffect(() => {
-    if (!isLoading2) {
-      if (requestStatus?.status === 'ACCEPTED') {
-        navigate({ to: `/play/${roomDetail.message._id}` });
-      } else if (requestStatus?.status === 'REJECTED') {
-        toast.error('Your request has been rejected. Please try again later');
+    if (!isLoading2 && !isLoading3) {
+      if (userDetail?.dealer) {
+        navigate({ to: `/dealer/${roomDetail.message._id}` });
+      } else {
+        if (requestStatus?.status === 'ACCEPTED') {
+          navigate({ to: `/play/${roomDetail.message._id}` });
+        } else if (requestStatus?.status === 'REJECTED') {
+          toast.error('Your request has been rejected. Please try again later');
+        }
       }
     }
-  }, [requestStatus?.status, isLoading2]);
+  }, [requestStatus?.status, isLoading2, isLoading3]);
 
   if (isLoading) return <>Loading...</>;
 
