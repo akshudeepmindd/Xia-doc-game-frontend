@@ -12,7 +12,7 @@ import { SOCKET_ROUND_START } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { socket } from '@/services';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { getRoundDetails, placeBetService } from '@/services/round';
+import { getRoundDetails, placeBetService, updateRound } from '@/services/round';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
 import Hint from '@/components/hint';
@@ -22,7 +22,14 @@ import { distribute, gsap } from 'gsap';
 import DepositDiaglog from '@/components/Deposit-dialog';
 import { updateUser, userProfile } from '@/services/auth';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
 const getBetTypeBySelectionCard = (selectionCard: number) => {
@@ -134,13 +141,10 @@ const GameComponent = () => {
   }, [roundDetails?.message?.data?.createdAt]);
 
   useEffect(() => {
-    if (
-      roundDetails?.message?.data?.roundStatus === 'completed'
-      && roundDetails?.message?.data?.roundResult
-    ) {
+    if (roundDetails?.message?.data?.roundStatus === 'resultdeclare' && roundDetails?.message?.data?.roundResult) {
       setwinnerModal(true);
     }
-  }, [roundDetails?.message?.data?.roundStatus, localStorage.getItem('roundstatus')]);
+  }, [roundDetails?.message?.data?.roundStatus]);
   useEffect(() => {
     if (countdown < 0 && roundDetails?.message?.data?.roundStatus === 'roundend') {
       setCoins([]);
@@ -260,6 +264,9 @@ const GameComponent = () => {
   });
   const { mutate: updateUserbalance } = useMutation({
     mutationFn: updateUser,
+  });
+  const { mutate: updateRoundStatus } = useMutation({
+    mutationFn: updateRound,
   });
   const resetBet = () => {
     const cardElement = document.getElementById(`card-${selectedCard}`);
@@ -923,11 +930,15 @@ const GameComponent = () => {
       </div>
       {winnermodal && (
         <>
-         
-          <WinnersModal open={winnermodal} onClose={() => {
-            setwinnerModal(false)
-            resetBet()
-          }} winners={roundDetails?.message?.data?.winners} />
+          <WinnersModal
+            open={winnermodal}
+            onClose={() => {
+              setwinnerModal(false);
+              resetBet();
+              updateRoundStatus({ roundId: roundDetails?.message?.data?._id, round: { roundStatus: 'completed' } });
+            }}
+            winners={roundDetails?.message?.data?.winners}
+          />
         </>
       )}
     </div>
