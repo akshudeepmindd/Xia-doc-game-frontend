@@ -73,13 +73,14 @@ const DealerFooter = ({
     if (round && round?.roundNumber) {
       roundId += round.roundNumber;
     }
-
+    setSelectResult('');
     return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId } });
   };
 
   const handleUpdateRoundStatus = () => {
     const roundId = round?.data?._id;
     setSelectResult('');
+    setCountDown(0);
     return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
   };
 
