@@ -24,6 +24,7 @@ import useProfile from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { updateUser } from '@/services/auth';
 
 interface NavbarProps {
   roomId: string | undefined;
@@ -33,6 +34,14 @@ interface NavbarProps {
 interface Player {
   telegramusername: string;
   _id: string;
+}
+
+interface Deposit {
+  userId: {
+    _id: string;
+    telegramusername: string;
+  };
+  deposit: number;
 }
 
 export default function Navbar({ roomId, isDealer }: NavbarProps) {
@@ -71,21 +80,31 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
   const acceptUser = useMutation({
     mutationFn: roomJoinRequestAccept,
   });
-
   const makeDealer = useMutation({
     mutationFn: updateRoom,
   });
+  const userWalletUpdate = useMutation({
+    mutationFn: updateUser,
+  });
+  const handleAccept = (userid: string, amount: number) => {
+    const updatedDepositRequest = roomDetails.depositeRequest.filter(
+      (deposit: { userId: { _id: string; telegramusername: string }; deposit: number }) =>
+        deposit.userId._id !== userid,
+    );
+    makeDealer.mutate({ id: roomDetails._id, game: { depositeRequest: updatedDepositRequest } });
+    userWalletUpdate.mutate({ userId: userid, body: { balance: amount, depositRequest: true } });
+  };
 
   const handleMakeSpo = () => {
     const players = roomDetails.players;
-    const requestedPlayer = players.find((player: { _id: string }) => player._id === userId)
+    const requestedPlayer = players.find((player: { _id: string }) => player._id === userId);
 
-    console.log("Players", players, requestedPlayer, userId)
+    console.log('Players', players, requestedPlayer, userId);
     const spoRequested = [...roomDetails.SpoRequested];
     spoRequested.push(requestedPlayer._id);
 
-    makeDealer.mutate({ id: roomDetails._id, game: { SpoRequested: spoRequested } })
-  }
+    makeDealer.mutate({ id: roomDetails._id, game: { SpoRequested: spoRequested } });
+  };
 
   const handleAcceptSPO = (userId: string) => {
     const spoRequested = roomDetails.SpoRequested;
@@ -96,7 +115,7 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
 
     const spoAccepted = requestedPlayer._id;
     makeDealer.mutate({ id: roomDetails._id, game: { SpoAccepted: spoAccepted, SpoRequested: newSpoRequested } });
-  }
+  };
 
   if (isLoading) return <>Loading...</>;
 
@@ -106,7 +125,7 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
         {isDealer && (
           <Hint content="Info">
             <Button size="icon" variant={'ghost'} className="w-8 h-8">
-              <img src="/Signal.svg" />
+              <img src="/Info.svg" />
             </Button>
           </Hint>
         )}
@@ -117,9 +136,16 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
         </Hint>
         <Hint content="Your Chats">
           <Button size="icon" variant={'ghost'} className="w-8 h-8">
-            <img src="/members.svg" />
+            <img src="/chat.svg" />
           </Button>
         </Hint>
+        {/* {roomOwner && (
+          <Hint content="Deposit">
+            <Button size="icon" variant={'ghost'} className="w-8 h-8">
+              <img src="/Deposit.svg" />
+            </Button>
+          </Hint>
+        )} */}
         {isDealer && (
           <Hint content="Tip">
             <Button size="icon" variant={'outline'} className="w-8 h-8">
@@ -150,6 +176,48 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
                                     size={'icon'}
                                     className="h-8 w-8 bg-green-400 hover:bg-green-200"
                                     onClick={() => acceptUser.mutate({ roomId: roomDetails._id, userId: player._id })}
+                                  >
+                                    <Check size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                                <Hint content="Reject">
+                                  <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
+                                    <X size={18} className="h-4 w-4" />
+                                  </Button>
+                                </Hint>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>No Users Have Requested</TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Hint>
+            <Hint content="Deposit Requested">
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button size="icon" variant={'ghost'} className="w-8 h-8">
+                    <img src="/Deposit.svg" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <Table>
+                    <TableBody>
+                      {!isEmpty(roomDetails.depositeRequest) ? (
+                        roomDetails.depositeRequest.map((player: Deposit, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>{player?.userId?.telegramusername ?? 'Username'}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Hint content="Accept">
+                                  <Button
+                                    size={'icon'}
+                                    className="h-8 w-8 bg-green-400 hover:bg-green-200"
+                                    onClick={() => handleAccept(player?.userId?._id, player?.deposit)}
                                   >
                                     <Check size={18} className="h-4 w-4" />
                                   </Button>

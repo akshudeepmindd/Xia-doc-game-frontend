@@ -10,19 +10,26 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { updateUser } from '@/services/auth';
 import useProfile from '@/hooks/useProfile';
+import { updateRoom } from '@/services/room';
+import { useMutation } from '@tanstack/react-query';
 
-export default function DepositDiaglog({ children }: { children: React.ReactNode }) {
+export default function DepositDiaglog({ children, roomId }: { children: React.ReactNode; roomId: string }) {
   const { userId } = useProfile();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(0);
+
+  const { mutate: depositeRequest } = useMutation({
+    mutationFn: updateRoom,
+  });
   const handleSubmit = async (e) => {
-    console.log(e, 'E');
     e.preventDefault();
     try {
       setLoading(true);
-      await updateUser({ userId, body: { balance: amount } });
-      toast.success('Deposit successful');
+      const depositeRequests = [];
+      depositeRequests.push({ userId, deposit: amount });
+      await depositeRequest({ id: roomId, game: { depositeRequest: depositeRequests } });
+      toast.success('Deposit Request sent for Approval');
     } catch (error: unknown | any) {
       toast.error(error.message || 'Failed to login');
     } finally {

@@ -901,7 +901,7 @@ const GameComponent = () => {
           />
         </div>
         <div className="px-4 pl-4">
-          <DepositDiaglog>
+          <DepositDiaglog roomId={roomId}>
             <Button size={'lg'} variant={'destructive'}>
               Deposit
             </Button>
@@ -928,7 +928,7 @@ const GameComponent = () => {
           </Button>
         </div>
       </div>
-      {winnermodal && (
+      {winnermodal && roomOwner && (
         <>
           <WinnersModal
             open={winnermodal}
