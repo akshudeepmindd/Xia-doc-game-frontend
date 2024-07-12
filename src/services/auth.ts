@@ -6,7 +6,7 @@ export const userLoginService = async (payload: { telegramusername: string; pass
 };
 
 
-export const updateUser = async (payload: { userId: string; body: { balance: number } }) => {
+export const updateUser = async (payload: { userId: string; body: { balance: number, depositRequest: boolean } }) => {
   const { data } = await http.patch(`User/update/${payload.userId}`, payload.body);
   return data;
 };

@@ -6,6 +6,8 @@ import './index.css';
 import { routeTree } from './routeTree.gen';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 
+import { BSCTestnet, Config, DAppProvider } from '@usedapp/core';
+
 // Create a new router instance
 const router = createRouter({ routeTree });
 
@@ -16,8 +18,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+const config: Config = {
+  readOnlyChainId: BSCTestnet.chainId,
+  readOnlyUrls: {
+    [BSCTestnet.chainId]: BSCTestnet.rpcUrl || ""
+  }
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <DAppProvider config={config}>
+      <RouterProvider router={router} />
+    </DAppProvider>
   </React.StrictMode>,
 );
