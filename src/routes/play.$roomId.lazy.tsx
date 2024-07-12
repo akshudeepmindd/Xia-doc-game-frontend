@@ -870,6 +870,8 @@ const GameComponent = () => {
               addNewCoin(selectedCard, 500000);
               setCurrentSelectedAmount(500000);
               setCurrentBet((prevBet) => prevBet + 500000);
+
+              ConfirmBet();
             }}
           />
           <CoinChips
@@ -879,6 +881,7 @@ const GameComponent = () => {
               addNewCoin(selectedCard, 1000000);
               setCurrentSelectedAmount(1000000);
               setCurrentBet((prevBet) => prevBet + 1000000);
+              ConfirmBet();
             }}
           />
           <CoinChips
@@ -888,6 +891,7 @@ const GameComponent = () => {
               addNewCoin(selectedCard, 2000000);
               setCurrentSelectedAmount(2000000);
               setCurrentBet((prevBet) => prevBet + 2000000);
+              ConfirmBet();
             }}
           />
           <CoinChips
@@ -897,6 +901,7 @@ const GameComponent = () => {
               addNewCoin(selectedCard, 5000000);
               setCurrentSelectedAmount(5000000);
               setCurrentBet((prevBet) => prevBet + 5000000);
+              ConfirmBet();
             }}
           />
         </div>
@@ -914,9 +919,9 @@ const GameComponent = () => {
           >
             {roomOwner === true ? 'Distrubute Coins' : 'Request for SPO'}
           </Button>
-          <Button size={'lg'} variant={'default'} className="mx-2" onClick={() => ConfirmBet()}>
+          {/* <Button size={'lg'} variant={'default'} className="mx-2" onClick={() => ConfirmBet()}>
             Confirm Bet
-          </Button>
+          </Button> */}
           <Button
             size={'lg'}
             variant={'default'}

@@ -4,7 +4,17 @@ export const getGamebyOwnerService = async (id: string) => {
   const { data } = await http.get(`/gameroom/getbyowner/${id}`);
   return data;
 };
-
+export const createRoom = async (body: {
+        name:string,
+        password:string,
+        startTime:string,
+        endTime:string,
+        status:string,
+        roomType:string,
+        owner: string
+    }) =>{
+      const {data} = await http.get(`/gameroom/create`,{...body})
+    }
 export const getRoomDetailService = async (id: string) => {
   const { data } = await http.get(`/gameroom/getdetails/${id}`);
   return data;
