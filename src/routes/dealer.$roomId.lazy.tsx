@@ -149,7 +149,7 @@ const DealerComponent = () => {
                     debugMode: false,
                   }}
                   token={
-                   roomDetails?.streamingToken
+                    roomDetails?.streamingToken
                   }
                   joinWithoutUserInteraction
                 >
@@ -167,6 +167,7 @@ const DealerComponent = () => {
                     resultDeclare={handleDeclareResult}
                     roundStatus={roundDetails?.message?.data?.roundStatus}
                     countdown={countdown}
+                    setCountDown={setCountdown}
                   />
                 </MeetingProvider>
               )}
@@ -185,7 +186,7 @@ export const WhiteCircle = () => {
   return <div className="w-8 h-8 bg-white rounded-full customBorder box-border"></div>;
 };
 
-const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
+const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: (result: string) => void }) => {
   return (
     <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Even</h1>
@@ -258,7 +259,7 @@ const EvenSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: s
   );
 };
 
-const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: Dispatch<SetStateAction<string | undefined>> }) => {
+const OddSelectionBoard = ({ selectResult, setSelectResult }: { selectResult: string | undefined, setSelectResult: (result: string) => void }) => {
   return (
     <div className="w-1/4 h-72 flex flex-col gap-y-6">
       <h1 className="text-background text-2xl font-medium text-center">Odd</h1>
