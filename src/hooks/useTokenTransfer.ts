@@ -1,14 +1,18 @@
 import { UsdtContract } from '@/contracts/UsdtContract'
-import { useConnector, useContractFunction } from '@usedapp/core'
+import { useCall, useConnector, useContractFunction } from '@usedapp/core'
 import { ethers } from 'ethers';
-import React, { useMemo, useState } from 'react'
+import { isEmpty } from 'lodash';
+import { useMemo, useState } from 'react'
 
-const useTokenTransfer = ({ onSuccess, onError }: { onSuccess?: () => void, onError?: (message: string) => void }): { sendToken: (recipient: string, amount: number) => Promise<void>, isPending: boolean } => {
+const useTokenTransfer = ({ onSuccess, onError }: { onSuccess?: (response?: any) => void, onError?: (message: string) => void }): { sendToken: (recipient: string, amount: number, responseBody?: any) => Promise<void>, isPending: boolean } => {
     const { account } = useConnector();
+    const [response, setResponse] = useState();
     const [status, setStatus] = useState<"PENDING" | "SUCCESS" | "ERROR">();
     const [isPending, setIsPending] = useState<boolean>(false);
     const { send, state } = useContractFunction(UsdtContract, "transferFrom", { transactionName: "Transfer" })
-    const { send: allowance, state: allowanceState } = useContractFunction(UsdtContract, "approve", { transactionName: "Transfer" })
+    const { send: approve } = useContractFunction(UsdtContract, "approve", { transactionName: "Transfer" })
+
+    const getAllowance = useCall({ contract: UsdtContract, method: "allowance", args: [account ? account : "", UsdtContract.address] })
 
     useMemo(() => {
         if (state.status === "PendingSignature") {
@@ -30,7 +34,7 @@ const useTokenTransfer = ({ onSuccess, onError }: { onSuccess?: () => void, onEr
             setIsPending(false);
         }
         if (status === "SUCCESS" && onSuccess) {
-            onSuccess();
+            onSuccess(response);
             setIsPending(false);
         }
         if (status === "PENDING") {
@@ -38,10 +42,13 @@ const useTokenTransfer = ({ onSuccess, onError }: { onSuccess?: () => void, onEr
         }
     }, [status])
 
-    const sendToken = async (recipient: string, amount: number) => {
+    const sendToken = async (recipient: string, amount: number, responseBody?: any) => {
         if (account) {
             setIsPending(true);
-            await allowance(account, ethers.utils.parseEther((amount * 1000).toString()))
+            setResponse(responseBody)
+            if (!isEmpty(getAllowance?.value) && (+ethers.utils.formatEther(getAllowance?.value?.[0] ?? 1000)) > amount) {
+                await approve(account, ethers.utils.parseEther((amount * 1000).toString()))
+            }
             await send(account, recipient, ethers.utils.parseEther(amount.toString()));
         }
 

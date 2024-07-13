@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { MouseEventHandler, useState } from 'react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { updateUser } from '@/services/auth';
@@ -13,7 +13,7 @@ import useProfile from '@/hooks/useProfile';
 import { updateRoom } from '@/services/room';
 import { useMutation } from '@tanstack/react-query';
 
-export default function DepositDiaglog({ children, roomId }: { children: React.ReactNode; roomId: string }) {
+export default function DepositDiaglog({ children, roomId }: { children: React.ReactNode; roomId: string | undefined }) {
   const { userId } = useProfile();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -22,8 +22,7 @@ export default function DepositDiaglog({ children, roomId }: { children: React.R
   const { mutate: depositeRequest } = useMutation({
     mutationFn: updateRoom,
   });
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     try {
       setLoading(true);
       const depositeRequests = [];
@@ -47,7 +46,7 @@ export default function DepositDiaglog({ children, roomId }: { children: React.R
         </DialogHeader>
 
         <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-        <Button onClick={(e) => handleSubmit(e)} className="w-full" disabled={loading}>
+        <Button onClick={() => handleSubmit()} className="w-full" disabled={loading}>
           {loading ? (
             <span className="flex items-center gap-x-1">
               <Loader2 className="w-4 h-4 animate-spin" />

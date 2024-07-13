@@ -9,18 +9,18 @@ import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group"
-interface BuyRoomProps{
-    children: ReactNode,
-    handleSubmit?: (data: {
-        name:string,
-        password:string,
-        startTime:string,
-        endTime:string,
-        status:string,
-        roomType:string,
-        owner: string
-    }) => void,
-    loading?: boolean
+interface BuyRoomProps {
+  children: ReactNode,
+  handleSubmit?: (data: {
+    name: string,
+    password: string,
+    startTime: string,
+    endTime: string,
+    status: string,
+    roomType: string,
+    owner: string
+  }) => void,
+  loading?: boolean
 }
 
 const buyRoomSchema = z.object({
@@ -32,27 +32,27 @@ const buyRoomSchema = z.object({
   roomType: z.string(),
   owner: z.string()
 
-});
-export default function BuyRoom({children,handleSubmit, loading}:BuyRoomProps){
-    
-    const form = useForm<z.infer<typeof buyRoomSchema>>({
+}).partial();
+export default function BuyRoom({ children, handleSubmit, loading }: BuyRoomProps) {
+
+  const form = useForm<z.infer<typeof buyRoomSchema>>({
     resolver: zodResolver(buyRoomSchema),
     defaultValues: {
       name: '',
       password: '',
     },
   });
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                {children}
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
 
-                <DialogTitle>Buy Room</DialogTitle>
-                </DialogHeader>
-             <Form {...form}>
+          <DialogTitle>Buy Room</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
@@ -100,15 +100,15 @@ export default function BuyRoom({children,handleSubmit, loading}:BuyRoomProps){
                 <FormItem className="relative">
                   <FormLabel>Room Type</FormLabel>
                   <FormControl>
-                   <RadioGroup defaultValue="public" {...field}>
-                    <div className="flex items-center space-x-2">
+                    <RadioGroup defaultValue="public" {...field}>
+                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="public" id="public" />
                         <Label htmlFor="public">Public</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="private" id="private" />
                         <Label htmlFor="private">Private</Label>
-                    </div>
+                      </div>
                     </RadioGroup>
                   </FormControl>
                   <FormMessage className="text-xs" />
@@ -116,18 +116,18 @@ export default function BuyRoom({children,handleSubmit, loading}:BuyRoomProps){
               )}
             />
             {form.getValues('roomType') == "private" && <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem className="relative">
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter password" type="password" {...field} />
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                            </FormItem>
-                        )}
-                        />}
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem className="relative">
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter password" type="password" {...field} />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <span className="flex items-center gap-x-1">
@@ -140,7 +140,7 @@ export default function BuyRoom({children,handleSubmit, loading}:BuyRoomProps){
             </Button>
           </form>
         </Form>
-            </DialogContent>
-        </Dialog>
-    )
+      </DialogContent>
+    </Dialog>
+  )
 }

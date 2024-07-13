@@ -16,7 +16,7 @@ import { getRoundDetails, placeBetService, updateRound } from '@/services/round'
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
 import Hint from '@/components/hint';
-import { CircleDollarSign, TrophyIcon } from 'lucide-react';
+import { AlertCircleIcon, BellDot, CircleDollarSign, TrophyIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { distribute, gsap } from 'gsap';
 import DepositDiaglog from '@/components/Deposit-dialog';
@@ -32,7 +32,8 @@ import {
 } from '../components/ui/dialog';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
-const getBetTypeBySelectionCard = (selectionCard: number) => {
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+const getBetTypeBySelectionCard = (selectionCard: number | undefined) => {
   switch (selectionCard) {
     case 1:
       return 'EVEN';
@@ -188,7 +189,7 @@ const GameComponent = () => {
     }
   }, [countdown]);
 
-  const addNewCoin = (cardId: number, amount: number) => {
+  const addNewCoin = (cardId: number | undefined, amount: number) => {
     const newCoinId = coinId.current++;
     const newCoin = { id: newCoinId, cardId, amount: amount };
 
@@ -197,7 +198,7 @@ const GameComponent = () => {
     setTimeout(() => {
       const newCoinElement = document.getElementById(`coin-${newCoinId}`);
       const cardElement = document.getElementById(`card-${cardId}`);
-      const cardWidth = cardElement?.offsetWidth;
+      const cardWidth = cardElement?.offsetWidth || 150;
       const randomX = Math.random() * (cardWidth - 150); // Ensure coin stays within bounds of the card
 
       gsap.fromTo(
@@ -312,7 +313,6 @@ const GameComponent = () => {
     const players = roomDetails.players;
     const requestedPlayer = players.find((player: { _id: string }) => player._id === userId);
 
-    console.log('Players', players, requestedPlayer, userId);
     const spoRequested = [...roomDetails.SpoRequested];
     spoRequested.push(requestedPlayer._id);
 
@@ -334,13 +334,7 @@ const GameComponent = () => {
   return (
     <div className="flex flex-col h-full bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
-
       <div className="flex flex-row w-full">
-        {/* <img className="h-[calc(100vh-5rem)]" src="/poker-table.png" /> */}
-
-        {/* {countdown > 0 && ( */}
-
-        {/* )} */}
         <div className="flex-col w-3/12">
           <div className="flex justify-between mx-6 my-6 w-full ">
             <div className="flex justify-between flex-col bg-[#D9D9D9] customBorder border-x-4 border-y-4  w-32">
@@ -926,7 +920,7 @@ const GameComponent = () => {
             size={'lg'}
             variant={'default'}
             className="mx-2"
-            disabled={countDownStatus === 'BET_LOCK' || countDownStatus === 'BET_SPO_LOCK'}
+            disabled={countDownStatus === 'BET_LOCK' || countDownSPOStatus === "BET_SPO_LOCK"}
             onClick={() => resetBet()}
           >
             Rebet
@@ -961,7 +955,7 @@ const CoinChips = ({
 }) => {
   return (
     <Hint content={`${amount} k`}>
-      <div className={cn('w-10 h-10 relative', className)} onClick={() => handleCoin()}>
+      <div className={cn('w-10 h-10 relative', className)} onClick={handleCoin}>
         <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[56%] text-[.5rem] font-semibold font-mono">
           {amount}K
         </span>
@@ -970,6 +964,7 @@ const CoinChips = ({
     </Hint>
   );
 };
+
 const WinnersModal = ({ winners, open, onClose }: { open: boolean; winners: any[]; onClose: () => void }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>

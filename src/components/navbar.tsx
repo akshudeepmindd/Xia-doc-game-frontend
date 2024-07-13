@@ -86,6 +86,18 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
   const userWalletUpdate = useMutation({
     mutationFn: updateUser,
   });
+
+  useEffect(() => {
+    async function fetchRequestAlert() {
+
+    }
+
+    if (roomDetails.playersRequested) {
+
+      fetchRequestAlert();
+    }
+  }, [])
+
   const handleAccept = (userid: string, amount: number) => {
     const updatedDepositRequest = roomDetails.depositeRequest.filter(
       (deposit: { userId: { _id: string; telegramusername: string }; deposit: number }) =>

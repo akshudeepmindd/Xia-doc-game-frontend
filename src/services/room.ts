@@ -5,16 +5,17 @@ export const getGamebyOwnerService = async (id: string) => {
   return data;
 };
 export const createRoom = async (body: {
-        name:string,
-        password:string,
-        startTime:string,
-        endTime:string,
-        status:string,
-        roomType:string,
-        owner: string
-    }) =>{
-      const {data} = await http.get(`/gameroom/create`,{...body})
-    }
+  name: string,
+  password?: string,
+  startTime: Date,
+  endTime: Date,
+  status: string,
+  roomType: "private" | "public",
+  owner: string
+}) => {
+  const { data } = await http.post(`/gameroom/create`, body)
+  return data;
+}
 export const getRoomDetailService = async (id: string) => {
   const { data } = await http.get(`/gameroom/getdetails/${id}`);
   return data;
@@ -35,7 +36,7 @@ export const roomJoinRequestAccept = async (payload: { roomId: string; userId: s
   return data;
 };
 
-export const updateRoom = async (payload: { id: string; game: unknown }) => {
+export const updateRoom = async (payload: { id: string | undefined; game: unknown }) => {
   const { data } = await http.patch(`/gameroom/update/${payload.id}`, payload.game);
   return data;
 };
@@ -55,7 +56,7 @@ export const roomRequestStatus = async (payload: { roomId: string; userId: strin
   return data;
 };
 
-export const distributeBalance = async (payload: { roomId: string }) => {
+export const distributeBalance = async (payload: { roomId: string | undefined }) => {
   const { data } = await http.patch(`/gameroom/distributeBalance/${payload.roomId}`);
   return data;
 }

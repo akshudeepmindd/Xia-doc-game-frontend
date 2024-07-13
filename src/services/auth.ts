@@ -6,12 +6,12 @@ export const userLoginService = async (payload: { telegramusername: string; pass
 };
 
 
-export const updateUser = async (payload: { userId: string; body: { balance: number, depositRequest: boolean } }) => {
+export const updateUser = async (payload: { userId: string; body: { balance: number, depositRequest?: boolean } }) => {
   const { data } = await http.patch(`User/update/${payload.userId}`, payload.body);
   return data;
 };
 
 export const userProfile = async (userId: string) => {
-  const { data } = await http.get(`User/profile/${userId}`);
+  const { data } = await http.get(`user/profile/${userId}`);
   return data;
 };

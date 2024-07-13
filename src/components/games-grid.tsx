@@ -30,7 +30,7 @@ const GamesGrid = () => {
   const { isLoading: isLoading3, data: userDetail } = useQuery({
     queryKey: [USER_PROFILE],
     queryFn: () => userProfile(userId),
-    enabled: !userId,
+    enabled: !!userId,
     refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
