@@ -2,20 +2,12 @@ import Hint from './hint';
 import { Button } from './ui/button';
 import {
   Check,
-  Signal,
-  UserPlus,
-  MessagesSquare,
-  Users,
   UserCog,
   X,
-  HandCoins,
-  CircleDollarSign,
   Drama,
-  Info,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GET_REQUEST_STATUS, GET_ROOMS_DETAILS } from '@/lib/constants';
 import { getRoomDetailService, roomJoinRequestAccept, roomRequestStatus, updateRoom } from '@/services/room';
@@ -25,6 +17,7 @@ import { toast } from 'sonner';
 import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { updateUser } from '@/services/auth';
+import { socket } from '@/services';
 
 interface NavbarProps {
   roomId: string | undefined;
@@ -54,6 +47,23 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
     refetchInterval: 3000,
     refetchIntervalInBackground: true,
   });
+
+  useEffect(() => {
+    // Handle JOIN_REQUEST event
+    const handleJoinRequest = (data: any) => {
+      if (data.roomId === roomId) {
+        toast.success("You have a join request!")
+      }
+    };
+
+    // Handle JOIN_REQUEST event
+    socket.on('JOIN_ROOM', handleJoinRequest);
+    // Clean up on component unmount
+    return () => {
+      socket.off('JOIN_ROOM', handleJoinRequest);
+      socket.disconnect();
+    };
+  }, [roomId]);
 
   const { isLoading: isLoading2, data: requestStatus } = useQuery({
     queryKey: [GET_REQUEST_STATUS],
