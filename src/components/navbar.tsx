@@ -61,7 +61,6 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
     // Clean up on component unmount
     return () => {
       socket.off('JOIN_ROOM', handleJoinRequest);
-      socket.disconnect();
     };
   }, [roomId]);
 
