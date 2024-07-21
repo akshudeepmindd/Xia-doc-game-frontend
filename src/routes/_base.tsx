@@ -22,7 +22,18 @@ import { Loader2 } from 'lucide-react';
 const CreateRoom = z.object({
   name: z.string().min(1, "Room name is required"),
   password: z.string(),
-  roomType: z.enum(["private", "public"])
+  roomType: z.enum(["private", "public"]),
+  houseEdgeFee: z.string().min(0).max(100),
+  even: z.string().min(0).max(100),
+  odd: z.string().min(0).max(100),
+  '4-white-0-red': z.string().min(0).max(100),
+  '4-red-0-white': z.string().min(0).max(100),
+  '3-white-1-red': z.string().min(0).max(100),
+  '3-red-1-white': z.string().min(0).max(100),
+  'even-9-10': z.string().min(0).max(100),
+  'even-10-9': z.string().min(0).max(100),
+  'odd-9-10': z.string().min(0).max(100),
+  'odd-10-9': z.string().min(0).max(100),
 }).refine(data => {
   if (data.roomType === "private") {
     return !!data.password
@@ -43,6 +54,20 @@ const BaseLayoutComponent = () => {
       console.log(massage)
     },
     onSuccess: async (response: z.infer<typeof CreateRoom>) => {
+      const rules = []
+      rules.push({
+        even: response.even,
+        odd: response.odd,
+        '4-white-0-red': response['4-white-0-red'],
+        '4-red-0-white': response['4-red-0-white'],
+        '3-white-1-red': response['3-white-1-red'],
+        '3-red-1-white': response['3-red-1-white'],
+        'even-9-10': response['even-9-10'],
+        'even-10-9': response['even-10-9'],
+        'odd-9-10': response['odd-9-10'],
+        'odd-10-9': response['odd-10-9'],
+      })
+
       const payload = {
         name: response.name,
         password: response.password,
@@ -50,7 +75,9 @@ const BaseLayoutComponent = () => {
         endTime: addHours(new Date(), 5),
         status: "active",
         owner: userId,
-        roomType: response.roomType
+        roomType: response.roomType,
+        houseEdgeFee: +response.houseEdgeFee,
+        rules: rules,
       }
       await purchaseRoom(payload) // API call for purchase room
     }
@@ -151,7 +178,7 @@ const BaseLayoutComponent = () => {
                           <FormLabel>Room Type</FormLabel>
                           <FormControl>
                             <RadioGroup onValueChange={field.onChange}
-                              defaultValue={field.value}>
+                              defaultValue={field.value} orientation='horizontal' className='flex items-center'>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="private" id="r1" />
                                 <Label htmlFor="r1">Private</Label>
@@ -166,6 +193,159 @@ const BaseLayoutComponent = () => {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="houseEdgeFee"
+                      render={({ field }) => (
+                        <FormItem className="relative">
+                          <FormLabel>House edge fee</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter House Edge fee" type='text' {...field} />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className='flex flex-col gap-y-2 mt-2'>
+                      <Label className='text-lg'>
+                        Set rules for the Room
+                      </Label>
+                      <div className='w-full grid grid-cols-2 gap-3 gap-x-2'>
+                        <FormField
+                          control={form.control}
+                          name="even"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>Even</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for even" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="odd"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>Odd</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for odd" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="4-white-0-red"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>4 White 0 Red</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for 4 white 0 red" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="4-red-0-white"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>4 Red 0 White</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for 4 red 0 white" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="3-white-1-red"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>3 White 1 Red</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for 3 white 1 red" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="3-red-1-white"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>3 Red 1 White</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for 3 red 1 white" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="even-10-9"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>Even 10:9</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for even 10:9" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="even-9-10"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>Even 9:10</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for even 9:10" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="odd-10-9"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>Odd 10:9</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for odd 10:9" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="odd-9-10"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              {/* <FormLabel>Odd 9:10</FormLabel> */}
+                              <FormControl>
+                                <Input placeholder="Enter rule for 9:10" type='text' {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
 
                     <Button type="submit" className="w-full" disabled={isPending}>
                       {isPending ? (

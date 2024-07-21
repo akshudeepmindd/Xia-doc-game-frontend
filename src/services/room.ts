@@ -11,7 +11,9 @@ export const createRoom = async (body: {
   endTime: Date,
   status: string,
   roomType: "private" | "public",
-  owner: string
+  owner: string,
+  houseEdgeFee: number;
+  rules: any[]
 }) => {
   const { data } = await http.post(`/gameroom/create`, body)
   return data;
