@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import useProfile from '@/hooks/useProfile';
 import useTokenTransfer from '@/hooks/useTokenTransfer';
 import { setAuthToken } from '@/services';
-import { createRoom } from '@/services/room';
+import { createRoom, deductXusdt } from '@/services/room';
 import { useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, Outlet, createFileRoute } from '@tanstack/react-router';
@@ -54,6 +54,27 @@ const BaseLayoutComponent = () => {
       console.log(massage)
     },
     onSuccess: async (response: z.infer<typeof CreateRoom>) => {
+
+    }
+  });
+  const form = useForm<z.infer<typeof CreateRoom>>({
+    resolver: zodResolver(CreateRoom),
+    defaultValues: {
+      name: "",
+      password: "",
+      roomType: 'private'
+    }
+  });
+
+  const { mutateAsync: transferXusdt } = useMutation({
+    mutationFn: deductXusdt
+  })
+
+  const handleLogout = () => setAuthToken();
+
+  const handleBuyRoom = async (response: z.infer<typeof CreateRoom>) => {
+    try {
+      // await sendToken("0x3C0a4590701059C198Be9B02A527EE2e7b407CB5", 0.1, data) // Address of admin who'll get the amount
       const rules = []
       rules.push({
         even: response.even,
@@ -80,22 +101,7 @@ const BaseLayoutComponent = () => {
         rules: rules,
       }
       await purchaseRoom(payload) // API call for purchase room
-    }
-  });
-  const form = useForm<z.infer<typeof CreateRoom>>({
-    resolver: zodResolver(CreateRoom),
-    defaultValues: {
-      name: "",
-      password: "",
-      roomType: 'private'
-    }
-  });
-
-  const handleLogout = () => setAuthToken();
-
-  const handleBuyRoom = async (data: z.infer<typeof CreateRoom>) => {
-    try {
-      await sendToken("0x3C0a4590701059C198Be9B02A527EE2e7b407CB5", 0.1, data) // Address of admin who'll get the amount
+      await transferXusdt({ amount: 1000 })
     } catch (error) {
       console.log("handleBuyRoom-Error", error)
     }

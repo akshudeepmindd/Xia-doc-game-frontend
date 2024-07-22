@@ -76,3 +76,8 @@ export const verifyRoomPassword = async ({ roomId, payload }: { roomId: string, 
   const { data } = await http.post(`/gameroom/verify/${roomId}`, payload);
   return data;
 }
+
+export const deductXusdt = async (payload: { amount: number }) => {
+  const { data } = await http.post('/transactions/transfer', payload)
+  return data;
+}
