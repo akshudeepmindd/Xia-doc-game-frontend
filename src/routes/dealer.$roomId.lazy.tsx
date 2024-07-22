@@ -8,12 +8,14 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
-import { getRoomDetailService } from '@/services/room';
+import { createlivestream, getRoomDetailService, uploadStream } from '@/services/room';
 import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-
+import LiveStream from '@/components/livestream/participants';
+import flvjs from 'flv.js';
+import VideoPlayer from '@/components/livestream/participants';
 const BetType = {
   FOUR_BLACK: 'FOUR_BLACK',
   FOUR_WHITE: 'FOUR_WHITE',
@@ -28,7 +30,11 @@ const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
-
+  const [streamdata, setStreamData] = useState<{ playbackUrl: string; rtmpsURL: string; streamkey: string }>({});
+  const [loading, setLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isStreamingStarted, setIsStreamingStarted] = useState(false);
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
       console.log('SOCKET DATA', data);
@@ -41,6 +47,14 @@ const DealerComponent = () => {
   }, []);
   const { mutateAsync: updateResult } = useMutation({
     mutationFn: updateRound,
+  });
+  const { mutateAsync: upload } = useMutation({
+    mutationFn: uploadStream,
+  });
+
+  const startStreaming = useMutation({
+    mutationFn: createlivestream,
+    onSuccess: () => setLoading(false),
   });
   const handleResultSelect = (result: string) => {
     setSelectResult(result);
@@ -69,6 +83,39 @@ const DealerComponent = () => {
     }
   }, [roundDetails?.message?.data?.createdAt]);
 
+  // useEffect(() => {
+
+  // }, [streamdata, videoRef]);
+  const handleStream = async () => {
+    setLoading(true);
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+
+    if (videoRef.current && videoRef.current !== null) {
+      videoRef.current.src = `${streamdata.rtmpsURL}${streamdata.streamkey}`;
+      videoRef.current.muted = true;
+      videoRef.current.play();
+    }
+    if (!isStreamingStarted) {
+      // Check if streaming is not started
+      setIsStreamingStarted(true); // Set streaming started to true
+      startStreaming.mutate({ roomId: roomId ?? '' });
+    }
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start(1000); //
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data && event.data.size > 0) {
+        const formData = new FormData();
+        formData.append('file', event.data, 'stream.webm');
+        setLoading(false);
+        startStreaming.reset();
+      }
+    };
+  };
   useEffect(() => {
     if (countdown > 0 && roundDetails) {
       const timer = setInterval(() => {
@@ -78,20 +125,18 @@ const DealerComponent = () => {
     }
   }, [countdown, roundDetails?.message?.data?.createdAt]);
 
-  const [meetingId, setMeetingId] = useState('');
   const [startLive, setStartLive] = useState(false);
-  const [authToken, setAuthToken] = useState('');
-  const { username } = useProfile();
 
   const { data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
     queryFn: async () => getRoomDetailService(roomId || ''),
   });
-
+  console.log(videoRef.current);
   useEffect(() => {
     if (roomDetails) {
-      setMeetingId(roomDetails?.dealerLiveStreamId);
-      setAuthToken(roomDetails?.streamingToken);
+      roomDetails?.livestream &&
+        Object.keys(roomDetails?.livestream).length > 0 &&
+        setStreamData(roomDetails?.livestream);
     }
   }, [roomDetails]);
 
@@ -122,7 +167,7 @@ const DealerComponent = () => {
           </div>
           <div className="w-[43rem] h-96 overflow-hidden">
             {startLive ? (
-              <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} />
+              <VideoPlayer videoRef={videoRef} />
             ) : (
               <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
             )}
@@ -134,45 +179,41 @@ const DealerComponent = () => {
           <div className="w-1/4 bg-slate-50 h-64"></div>
           <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
         </div>
-        {roomId &&
-          roomDetails?.dealerLiveStreamId &&
-          roomDetails?.streamingToken && (
-            <>
-              {meetingId !== '' && (
-                <MeetingProvider
-                  config={{
-                    meetingId: roomDetails?.dealerLiveStreamId,
-                    mode: 'CONFERENCE',
-                    name: 'Name',
-                    micEnabled: true,
-                    webcamEnabled: true,
-                    debugMode: false,
-                  }}
-                  token={
-                    roomDetails?.streamingToken
-                  }
-                  joinWithoutUserInteraction
-                >
-                  <DealerFooter
-                    roomId={roomId}
-                    round={roundDetails?.message}
-                    setMeetingId={setMeetingId}
-                    setStartLive={setStartLive}
-                    startLive={startLive}
-                    setAuthToken={setAuthToken}
-                    meetingId={meetingId}
-                    authToken={authToken}
-                    selectResult={selectResult}
-                    setSelectResult={setSelectResult}
-                    resultDeclare={handleDeclareResult}
-                    roundStatus={roundDetails?.message?.data?.roundStatus}
-                    countdown={countdown}
-                    setCountDown={setCountdown}
-                  />
-                </MeetingProvider>
-              )}
-            </>
-          )}
+        {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
+          <>
+            {/* {meetingId !== '' && (
+              <MeetingProvider
+                config={{
+                  meetingId: roomDetails?.dealerLiveStreamId,
+                  mode: 'CONFERENCE',
+                  name: 'Name',
+                  micEnabled: true,
+                  webcamEnabled: true,
+                  debugMode: false,
+                }}
+                token={roomDetails?.streamingToken}
+                joinWithoutUserInteraction
+              > */}
+            <DealerFooter
+              roomId={roomId}
+              round={roundDetails?.message}
+              handleStream={handleStream}
+              setStartLive={setStartLive}
+              startLive={startLive}
+              rtmpsUrl={streamdata?.rtmpsURL}
+              playbackurl={streamdata?.playbackUrl}
+              streamkey={streamdata?.streamkey}
+              selectResult={selectResult}
+              setSelectResult={setSelectResult}
+              resultDeclare={handleDeclareResult}
+              roundStatus={roundDetails?.message?.data?.roundStatus}
+              countdown={countdown}
+              setCountDown={setCountdown}
+            />
+            {/* </MeetingProvider> */}
+            {/* )} */}
+          </>
+        )}
       </div>
     </div>
   );

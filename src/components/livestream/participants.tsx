@@ -1,75 +1,24 @@
-import { MeetingConsumer, Constants, MeetingProvider, useMeeting } from '@videosdk.live/react-sdk';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
-import { Loader2 } from 'lucide-react';
 
-const HLSPlayer = () => {
-  const { hlsUrls, hlsState } = useMeeting();
-
-  const playerRef = useRef(null);
-
-  const hlsPlaybackHlsUrl = useMemo(() => hlsUrls.playbackHlsUrl, [hlsUrls]);
+const VideoPlayer = ({ videoRef }) => {
+  // const videoRef = useRef(null);
 
   useEffect(() => {
     if (Hls.isSupported()) {
-      const hls = new Hls({
-        capLevelToPlayerSize: true,
-        maxLoadingDelay: 4,
-        minAutoBitrate: 0,
-        autoStartLoad: true,
-        defaultAudioCodec: 'mp4a.40.2',
+      const video = videoRef.current;
+      const hls = new Hls();
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+        hls.loadSource(
+          'https://customer-f33zs165nr7gyfy4.cloudflarestream.com/6b9e68b07dfee8cc2d116e4c51d6a957/manifest/video.m3u8',
+        );
+        video.play();
       });
-
-      let player = document.querySelector('#hlsPlayer');
-
-      hls.loadSource(hlsPlaybackHlsUrl);
-      hls.attachMedia(player);
-    } else {
-      if (typeof playerRef.current?.play === 'function') {
-        playerRef.current.src = hlsPlaybackHlsUrl;
-        playerRef.current.play();
-      }
     }
-  }, [hlsPlaybackHlsUrl, hlsState]);
+  }, []);
 
-  return (
-    <video
-      ref={playerRef}
-      id="hlsPlayer"
-      autoPlay
-      style={{ width: '100%', height: '100%' }}
-      playsInline
-      playing
-      onError={(err) => console.log(err, 'hls video error')}
-    ></video>
-  );
+  return <video ref={videoRef} controls style={{ width: '100%', height: 'auto' }} />;
 };
 
-const ViewerScreenContainer = ({ meetingId, authToken }) => {
-  return (
-    <MeetingProvider
-      token={authToken}
-      config={{
-        meetingId,
-        name: 'C.V. Raman',
-        mode: 'VIEWER',
-        webcamEnabled: false,
-      }}
-      joinWithoutUserInteraction
-    >
-      <MeetingConsumer>
-        {({ hlsState }) =>
-          hlsState === Constants.hlsEvents.HLS_PLAYABLE ? (
-            <HLSPlayer style={{ width: '100%' }} />
-          ) : (
-            <div className='flex justify-center items-center h-full'>
-              <Loader2 size={120} color='white' className="w-8 h-8 animate-spin" />
-            </div>
-          )
-        }
-      </MeetingConsumer>
-    </MeetingProvider>
-  );
-};
-
-export default ViewerScreenContainer;
+export default VideoPlayer;

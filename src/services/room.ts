@@ -43,9 +43,32 @@ export const updateRoom = async (payload: { id: string | undefined; game: unknow
   return data;
 };
 
+export const uploadStream = async (payload: { streamkey: string; data: unknown }) => {
+  try {
+    const { data } = await http.post(`/livestream/upload`, payload.data, {
+      headers: {
+        'stream-key': payload.streamkey,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return data;
+  } catch (error) {
+    return error;
+  }
+};
 export const rejectjoinrequestservice = async (id: string, game: unknown) => {
   try {
     const { data } = await http.patch(`/gameroom/rejectrequest/${id}`, game);
+
+    return data;
+  } catch (error) {
+    return error;
+  }
+};
+export const createlivestream = async (payload: { roomId: string }) => {
+  try {
+    const { data } = await http.post(`/livestream/room`, payload);
 
     return data;
   } catch (error) {
@@ -61,7 +84,7 @@ export const roomRequestStatus = async (payload: { roomId: string; userId: strin
 export const distributeBalance = async (payload: { roomId: string | undefined }) => {
   const { data } = await http.patch(`/gameroom/distributeBalance/${payload.roomId}`);
   return data;
-}
+};
 
 export const createDealerLive = async (payload: { roomId: string }) => {
   const { data } = await http.post(`/livestream/room/`, { roomId: payload.roomId });
@@ -70,4 +93,9 @@ export const createDealerLive = async (payload: { roomId: string }) => {
     game: { dealerLiveStreamId: data.message.roomId, streamingToken: data.message.token },
   });
   return data;
+};
+
+export const getAgoraToken = async (payload: { channelName: string; uid: string; role: number }) => {
+  const response = await http.get(`/livestream/token?channelName=${payload.channelName}&uid=${payload.uid}&role=${payload.role}`);
+  return response.data;
 };

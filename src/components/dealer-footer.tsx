@@ -5,7 +5,6 @@ import useProfile from '@/hooks/useProfile';
 import { useMutation } from '@tanstack/react-query';
 import { createDealerLive } from '@/services/room';
 import { addRound, updateRound } from '@/services/round';
-import { useMeeting } from '@videosdk.live/react-sdk';
 import { useEffect } from 'react';
 
 const config: any = {
@@ -20,26 +19,27 @@ const config: any = {
 };
 
 const DealerFooter = ({
-  setMeetingId,
   setStartLive,
-  setAuthToken,
   startLive,
-  meetingId,
+  handleStream,
   roomId,
   round,
   selectResult,
   resultDeclare,
   roundStatus,
   countdown,
+  rtmpsUrl,
+  playbackurl,
+  streamkey,
   setSelectResult,
   setCountDown,
 }: {
-  setMeetingId: (meetingId: string) => void;
   setStartLive: (startLive: boolean) => void;
-  setAuthToken: (authToken: string) => void;
+  handleStream: () => void;
   startLive: boolean;
-  meetingId: string;
-  authToken: string;
+  rtmpsUrl: string;
+  playbackurl: string;
+  streamkey: string;
   roomId: string;
   round: any;
   selectResult: string | undefined;
@@ -50,10 +50,10 @@ const DealerFooter = ({
   setSelectResult: (selectResult: string) => void;
 }) => {
   const { username } = useProfile();
-  const { startHls, stopHls, toggleWebcam, hlsState } = useMeeting();
+  // const { startHls, stopHls, toggleWebcam, hlsState } = useMeeting();
 
   useEffect(() => {
-    console.log('useMeeting properties:', { startHls, stopHls, toggleWebcam, hlsState });
+    // console.log('useMeeting properties:', { startHls, stopHls, toggleWebcam, hlsState });
   }, []);
 
   const isLive = true;
@@ -84,28 +84,26 @@ const DealerFooter = ({
     return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
   };
 
-  const progressLive = useMutation({
-    mutationFn: createDealerLive,
-    onSuccess: (data) => {
-      setMeetingId(data.message.roomId);
-      setAuthToken(data.message.token);
-      setStartLive(true);
-      console.log('Dealer live created, meeting ID:', data.message.roomId);
-    },
-  });
+  // const progressLive = useMutation({
+  //   mutationFn: createDealerLive,
+  //   onSuccess: (data) => {
+  //     setMeetingId(data.message.roomId);
+  //     setAuthToken(data.message.token);
+  //     setStartLive(true);
+  //     console.log('Dealer live created, meeting ID:', data.message.roomId);
+  //   },
+  // });
 
   const handleLive = async () => {
     try {
-      if (!startLive && meetingId === '') {
-        await startHls(config);
+      if (!startLive && rtmpsUrl == '' && playbackurl == '' && streamkey == '') {
+        handleStream();
         console.log('HLS started');
       } else if (startLive) {
-        await stopHls();
         console.log('HLS stopped');
         setStartLive(false);
       } else {
-        await startHls(config);
-        console.log('HLS started');
+        handleStream();
         setStartLive(true);
       }
     } catch (error) {
@@ -113,9 +111,9 @@ const DealerFooter = ({
     }
   };
 
-  useEffect(() => {
-    console.log('HLS state changed:', hlsState);
-  }, [hlsState]);
+  // useEffect(() => {
+  //   // console.log('HLS state changed:', hlsState);
+  // }, [hlsState]);
 
   return (
     <footer className="flex-1 bg-primary flex items-center justify-between px-8">
@@ -128,7 +126,7 @@ const DealerFooter = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => toggleWebcam()}>
+            <DropdownMenuItem>
               {!isCameraOn ? <Camera className="w-4 h-4 mr-1" /> : <CameraOff className="w-4 h-4 mr-1" />}
               {!isCameraOn ? 'Turn on camera' : 'Turn off camera'}
             </DropdownMenuItem>
@@ -138,13 +136,7 @@ const DealerFooter = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            !startLive && meetingId === '' ? progressLive.mutate({ roomId: roomId ?? '' }) : handleLive()
-          }
-        >
+        <Button variant="outline" size="sm" onClick={() => handleLive()}>
           <PlaySquare className="w-4 h-4 mr-1" />
           {startLive ? 'Stop live' : 'Start live'}
         </Button>
