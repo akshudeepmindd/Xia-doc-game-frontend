@@ -71,3 +71,8 @@ export const createDealerLive = async (payload: { roomId: string }) => {
   });
   return data;
 };
+
+export const verifyRoomPassword = async ({ roomId, payload }: { roomId: string, payload: { password: string } }) => {
+  const { data } = await http.post(`/gameroom/verify/${roomId}`, payload);
+  return data;
+}

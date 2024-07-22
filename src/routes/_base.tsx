@@ -89,8 +89,10 @@ const BaseLayoutComponent = () => {
       password: "",
       roomType: 'private'
     }
-  })
+  });
+
   const handleLogout = () => setAuthToken();
+
   const handleBuyRoom = async (data: z.infer<typeof CreateRoom>) => {
     try {
       await sendToken("0x3C0a4590701059C198Be9B02A527EE2e7b407CB5", 0.1, data) // Address of admin who'll get the amount

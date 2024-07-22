@@ -5,7 +5,7 @@ import useProfile from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 
 import { GET_ROOMS_DETAILS, GET_ROUND_DETAILS, GET_USER_DETAILS } from '@/lib/constants';
-import { distributeBalance, getRoomDetailService, updateRoom } from '@/services/room';
+import { distributeBalance, getRoomDetailService, updateRoom, verifyRoomPassword } from '@/services/room';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { SOCKET_ROUND_START } from '@/lib/constants';
@@ -16,7 +16,7 @@ import { getRoundDetails, placeBetService, updateRound } from '@/services/round'
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { RedCircle, WhiteCircle } from './dealer.$roomId.lazy';
 import Hint from '@/components/hint';
-import { AlertCircleIcon, BellDot, CircleDollarSign, TrophyIcon } from 'lucide-react';
+import { AlertCircleIcon, BellDot, CircleDollarSign, Loader2, TrophyIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { distribute, gsap } from 'gsap';
 import DepositDiaglog from '@/components/Deposit-dialog';
@@ -33,6 +33,12 @@ import {
 import ConfettiExplosion from 'react-confetti-explosion';
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useNavigate } from '@tanstack/react-router';
+import { AxiosError } from 'axios';
 const getBetTypeBySelectionCard = (selectionCard: number | undefined) => {
   switch (selectionCard) {
     case 1:
@@ -86,6 +92,10 @@ const getBetTypeByCardName = (cardName: string) => {
   }
 };
 
+const RoomVerfication = z.object({
+  password: z.string().min(1, "Password is required!")
+})
+
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
   const { isSbo, userId, roomOwner } = useProfile();
@@ -100,6 +110,18 @@ const GameComponent = () => {
   const [userBet, setUserBet] = useState<number>(0);
   const coinId = useRef(0);
   const [winnermodal, setwinnerModal] = useState(false);
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(true)
+  const [verifiedPassword, setVerifiedPassword] = useState(false);
+
+  const form = useForm<z.infer<typeof RoomVerfication>>({
+    resolver: zodResolver(RoomVerfication),
+    defaultValues: {
+      password: ""
+    },
+  })
+
+  const navigate = useNavigate();
+
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
       console.log('SOCKET DATA', data);
@@ -118,6 +140,7 @@ const GameComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
+
   const { isLoading: isUserLoading, data: userDetails } = useQuery({
     queryKey: [GET_USER_DETAILS],
     queryFn: () => userProfile(userId),
@@ -125,6 +148,7 @@ const GameComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
+
   useEffect(() => {
     if (roundDetails && roundDetails?.message?.data?.createdAt) {
       const futureTime = parseISO(roundDetails?.message?.data?.createdAt);
@@ -146,6 +170,7 @@ const GameComponent = () => {
       setwinnerModal(true);
     }
   }, [roundDetails?.message?.data?.roundStatus]);
+
   useEffect(() => {
     if (countdown < 0 && roundDetails?.message?.data?.roundStatus === 'roundend') {
       setCoins([]);
@@ -153,12 +178,31 @@ const GameComponent = () => {
       setCurrentBet(0);
     }
   }, [countdown, roundDetails?.message?.data?.roundStatus]);
+
   useEffect(() => {
     if (countdown == 45 && roundDetails?.message?.data?.roundStatus === 'roundStarted') {
       toast.success('Round Started');
     }
     localStorage.setItem('roundstatus', roundDetails?.message?.data?.roundStatus);
   }, [countdown, roundDetails?.message?.data?.roundStatus]);
+
+  const { mutate: verifyPassword, isPending } = useMutation({
+    mutationFn: verifyRoomPassword,
+    onSuccess: (data) => {
+      setVerifiedPassword(true)
+    },
+    onError: (error: AxiosError) => {
+      let message = 'Something went wrong!'
+      if (error?.response?.data?.message) {
+        message = error.response.data?.message;
+      }
+      toast.error(message)
+      navigate({
+        to: '/room'
+      });
+    }
+  })
+
   const ConfirmBet = () => {
     if (userDetails?.user?.balance < currentBet) {
       toast.error('Insufficient balance');
@@ -263,12 +307,15 @@ const GameComponent = () => {
   const { mutate: distributeamount } = useMutation({
     mutationFn: distributeBalance,
   });
+
   const { mutate: updateUserbalance } = useMutation({
     mutationFn: updateUser,
   });
+
   const { mutate: updateRoundStatus } = useMutation({
     mutationFn: updateRound,
   });
+
   const resetBet = () => {
     const cardElement = document.getElementById(`card-${selectedCard}`);
     const spocardElement = document.getElementById(`card-${selectedCard}`);
@@ -280,6 +327,7 @@ const GameComponent = () => {
     setUserBet(0);
     localStorage.removeItem('roundstatus');
   };
+
   const handleSelection = ({ card, type }: { card: number; type: string }) => {
     if (countDownSPOStatus === 'BET_SPO' && (card === 6 || card === 4 || card === 5 || card === 2)) {
       const cardElement = document.getElementById(`card-${card}`);
@@ -318,9 +366,17 @@ const GameComponent = () => {
 
     makeDealer.mutate({ id: roomDetails._id, game: { SpoRequested: spoRequested } });
   };
+
+  const handleRoomVerification = (data: z.infer<typeof RoomVerfication>) => {
+    if (roomId) {
+      verifyPassword({ roomId: roomId, payload: data })
+    }
+  }
+
   useEffect(() => {
     if (!isLoading) {
       if (roomDetails) {
+        setVerifiedPassword(roomDetails?.roomType === 'private')
         setMeetingId(roomDetails?.dealerLiveStreamId);
         setAuthToken(roomDetails?.streamingToken);
       }
@@ -334,6 +390,35 @@ const GameComponent = () => {
   return (
     <div className="flex flex-col h-full bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
+      {!verifiedPassword && <Dialog open={!verifiedPassword}>
+        <DialogContent>
+          <DialogTitle>
+            Join room
+          </DialogTitle>
+          <div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleRoomVerification)} className='flex flex-col gap-2'>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="relative">
+                      <FormLabel>Room name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter room password" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <Button type='submit' disabled={isPending}>
+                  {isPending ? <div className='flex items-center'><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Please wait</div> : <>Submit</>}
+                </Button>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>}
       <div className="flex flex-row w-full">
         <div className="flex-col w-3/12">
           <div className="flex justify-between mx-6 my-6 w-full ">
@@ -927,20 +1012,22 @@ const GameComponent = () => {
           </Button>
         </div>
       </div>
-      {winnermodal && roomOwner && (
-        <>
-          <WinnersModal
-            open={winnermodal}
-            onClose={() => {
-              setwinnerModal(false);
-              resetBet();
-              updateRoundStatus({ roundId: roundDetails?.message?.data?._id, round: { roundStatus: 'completed' } });
-            }}
-            winners={roundDetails?.message?.data?.winners}
-          />
-        </>
-      )}
-    </div>
+      {
+        winnermodal && roomOwner && (
+          <>
+            <WinnersModal
+              open={winnermodal}
+              onClose={() => {
+                setwinnerModal(false);
+                resetBet();
+                updateRoundStatus({ roundId: roundDetails?.message?.data?._id, round: { roundStatus: 'completed' } });
+              }}
+              winners={roundDetails?.message?.data?.winners}
+            />
+          </>
+        )
+      }
+    </div >
   );
 };
 
