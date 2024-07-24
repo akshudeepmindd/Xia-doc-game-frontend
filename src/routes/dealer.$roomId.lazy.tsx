@@ -13,6 +13,7 @@ import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import SpeakerScreen2 from '@/components/livestream/participants2';
 
 const BetType = {
   FOUR_BLACK: 'FOUR_BLACK',
@@ -28,7 +29,7 @@ const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
-
+  // const []
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
       console.log('SOCKET DATA', data);
@@ -81,6 +82,7 @@ const DealerComponent = () => {
   const [meetingId, setMeetingId] = useState('');
   const [startLive, setStartLive] = useState(false);
   const [authToken, setAuthToken] = useState('');
+  const [cameraId, setCameraId] = useState('');
   const { username } = useProfile();
 
   const { data: roomDetails } = useQuery({
@@ -92,6 +94,7 @@ const DealerComponent = () => {
     if (roomDetails) {
       setMeetingId(roomDetails?.dealerLiveStreamId);
       setAuthToken(roomDetails?.streamingToken);
+      setCameraId(roomDetails?.cameraLiveStreamId);
     }
   }, [roomDetails]);
 
@@ -131,48 +134,48 @@ const DealerComponent = () => {
         </div>
         <div className="flex items-center justify-between px-10 gap-x-4">
           <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
-          <div className="w-1/4 bg-slate-50 h-64"></div>
+          <div className="w-1/4 bg-slate-50 h-64">
+            {startLive ? (
+              <SpeakerScreen2 meetingId={cameraId} authToken={authToken} />
+            ) : (
+              <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
+            )}
+          </div>
           <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
         </div>
-        {roomId &&
-          roomDetails?.dealerLiveStreamId &&
-          roomDetails?.streamingToken && (
-            <>
-              {meetingId !== '' && (
-                <MeetingProvider
-                  config={{
-                    meetingId: roomDetails?.dealerLiveStreamId,
-                    mode: 'CONFERENCE',
-                    name: 'Name',
-                    micEnabled: true,
-                    webcamEnabled: true,
-                    debugMode: false,
-                  }}
-                  token={
-                    roomDetails?.streamingToken
-                  }
-                  joinWithoutUserInteraction
-                >
-                  <DealerFooter
-                    roomId={roomId}
-                    round={roundDetails?.message}
-                    setMeetingId={setMeetingId}
-                    setStartLive={setStartLive}
-                    startLive={startLive}
-                    setAuthToken={setAuthToken}
-                    meetingId={meetingId}
-                    authToken={authToken}
-                    selectResult={selectResult}
-                    setSelectResult={setSelectResult}
-                    resultDeclare={handleDeclareResult}
-                    roundStatus={roundDetails?.message?.data?.roundStatus}
-                    countdown={countdown}
-                    setCountDown={setCountdown}
-                  />
-                </MeetingProvider>
-              )}
-            </>
-          )}
+        {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
+          <>
+            <MeetingProvider
+              config={{
+                meetingId: roomDetails?.dealerLiveStreamId,
+                mode: 'CONFERENCE',
+                name: 'Name',
+                micEnabled: true,
+                webcamEnabled: true,
+                debugMode: false,
+              }}
+              token={roomDetails?.streamingToken}
+              joinWithoutUserInteraction
+            >
+              <DealerFooter
+                roomId={roomId}
+                round={roundDetails?.message}
+                setMeetingId={setMeetingId}
+                setStartLive={setStartLive}
+                startLive={startLive}
+                setAuthToken={setAuthToken}
+                meetingId={meetingId}
+                authToken={authToken}
+                selectResult={selectResult}
+                setSelectResult={setSelectResult}
+                resultDeclare={handleDeclareResult}
+                roundStatus={roundDetails?.message?.data?.roundStatus}
+                countdown={countdown}
+                setCountDown={setCountdown}
+              />
+            </MeetingProvider>
+          </>
+        )}
       </div>
     </div>
   );

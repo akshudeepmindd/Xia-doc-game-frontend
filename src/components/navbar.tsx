@@ -101,8 +101,7 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
 
     }
 
-    if (roomDetails.playersRequested) {
-
+    if (roomDetails?.playersRequested) {
       fetchRequestAlert();
     }
   }, [])

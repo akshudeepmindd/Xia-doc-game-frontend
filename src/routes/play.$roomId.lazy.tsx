@@ -39,6 +39,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from '@tanstack/react-router';
 import { AxiosError } from 'axios';
+import Participant2 from '@/components/livestream/viewer2';
 const getBetTypeBySelectionCard = (selectionCard: number | undefined) => {
   switch (selectionCard) {
     case 1:
@@ -93,8 +94,8 @@ const getBetTypeByCardName = (cardName: string) => {
 };
 
 const RoomVerfication = z.object({
-  password: z.string().min(1, "Password is required!")
-})
+  password: z.string().min(1, 'Password is required!'),
+});
 
 const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
@@ -104,21 +105,22 @@ const GameComponent = () => {
   const [coins, setCoins] = useState<any[]>([]);
   const [countdown, setCountdown] = useState<number>(0);
   const [meetingId, setMeetingId] = useState<string>('');
+  const [cameraId, setCameraId] = useState<string>('');
   const [authToken, setAuthToken] = useState<string>('');
   const [currentSelectedAmount, setCurrentSelectedAmount] = useState<number>(0);
   const [currentBet, setCurrentBet] = useState<number>(0);
   const [userBet, setUserBet] = useState<number>(0);
   const coinId = useRef(0);
   const [winnermodal, setwinnerModal] = useState(false);
-  const [openPasswordDialog, setOpenPasswordDialog] = useState(true)
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(true);
   const [verifiedPassword, setVerifiedPassword] = useState(false);
 
   const form = useForm<z.infer<typeof RoomVerfication>>({
     resolver: zodResolver(RoomVerfication),
     defaultValues: {
-      password: ""
+      password: '',
     },
-  })
+  });
 
   const navigate = useNavigate();
 
@@ -189,19 +191,19 @@ const GameComponent = () => {
   const { mutate: verifyPassword, isPending } = useMutation({
     mutationFn: verifyRoomPassword,
     onSuccess: (data) => {
-      setVerifiedPassword(true)
+      setVerifiedPassword(true);
     },
     onError: (error: AxiosError) => {
-      let message = 'Something went wrong!'
+      let message = 'Something went wrong!';
       if (error?.response?.data?.message) {
         message = error.response.data?.message;
       }
-      toast.error(message)
+      toast.error(message);
       navigate({
-        to: '/room'
+        to: '/room',
       });
-    }
-  })
+    },
+  });
 
   const ConfirmBet = () => {
     if (userDetails?.user?.balance < currentBet) {
@@ -243,12 +245,13 @@ const GameComponent = () => {
       const newCoinElement = document.getElementById(`coin-${newCoinId}`);
       const cardElement = document.getElementById(`card-${cardId}`);
       const cardWidth = cardElement?.offsetWidth || 150;
+      const cardHeight = cardElement?.offsetHeight || 200; // Get the height of the card
       const randomX = Math.random() * (cardWidth - 150); // Ensure coin stays within bounds of the card
 
       gsap.fromTo(
         newCoinElement,
-        { y: -50, x: randomX, opacity: 0, rotation: 0 },
-        { y: 470, opacity: 1, rotation: 360, duration: 1, ease: 'bounce' },
+        { y: cardHeight + 50, x: cardWidth, opacity: 0, rotation: 0 }, // Start from bottom right
+        { y: 470, x: randomX, opacity: 1, rotation: 360, duration: 1, ease: 'power2.out' },
       );
     }, 0);
   };
@@ -342,8 +345,13 @@ const GameComponent = () => {
     }
 
     if (
-      countDownStatus === 'BET' &&
-      (card === 1 || card === 3 || card === 7 || card === 8 || card === 9 || card === 10)
+      // countDownStatus === 'BET' &&
+      card === 1 ||
+      card === 3 ||
+      card === 7 ||
+      card === 8 ||
+      card === 9 ||
+      card === 10
     ) {
       if (selectedCard !== card && type === 'NON_SPO') {
         const cardElement = document.getElementById(`card-${card}`);
@@ -369,16 +377,17 @@ const GameComponent = () => {
 
   const handleRoomVerification = (data: z.infer<typeof RoomVerfication>) => {
     if (roomId) {
-      verifyPassword({ roomId: roomId, payload: data })
+      verifyPassword({ roomId: roomId, payload: data });
     }
-  }
+  };
 
   useEffect(() => {
     if (!isLoading) {
       if (roomDetails) {
-        setVerifiedPassword(roomDetails?.roomType === 'private')
+        setVerifiedPassword(roomDetails?.roomType === 'private');
         setMeetingId(roomDetails?.dealerLiveStreamId);
         setAuthToken(roomDetails?.streamingToken);
+        setCameraId(roomDetails?.cameraLiveStreamId);
       }
     }
   }, [roomDetails, isLoading]);
@@ -390,35 +399,41 @@ const GameComponent = () => {
   return (
     <div className="flex flex-col h-full bg-[#040816] bg-center">
       <Navbar roomId={roomId} />
-      {!verifiedPassword && <Dialog open={!verifiedPassword}>
-        <DialogContent>
-          <DialogTitle>
-            Join room
-          </DialogTitle>
-          <div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleRoomVerification)} className='flex flex-col gap-2'>
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="relative">
-                      <FormLabel>Room name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter room password" type="password" {...field} />
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-                <Button type='submit' disabled={isPending}>
-                  {isPending ? <div className='flex items-center'><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Please wait</div> : <>Submit</>}
-                </Button>
-              </form>
-            </Form>
-          </div>
-        </DialogContent>
-      </Dialog>}
+      {!verifiedPassword && (
+        <Dialog open={!verifiedPassword}>
+          <DialogContent>
+            <DialogTitle>Join room</DialogTitle>
+            <div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleRoomVerification)} className="flex flex-col gap-2">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="relative">
+                        <FormLabel>Room name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter room password" type="password" {...field} />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? (
+                      <div className="flex items-center">
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Please wait
+                      </div>
+                    ) : (
+                      <>Submit</>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="flex flex-row w-full">
         <div className="flex-col w-3/12">
           <div className="flex justify-between mx-6 my-6 w-full ">
@@ -485,7 +500,7 @@ const GameComponent = () => {
           </div>
 
           <div className="border cameraCustomBorder h-1/3 width-1/3 text-white absolute left-0 top-0 mx-2 my-2">
-            Waiting for live from Dealer
+            {cameraId !== '' && <ViewerScreenContainer meetingId={cameraId} authToken={authToken} />}
           </div>
         </div>
         <div className="h-40 flex flex-col w-[28%] justify-between">
@@ -522,21 +537,7 @@ const GameComponent = () => {
             }
           >
             {selectedCard === 8 &&
-              coins.map((coin) => (
-                <div
-                  key={coin.id}
-                  id={`coin-${coin.id}`}
-                  className="flex justify-center items-center coin gradient-gold text-[10px]"
-                >
-                  {currentSelectedAmount === 500000
-                    ? '500k'
-                    : currentSelectedAmount === 1000000
-                      ? '1000k'
-                      : currentSelectedAmount === 2000000
-                        ? '2000k'
-                        : '5000k'}
-                </div>
-              ))}
+              coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
             <p className="absolute top-[0%] right-2 font-bold text-xl">
               ${' '}
               {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(8)]
@@ -560,21 +561,7 @@ const GameComponent = () => {
             }
           >
             {selectedCard === 7 &&
-              coins.map((coin) => (
-                <div
-                  key={coin.id}
-                  id={`coin-${coin.id}`}
-                  className="flex justify-center items-center coin gradient-gold text-[10px]"
-                >
-                  {coin.amount === 500000
-                    ? '500k'
-                    : coin.amount === 1000000
-                      ? '1000k'
-                      : coin.amount === 2000000
-                        ? '2000k'
-                        : '5000k'}
-                </div>
-              ))}
+              coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
             <p className="absolute top-[0%] right-2 font-bold text-xl">
               $
               {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(7)]
@@ -603,19 +590,13 @@ const GameComponent = () => {
               >
                 {selectedCard === 1 &&
                   coins.map((coin) => (
-                    <div
-                      key={coin.id}
-                      id={`coin-${coin.id}`}
-                      className="flex justify-center items-center coin gradient-gold text-[10px]"
-                    >
-                      {currentSelectedAmount === 500000
-                        ? '500k'
-                        : currentSelectedAmount === 1000000
-                          ? '1000k'
-                          : currentSelectedAmount === 2000000
-                            ? '2000k'
-                            : '5000k'}
-                    </div>
+                    <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />
+                    // <div
+
+                    //   className="flex justify-center items-center coin gradient-gold text-[10px]"
+                    // >
+                    //   <img src="/coin.svg" />
+                    // </div>
                   ))}
                 <p className="absolute top-[0%] left-2 font-bold text-xl">
                   ${' '}
@@ -640,21 +621,7 @@ const GameComponent = () => {
                 }
               >
                 {selectedCard === 3 &&
-                  coins.map((coin) => (
-                    <div
-                      key={coin.id}
-                      id={`coin-${coin.id}`}
-                      className="flex justify-center items-center coin gradient-gold text-[10px]"
-                    >
-                      {currentSelectedAmount === 500000
-                        ? '500k'
-                        : currentSelectedAmount === 1000000
-                          ? '1000k'
-                          : currentSelectedAmount === 2000000
-                            ? '2000k'
-                            : '5000k'}
-                    </div>
-                  ))}
+                  coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
                 <p className="absolute top-[0%] left-2 font-bold text-xl">
                   ${' '}
                   {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(3)]
@@ -681,21 +648,7 @@ const GameComponent = () => {
                   )}
                 >
                   {selectedCard === 2 &&
-                    coins.map((coin) => (
-                      <div
-                        key={coin.id}
-                        id={`coin-${coin.id}`}
-                        className="flex justify-center items-center coin gradient-gold text-[10px]"
-                      >
-                        {currentSelectedAmount === 500000
-                          ? '500k'
-                          : currentSelectedAmount === 1000000
-                            ? '1000k'
-                            : currentSelectedAmount === 2000000
-                              ? '2000k'
-                              : '5000k'}
-                      </div>
-                    ))}
+                    coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
                   <p className="text-sm font-bold px-1 py-1"> 4 White</p>
                   <p className="absolute top-[0%] right-2 font-bold text-xl">
                     ${' '}
@@ -725,21 +678,7 @@ const GameComponent = () => {
                   )}
                 >
                   {selectedCard === 5 &&
-                    coins.map((coin) => (
-                      <div
-                        key={coin.id}
-                        id={`coin-${coin.id}`}
-                        className="flex justify-center items-center coin gradient-gold text-[10px]"
-                      >
-                        {coin.amount === 500000
-                          ? '500k'
-                          : coin.amount === 1000000
-                            ? '1000k'
-                            : coin.amount === 2000000
-                              ? '2000k'
-                              : '5000k'}
-                      </div>
-                    ))}
+                    coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
                   <p className="absolute top-[0%] right-2 font-bold text-xl">
                     $
                     {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(5)]
@@ -771,21 +710,7 @@ const GameComponent = () => {
                   }
                 >
                   {selectedCard === 6 &&
-                    coins.map((coin) => (
-                      <div
-                        key={coin.id}
-                        id={`coin-${coin.id}`}
-                        className="flex justify-center items-center coin gradient-gold text-[10px]"
-                      >
-                        {coin.amount === 500000
-                          ? '500k'
-                          : coin.amount === 1000000
-                            ? '1000k'
-                            : coin.amount === 2000000
-                              ? '2000k'
-                              : '5000k'}
-                      </div>
-                    ))}
+                    coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
                   <p className="absolute top-[0%] right-2 font-bold text-xl">
                     ${' '}
                     {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(6)]
@@ -815,21 +740,7 @@ const GameComponent = () => {
                   }
                 >
                   {selectedCard === 4 &&
-                    coins.map((coin) => (
-                      <div
-                        key={coin.id}
-                        id={`coin-${coin.id}`}
-                        className="flex justify-center items-center coin gradient-gold text-[10px]"
-                      >
-                        {coin.amount === 500000
-                          ? '500k'
-                          : coin.amount === 1000000
-                            ? '1000k'
-                            : coin.amount === 2000000
-                              ? '2000k'
-                              : '5000k'}
-                      </div>
-                    ))}
+                    coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
                   <p className="absolute top-[0%] right-2 font-bold text-xl">
                     ${' '}
                     {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(4)]
@@ -864,22 +775,7 @@ const GameComponent = () => {
             }
           >
             {selectedCard === 9 &&
-              coins.map((coin) => (
-                <div
-                  key={coin.id}
-                  id={`coin-${coin.id}`}
-                  className="flex justify-center items-center coin gradient-gold text-[10px]"
-                >
-                  {coin.amount === 500000
-                    ? '500k'
-                    : coin.amount === 1000000
-                      ? '1000k'
-                      : coin.amount === 2000000
-                        ? '2000k'
-                        : '5000k'}
-                  M
-                </div>
-              ))}
+              coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
             <p className="absolute top-[0%] right-2 font-bold text-xl">
               ${' '}
               {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(10)]
@@ -903,21 +799,7 @@ const GameComponent = () => {
             }
           >
             {selectedCard === 9 &&
-              coins.map((coin) => (
-                <div
-                  key={coin.id}
-                  id={`coin-${coin.id}`}
-                  className="flex justify-center items-center coin gradient-gold text-[10px]"
-                >
-                  {coin.amount === 500000
-                    ? '500k'
-                    : coin.amount === 1000000
-                      ? '1000k'
-                      : coin.amount === 2000000
-                        ? '2000k'
-                        : '5000k'}
-                </div>
-              ))}
+              coins.map((coin) => <img src="/coin2.svg" key={coin.id} id={`coin-${coin.id}`} className="coin" />)}
             <p className="absolute top-[0%] right-2 font-bold text-xl">
               ${' '}
               {roundDetails?.message?.totalBetAmounts[getBetTypeBySelectionCard(9)]
@@ -1005,29 +887,27 @@ const GameComponent = () => {
             size={'lg'}
             variant={'default'}
             className="mx-2"
-            disabled={countDownStatus === 'BET_LOCK' || countDownSPOStatus === "BET_SPO_LOCK"}
+            disabled={countDownStatus === 'BET_LOCK' || countDownSPOStatus === 'BET_SPO_LOCK'}
             onClick={() => resetBet()}
           >
             Rebet
           </Button>
         </div>
       </div>
-      {
-        winnermodal && roomOwner && (
-          <>
-            <WinnersModal
-              open={winnermodal}
-              onClose={() => {
-                setwinnerModal(false);
-                resetBet();
-                updateRoundStatus({ roundId: roundDetails?.message?.data?._id, round: { roundStatus: 'completed' } });
-              }}
-              winners={roundDetails?.message?.data?.winners}
-            />
-          </>
-        )
-      }
-    </div >
+      {winnermodal && roomOwner && (
+        <>
+          <WinnersModal
+            open={winnermodal}
+            onClose={() => {
+              setwinnerModal(false);
+              resetBet();
+              updateRoundStatus({ roundId: roundDetails?.message?.data?._id, round: { roundStatus: 'completed' } });
+            }}
+            winners={roundDetails?.message?.data?.winners}
+          />
+        </>
+      )}
+    </div>
   );
 };
 
