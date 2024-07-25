@@ -15,3 +15,12 @@ export const userProfile = async (userId: string) => {
   const { data } = await http.get(`user/profile/${userId}`);
   return data;
 };
+
+export const rechargeXusdt = async (payload: { amount: number }) => {
+  const { data } = await http.post('User/updateWallet', payload, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+  });
+  return data;
+};

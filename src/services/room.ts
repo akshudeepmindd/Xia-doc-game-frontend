@@ -78,6 +78,10 @@ export const verifyRoomPassword = async ({ roomId, payload }: { roomId: string, 
 }
 
 export const deductXusdt = async (payload: { amount: number }) => {
-  const { data } = await http.post('/transactions/transfer', payload)
+  const { data } = await http.post('/transactions/transfer', payload,{
+    headers:{
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    }
+  })
   return data;
 }

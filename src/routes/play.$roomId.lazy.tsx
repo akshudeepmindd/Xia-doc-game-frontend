@@ -819,7 +819,7 @@ const GameComponent = () => {
               placeholder=""
               className="w-[14rem] rounded-sm px-6 h-7 border-10 customBorderInput text-black px-12"
               disabled
-              value={userDetails?.user?.balance}
+              value={`${userDetails?.user?.balance} vUsd`}
             />
           </div>
         </div>
