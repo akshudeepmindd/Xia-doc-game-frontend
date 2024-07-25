@@ -43,12 +43,13 @@ const useTokenTransfer = ({ onSuccess, onError }: { onSuccess?: (response?: any)
     }, [status])
 
     const sendToken = async (recipient: string, amount: number, responseBody?: any) => {
-        console.log(amount, 'amount');
         if (account) {
             setIsPending(true);
             setResponse(responseBody)
-            if (!isEmpty(getAllowance?.value) && (+ethers.utils.formatEther(getAllowance?.value?.[0] ?? 1000)) > amount) {
-                await approve(account, ethers.utils.parseEther(amount.toString()));
+            if (getAllowance?.value?.[0]) {
+                const allowanceAmount = +ethers.utils.formatEther(getAllowance?.value?.[0]);
+                if (allowanceAmount < amount)
+                    await approve(account, ethers.utils.parseEther(amount.toString()));
             }
             await send(account, recipient, ethers.utils.parseEther(amount.toString()));
         }

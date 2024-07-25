@@ -81,7 +81,7 @@ const BaseLayoutComponent = () => {
     onError: (massage) => {
       console.log(massage);
     },
-    onSuccess: async (response: z.infer<typeof CreateRoom>) => {},
+    onSuccess: async (response: z.infer<typeof CreateRoom>) => { },
   });
   const form = useForm<z.infer<typeof CreateRoom>>({
     resolver: zodResolver(CreateRoom),
@@ -136,9 +136,9 @@ const BaseLayoutComponent = () => {
       console.log('handleBuyRoom-Error', error);
     }
   };
-  const handleWalletRecharge = () => {
+  const handleWalletRecharge = async () => {
     console.log(amount, 'amount');
-    sendToken('0xebE3B38b9BADD80452809987E353E03a88C13387', amount);
+    await sendToken('0xebE3B38b9BADD80452809987E353E03a88C13387', amount);
   };
   return (
     <div className="flex flex-col min-h-screen">
