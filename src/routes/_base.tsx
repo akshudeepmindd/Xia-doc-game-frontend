@@ -74,7 +74,7 @@ const BaseLayoutComponent = () => {
   const { mutateAsync: purchaseRoom } = useMutation({
     mutationFn: createRoom,
   });
-  const { mutateAsync: rechargewallet } = useMutation({
+  const { mutateAsync: rechargewallet, isPending: RechargewalletPending } = useMutation({
     mutationFn: rechargeXusdt,
   });
   const { isPending, sendToken } = useTokenTransfer({
@@ -83,7 +83,7 @@ const BaseLayoutComponent = () => {
     },
     onSuccess: async (response: z.infer<typeof CreateRoom>) => {
       rechargewallet({ amount });
-      setdepositeopen(false)
+      setdepositeopen(false);
     },
   });
   const form = useForm<z.infer<typeof CreateRoom>>({
@@ -432,8 +432,8 @@ const BaseLayoutComponent = () => {
                     </DialogHeader>
 
                     <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-                    <Button onClick={() => handleWalletRecharge()} className="w-full" disabled={isPending}>
-                      {isPending ? (
+                    <Button onClick={() => handleWalletRecharge()} className="w-full" disabled={RechargewalletPending}>
+                      {RechargewalletPending ? (
                         <span className="flex items-center gap-x-1">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Deposit is in progress
