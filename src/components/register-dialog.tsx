@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { userLoginService } from '@/services/auth';
+import { userRegister } from '@/services/auth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { setAuthToken, setAuthUser } from '@/services';
@@ -36,15 +36,8 @@ const Register = ({ children }: RegisterProps) => {
   const handleSubmit = async (data: z.infer<typeof loginSchema>) => {
     try {
       setLoading(true);
-      const response = await userLoginService(data);
-      setAuthToken(response.message.token);
-      setAuthUser({
-        userId: response.message.user._id,
-        username: response.message.user.telegramusername,
-        roomOwner: response.message.user.roomowner,
-      });
-      navigate({ to: '/' });
-      toast.success('Register successfully. Please login to continue');
+      const response = await userRegister(data);
+     toast.success('Register successfully. Please login to continue');
     } catch (error: unknown | any) {
       toast.error(error.message || 'Failed to login');
     } finally {
