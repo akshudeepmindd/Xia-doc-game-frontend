@@ -17,7 +17,7 @@ export const userProfile = async (userId: string) => {
 };
 
 export const rechargeXusdt = async (payload: { amount: number }) => {
-  const { data } = await http.post('User/updateWallet', payload, {
+  const { data } = await http.patch('User/updateWallet', payload, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     },

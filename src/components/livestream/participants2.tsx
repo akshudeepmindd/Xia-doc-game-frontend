@@ -3,14 +3,15 @@ import Hls from 'hls.js';
 import { Loader2 } from 'lucide-react';
 import { MeetingConsumer, Constants, MeetingProvider, useMeeting } from '@videosdk.live/react-sdk';
 
-const HLSPlayer = () => {
+const HLSPlayer = ({player}) => {
   const { hlsUrls, hlsState } = useMeeting();
   const playerRef = useRef(null);
 
   const hlsPlaybackHlsUrl = useMemo(() => hlsUrls.playbackHlsUrl, [hlsUrls]);
 
   useEffect(() => {
-    if (Hls.isSupported()) {
+    const player = playerRef.current;
+    if (Hls.isSupported() && hlsPlaybackHlsUrl) {
       const hls = new Hls({
         capLevelToPlayerSize: true,
         maxLoadingDelay: 0,
@@ -19,32 +20,39 @@ const HLSPlayer = () => {
         defaultAudioCodec: 'mp4a.40.2',
       });
 
-      let player = document.querySelector('#hlsPlayer2');
-
       hls.loadSource(hlsPlaybackHlsUrl);
       hls.attachMedia(player);
-    } else {
-      if (typeof playerRef.current?.play === 'function') {
-        playerRef.current.src = hlsPlaybackHlsUrl;
-        playerRef.current.play();
-      }
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        player.play();
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS error', data);
+      });
+
+      return () => {
+        hls.destroy();
+      };
+    } else if (player && typeof player.play === 'function') {
+      player.src = hlsPlaybackHlsUrl;
+      player.play();
     }
   }, [hlsPlaybackHlsUrl, hlsState]);
 
   return (
     <video
       ref={playerRef}
-      id="hlsPlayer2"
+      id={`hlsPlayer-${player}`}
       autoPlay
       style={{ width: '100%', height: '100%' }}
       playsInline
-      playing
       onError={(err) => console.log(err, 'hls video error')}
     ></video>
   );
 };
 
-const Speaker2 = ({ meetingId, authToken }) => {
+const Speaker2 = ({ meetingId, authToken, player }) => {
   const [externalCamAvailable, setExternalCamAvailable] = useState(false);
 
   useEffect(() => {
@@ -73,7 +81,7 @@ const Speaker2 = ({ meetingId, authToken }) => {
       <MeetingConsumer>
         {({ hlsState }) =>
           hlsState === Constants.hlsEvents.HLS_PLAYABLE ? (
-            <HLSPlayer style={{ width: '100%' }} />
+            <HLSPlayer style={{ width: '100%' }} player={player}/>
           ) : (
             <div className="flex justify-center items-center h-full">
               <Loader2 size={120} color="white" className="w-8 h-8 animate-spin" />

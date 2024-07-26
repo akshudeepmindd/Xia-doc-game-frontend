@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 const HLSPlayer = () => {
   const { hlsUrls, hlsState } = useMeeting();
 
-  const playerRef = useRef(null);
+  const playerRef2 = useRef(null);
 
   const hlsPlaybackHlsUrl = useMemo(() => hlsUrls.playbackHlsUrl, [hlsUrls]);
 
@@ -25,16 +25,17 @@ const HLSPlayer = () => {
       hls.loadSource(hlsPlaybackHlsUrl);
       hls.attachMedia(player);
     } else {
-      if (typeof playerRef.current?.play === 'function') {
-        playerRef.current.src = hlsPlaybackHlsUrl;
-        playerRef.current.play();
+      if (typeof playerRef2.current?.play === 'function') {
+        playerRef2.current.src = hlsPlaybackHlsUrl;
+        playerRef2.current.play();
       }
+      console.log(playerRef2, 'playerRef2');
     }
   }, [hlsPlaybackHlsUrl, hlsState]);
 
   return (
     <video
-      ref={playerRef}
+      ref={playerRef2}
       id="hlsPlayer"
       autoPlay
       style={{ width: '100%', height: '100%' }}

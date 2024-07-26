@@ -83,6 +83,7 @@ const DealerComponent = () => {
   const [startLive, setStartLive] = useState(false);
   const [authToken, setAuthToken] = useState('');
   const [cameraId, setCameraId] = useState('');
+  const [cameratoken, setCameratoken] = useState('');
   const { username } = useProfile();
 
   const { data: roomDetails } = useQuery({
@@ -95,6 +96,7 @@ const DealerComponent = () => {
       setMeetingId(roomDetails?.dealerLiveStreamId);
       setAuthToken(roomDetails?.streamingToken);
       setCameraId(roomDetails?.cameraLiveStreamId);
+      setCameratoken(roomDetails?.camerastreamingToken);
     }
   }, [roomDetails]);
 
@@ -125,7 +127,7 @@ const DealerComponent = () => {
           </div>
           <div className="w-[43rem] h-96 overflow-hidden">
             {startLive ? (
-              <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} />
+              <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} player="1" />
             ) : (
               <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
             )}
@@ -136,7 +138,7 @@ const DealerComponent = () => {
           <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
           <div className="w-1/4 bg-slate-50 h-64">
             {startLive ? (
-              <SpeakerScreen2 meetingId={cameraId} authToken={authToken} />
+              <SpeakerScreen2 meetingId={cameraId} authToken={cameratoken} player="2" />
             ) : (
               <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
             )}
@@ -164,6 +166,10 @@ const DealerComponent = () => {
                 setStartLive={setStartLive}
                 startLive={startLive}
                 setAuthToken={setAuthToken}
+                cameraId={cameraId}
+                setCameraId={setCameraId}
+                cameraToken={cameratoken}
+                setCameraToken={setCameratoken}
                 meetingId={meetingId}
                 authToken={authToken}
                 selectResult={selectResult}

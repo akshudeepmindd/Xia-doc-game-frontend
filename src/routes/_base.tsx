@@ -81,7 +81,10 @@ const BaseLayoutComponent = () => {
     onError: (massage) => {
       console.log(massage);
     },
-    onSuccess: async (response: z.infer<typeof CreateRoom>) => { },
+    onSuccess: async (response: z.infer<typeof CreateRoom>) => {
+      rechargewallet({ amount });
+      setdepositeopen(false)
+    },
   });
   const form = useForm<z.infer<typeof CreateRoom>>({
     resolver: zodResolver(CreateRoom),
@@ -412,7 +415,9 @@ const BaseLayoutComponent = () => {
                     <div className="relative w-44 px-2 py-1 bg-inherit border-2 rounded border-black-200 flex justify-between items-center">
                       <p className="text-xs">Balance: </p>
                       <div className="flex items-center">
-                        <p className="text-xs ">{userDetail?.walletBalance ? userDetail?.walletBalance : 0} xUsd</p>
+                        <p className="text-xs ">
+                          {userDetail?.user?.walletBalance ? userDetail?.user?.walletBalance : 0} xUsd
+                        </p>
                         &nbsp;
                         <p className="text-xs">
                           <img src="/plus.svg" alt="recharge wallet" className="h-4" />
