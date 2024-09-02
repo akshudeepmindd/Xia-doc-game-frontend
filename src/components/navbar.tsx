@@ -140,39 +140,79 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
   if (isLoading) return <>Loading...</>;
 
   return (
-    <div className="flex items-center justify-between h-10 px-8 bg-[#D9D9D9]">
+    <div className="flex items-center justify-between h-10 px-4 pt-4">
       <div className="flex px-4 item-center gap-2">
         {isDealer && (
           <Hint content="Info">
             <Button size="icon" variant={'ghost'} className="w-8 h-8">
-              <img src="/Info.svg" />
+              <img src="/arrow.png" />
             </Button>
           </Hint>
         )}
         <Hint content="Signal">
           <Button size="icon" variant={'ghost'} className="w-8 h-8">
-            <img src="/Signal.svg" />
+            <img src="/info.png" />
           </Button>
         </Hint>
         <Hint content="Your Chats">
           <Button size="icon" variant={'ghost'} className="w-8 h-8">
-            <img src="/chat.svg" />
+            <img src="/signal.png" />
           </Button>
         </Hint>
-        {/* {roomOwner && (
-          <Hint content="Deposit">
-            <Button size="icon" variant={'ghost'} className="w-8 h-8">
-              <img src="/Deposit.svg" />
-            </Button>
-          </Hint>
-        )} */}
-        {isDealer && (
+        <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/chat.png" />
+          </Button>
+        </Hint>  <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/media.png" />
+          </Button>
+        </Hint>  <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/wallet.png" />
+          </Button>
+        </Hint>  <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/subsidy.png" />
+          </Button>
+        </Hint>  <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/qa.png" />
+          </Button>
+        </Hint>  <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/music.png" />
+          </Button>
+        </Hint>
+        <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/volume.png" />
+          </Button>
+        </Hint>
+        <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/gift.png" />
+          </Button>
+        </Hint>
+         <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/gamepad.png" />
+          </Button>
+        </Hint>
+        <Hint content="Your Chats">
+          <Button size="icon" variant={'ghost'} className="w-8 h-8">
+            <img src="/logout.png" />
+          </Button>
+        </Hint>
+        
+       
+        {/* {isDealer && (
           <Hint content="Tip">
             <Button size="icon" variant={'outline'} className="w-8 h-8">
               <Drama size={18} />
             </Button>
           </Hint>
-        )}
+        )} */}
         {roomOwner && !isDealer && (
           <>
             <Hint content="Players Requested">
@@ -368,18 +408,8 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
       {/* {roomOwner && <Button size="sm">Distribute coins</Button>} */}
       {/* <Button size="sm" onClick={handleMakeSpo}>Request for SPO</Button> */}
       <div className="flex items-center px-4 gap-x-4">
-        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-          <img src="/Resize.svg" />
-        </Button>
-        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-          <img src="/note.svg" />
-        </Button>
-        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-          <img src="/Sound.svg" />
-        </Button>
-        <Button size={'icon'} className="w-8 h-8" variant={'ghost'}>
-          <img src="/Logout.svg" />
-        </Button>
+      <Button className="rounded-xl bg-[#0EA66E]">Result Declare</Button>
+         
       </div>
     </div>
   );
