@@ -3,7 +3,7 @@ import { Outlet, createRootRoute } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useConnector } from '@usedapp/core';
 import { useEffect } from 'react';
-
+import '../styles/common.css';
 const queryClient = new QueryClient();
 
 const RootComponent = () => {

@@ -14,6 +14,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 interface RegisterProps {
   children: ReactNode;
+  className?: string;
 }
 
 const loginSchema = z.object({
@@ -37,7 +38,7 @@ const Register = ({ children }: RegisterProps) => {
     try {
       setLoading(true);
       const response = await userRegister(data);
-     toast.success('Register successfully. Please login to continue');
+      toast.success('Register successfully. Please login to continue');
     } catch (error: unknown | any) {
       toast.error(error.message || 'Failed to login');
     } finally {
