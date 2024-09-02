@@ -1,3 +1,11 @@
 .buttoncss{
     background: linear-gradient(109.77deg, #5200FF 21.74%, #DD1350 91.44%);
 }
+.dealer-container{
+    min-width: 100vh;
+    height: 100%;
+}
+
+.box-container{
+    height: -1rem;
+}

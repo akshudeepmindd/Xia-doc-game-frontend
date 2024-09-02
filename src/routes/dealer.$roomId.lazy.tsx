@@ -115,25 +115,26 @@ const DealerComponent = () => {
   }
 
   return (
-    <div className="bg-auto bg-no-repeat bg-center bg-cover bg-[url('/game.png')] relative h-[100vh]">
-      <div className="flex flex-col h-screen ">
-        <Navbar roomId={roomId} isDealer={true} />
-        <div className="flex-1 flex flex-col gap-y-2">
-          <div className="flex items-center justify-between px-10 gap-x-4">
-            <div className="w-1/4 h-40 flex items-center justify-center">
-              <div className="w-24 h-24 flex items-center justify-center text-background border-2 rounded-full text-3xl font-medium font-mono">
-                {countdown > 0 ? countdown : <span className="text-xl">Start</span>}
+    <div className="dealer-container">
+      <div className=" bg-auto bg-no-repeat bg-center bg-cover bg-[url('/game.png')] relative ">
+        <div className="flex flex-col ">
+          <Navbar roomId={roomId} isDealer={true} />
+          <div className="flex-1 flex flex-col gap-y-2">
+            <div className="flex items-center justify-between px-10 gap-x-4">
+              <div className="w-1/4 h-40 flex items-center justify-center">
+                <div className="w-24 h-24 flex items-center justify-center text-background border-2 rounded-full text-3xl font-medium font-mono">
+                  {countdown > 0 ? countdown : <span className="text-xl">Start</span>}
+                </div>
               </div>
-            </div>
-            <div className="w-[43rem]  overflow-hidden">
-              {startLive ? (
-                <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} player="1" />
-              ) : (
-                <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
+              <div className="w-[30rem]  overflow-hidden mt-5">
+                {startLive ? (
+                  <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} player="1" />
+                ) : (
+                <div className="flex justify-center items-center bg-white h-[200px] ">Live Need to Start from Bottom</div>
               )}
             </div>
-            <div className="w-1/4 border rounded-xl mt-40">
-              <div className="table w-full text-white p-2 ">
+            <div className="w-1/4  mt-40">
+              {/* <div className="table w-full text-white p-2 ">
                 <div className="table-header-group">
                   <div className="table-row  rounded-xl p-2">
                     <div className="table-cell text-center ...">Bet</div>
@@ -154,57 +155,58 @@ const DealerComponent = () => {
                     <div className="table-cell ...">$3000</div>
                   </div>
                 </div>
+              </div> */}
+            </div>
+            </div>
+            <div className="flex items-center justify-between px-10 gap-x-4">
+              <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
+              <div className="w-1/4 bg-slate-50 h-64">
+                {startLive ? (
+                  <SpeakerScreen2 meetingId={cameraId} authToken={cameratoken} player="2" />
+                ) : (
+                  <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
+                )}
               </div>
+              <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
             </div>
+            {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
+              <>
+                <MeetingProvider
+                  config={{
+                    meetingId: roomDetails?.dealerLiveStreamId,
+                    mode: 'CONFERENCE',
+                    name: 'Name',
+                    micEnabled: true,
+                    webcamEnabled: true,
+                    debugMode: false,
+                  }}
+                  token={roomDetails?.streamingToken}
+                  joinWithoutUserInteraction
+                >
+                  <DealerFooter
+                    roomId={roomId}
+                    round={roundDetails?.message}
+                    setMeetingId={setMeetingId}
+                    setStartLive={setStartLive}
+                    startLive={startLive}
+                    setAuthToken={setAuthToken}
+                    cameraId={cameraId}
+                    setCameraId={setCameraId}
+                    cameraToken={cameratoken}
+                    setCameraToken={setCameratoken}
+                    meetingId={meetingId}
+                    authToken={authToken}
+                    selectResult={selectResult}
+                    setSelectResult={setSelectResult}
+                    resultDeclare={handleDeclareResult}
+                    roundStatus={roundDetails?.message?.data?.roundStatus}
+                    countdown={countdown}
+                    setCountDown={setCountdown}
+                  />
+                </MeetingProvider>
+              </>
+            )}
           </div>
-          <div className="flex items-center justify-between px-10 gap-x-4">
-            <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
-            <div className="w-1/4 bg-slate-50 h-64">
-              {startLive ? (
-                <SpeakerScreen2 meetingId={cameraId} authToken={cameratoken} player="2" />
-              ) : (
-                <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
-              )}
-            </div>
-            <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
-          </div>
-          {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
-            <>
-              <MeetingProvider
-                config={{
-                  meetingId: roomDetails?.dealerLiveStreamId,
-                  mode: 'CONFERENCE',
-                  name: 'Name',
-                  micEnabled: true,
-                  webcamEnabled: true,
-                  debugMode: false,
-                }}
-                token={roomDetails?.streamingToken}
-                joinWithoutUserInteraction
-              >
-                <DealerFooter
-                  roomId={roomId}
-                  round={roundDetails?.message}
-                  setMeetingId={setMeetingId}
-                  setStartLive={setStartLive}
-                  startLive={startLive}
-                  setAuthToken={setAuthToken}
-                  cameraId={cameraId}
-                  setCameraId={setCameraId}
-                  cameraToken={cameratoken}
-                  setCameraToken={setCameratoken}
-                  meetingId={meetingId}
-                  authToken={authToken}
-                  selectResult={selectResult}
-                  setSelectResult={setSelectResult}
-                  resultDeclare={handleDeclareResult}
-                  roundStatus={roundDetails?.message?.data?.roundStatus}
-                  countdown={countdown}
-                  setCountDown={setCountdown}
-                />
-              </MeetingProvider>
-            </>
-          )}
         </div>
       </div>
     </div>
@@ -227,9 +229,15 @@ const EvenSelectionBoard = ({
   setSelectResult: (result: string) => void;
 }) => {
   return (
-    <div className="w-1/4 h-72 flex flex-col gap-y-6">
+    <div className="w-1/4 box-container flex flex-col gap-y-6">
       <div className="grid gap-6">
-        <div className="bg-[#0099C3] rounded-lg">
+        <div
+          className={cn(
+            'flex flex-col justify-around w-full border-background p-26 rounded p-2 bg-[#0099C3]',
+            selectResult === BetType.EVEN ? 'bg-white/10 glow' : '',
+          )}
+          onClick={() => setSelectResult(BetType.EVEN)}
+        >
           <h2 className="text-center text-white p-8 text-xl">Even</h2>
         </div>
         <div
@@ -252,7 +260,7 @@ const EvenSelectionBoard = ({
         </div>
         <div
           className={cn(
-            'flex flex-col justify-around w-full border-background p-26 rounded p-2 bg-[#0099C3]',
+            'flex flex-col justify-around w-full  p-26 rounded p-2 bg-[#0099C3]',
             selectResult === BetType.FOUR_BLACK ? 'bg-white/10 glow' : '',
           )}
           onClick={() => setSelectResult(BetType.FOUR_BLACK)}
@@ -270,30 +278,21 @@ const EvenSelectionBoard = ({
         </div>
         <div
           className={cn(
-            'flex flex-col justify-around w-full border border-background p-26 rounded p-2 bg-[#0099C3]',
+            'flex flex-col justify-between w-full  p-26 rounded p-2 bg-[#0099C3] ',
             selectResult === BetType.TWO_BLACK_TWO_WHITE ? 'bg-white/10 glow' : '',
           )}
           onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}
         >
-          <h3 className="flex items-center justify-around w-full">
+          <h3 className="flex items-center justify-between w-full p-2">
             <span className="text-background text-sm">White 2</span>
             <span className="text-background text-sm">Red 2</span>
           </h3>
-          <div className="w-full flex items-center justify-around">
+          <div className="w-full flex items-center justify-center gap-2 pb-2">
             <RedCircle />
             <RedCircle />
             <WhiteCircle />
             <WhiteCircle />
           </div>
-        </div>
-        <div
-          className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
-            selectResult === BetType.EVEN ? 'bg-white/10 glow' : '',
-          )}
-          onClick={() => setSelectResult(BetType.EVEN)}
-        >
-          <div className="w-full flex items-center justify-around 4xl text-background">EVEN</div>
         </div>
       </div>
     </div>
@@ -308,23 +307,26 @@ const OddSelectionBoard = ({
   setSelectResult: (result: string) => void;
 }) => {
   return (
-    <div className="w-1/4 h-72 flex flex-col gap-y-6">
+    <div className="w-1/4 box-container flex flex-col gap-y-6">
       <div className="grid  gap-6">
-        <div className="bg-[#972b46] rounded-lg p-8">
+        <div
+          className={cn('bg-[#972b46] rounded-lg p-8', selectResult === BetType.ODD ? 'bg-white/10 glow' : '')}
+          onClick={() => setSelectResult(BetType.ODD)}
+        >
           <h1 className="text-background text-2xl font-medium text-center">Odd</h1>
         </div>
         <div
           className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            'flex flex-col justify-around w-full bg-[#972b46] h-24 rounded p-2',
             selectResult === BetType.THREE_WHITE_ONE_BLACK ? 'bg-white/10 glow' : '',
           )}
           onClick={() => setSelectResult(BetType.THREE_WHITE_ONE_BLACK)}
         >
-          <h3 className="flex items-center justify-around w-full">
-            <span className="text-background">White 3</span>
-            <span className="text-background">Red 1</span>
+          <h3 className="flex items-center justify-between w-full">
+            <span className="text-background text-sm">White 3</span>
+            <span className="text-background text-sm">Red 1</span>
           </h3>
-          <div className="w-full flex items-center justify-around">
+          <div className="w-full flex items-center justify-center gap-3">
             <WhiteCircle />
             <WhiteCircle />
             <WhiteCircle />
@@ -333,30 +335,21 @@ const OddSelectionBoard = ({
         </div>
         <div
           className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
+            'flex flex-col justify-between w-full bg-[#972b46] h-24 rounded p-2',
             selectResult === BetType.THREE_BLACK_ONE_WHITE ? 'bg-white/10 glow' : '',
           )}
           onClick={() => setSelectResult(BetType.THREE_BLACK_ONE_WHITE)}
         >
-          <h3 className="flex items-center justify-around w-full">
-            <span className="text-background">White 1</span>
-            <span className="text-background">Red 3</span>
+          <h3 className="flex items-center justify-between w-full">
+            <span className="text-background text-sm">White 1</span>
+            <span className="text-background text-sm">Red 3</span>
           </h3>
-          <div className="w-full flex items-center justify-around">
+          <div className="w-full flex items-center justify-center gap-4 pb-2">
             <WhiteCircle />
             <RedCircle />
             <RedCircle />
             <RedCircle />
           </div>
-        </div>
-        <div
-          className={cn(
-            'flex flex-col justify-around w-full border border-background h-24 rounded p-2',
-            selectResult === BetType.ODD ? 'bg-white/10 glow' : '',
-          )}
-          onClick={() => setSelectResult(BetType.ODD)}
-        >
-          <div className="w-full flex items-center justify-around 4xl text-background">ODD</div>
         </div>
       </div>
     </div>
