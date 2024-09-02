@@ -85,7 +85,7 @@ const Register = ({ children }: RegisterProps) => {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full buttoncss" disabled={loading}>
               {loading ? (
                 <span className="flex items-center gap-x-1">
                   <Loader2 className="w-4 h-4 animate-spin" />

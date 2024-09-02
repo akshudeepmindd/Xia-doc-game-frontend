@@ -157,13 +157,13 @@ const Navbar = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-6">
-          <a href="#" className="hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+          <a href="#" className="rounded-full rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6] px-1">
             Home
           </a>
-          <a href="#" className="hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+          <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
             Features
           </a>
-          <a href="#" className="hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+          <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
             Pricing
           </a>
           {localStorage.getItem('token') ? (
@@ -187,7 +187,11 @@ const Navbar = () => {
                   </DialogHeader>
 
                   <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-                  <Button onClick={() => handleWalletRecharge()} className="w-full" disabled={RechargewalletPending}>
+                  <Button
+                    onClick={() => handleWalletRecharge()}
+                    className="w-full buttoncss"
+                    disabled={RechargewalletPending}
+                  >
                     {RechargewalletPending ? (
                       <span className="flex items-center gap-x-1">
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -199,7 +203,7 @@ const Navbar = () => {
                   </Button>
                 </DialogContent>
               </Dialog>
-              <a href="/room" className="hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+              <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
                 My Rooms
               </a>
 
@@ -433,7 +437,7 @@ const Navbar = () => {
                         </div>
                       </div>
 
-                      <Button type="submit" className="w-full" disabled={isPending}>
+                      <Button type="submit" className="w-full buttoncss" disabled={isPending}>
                         {isPending ? (
                           <span className="flex items-center gap-x-1">
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -453,11 +457,7 @@ const Navbar = () => {
                 size="sm"
                 disabled={isDeductLoading}
                 onClick={() => {
-                  localStorage.removeItem('userId');
-                  localStorage.removeItem('roomOwner');
-                  localStorage.removeItem('sbo');
-                  localStorage.removeItem('username');
-                  localStorage.removeItem('token');
+                  handleLogout();
                   window.location.reload();
                 }}
               >
@@ -496,16 +496,16 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-gray-800`}>
-        <a href="#" className="block px-4 py-2 text-white hover:bg-gray-700">
+        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
           Home
         </a>
-        <a href="#" className="block px-4 py-2 text-white hover:bg-gray-700">
+        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
           About
         </a>
-        <a href="#" className="block px-4 py-2 text-white hover:bg-gray-700">
+        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
           Services
         </a>
-        <a href="#" className="block px-4 py-2 text-white hover:bg-gray-700">
+        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
           Contact
         </a>
       </div>
