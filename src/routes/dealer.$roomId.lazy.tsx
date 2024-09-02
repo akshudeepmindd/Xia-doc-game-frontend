@@ -1,5 +1,6 @@
 import DealerFooter from '@/components/dealer-footer';
 import SpeakerScreen from '@/components/livestream/speaker';
+import io from 'socket.io-client';
 import Navbar from '@/components/navbar';
 import { GET_ROUND_DETAILS, SOCKET_ROUND_START } from '@/lib/constants';
 import { socket } from '@/services';
@@ -11,7 +12,7 @@ import { GET_ROOMS_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
 import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import SpeakerScreen2 from '@/components/livestream/participants2';
 
@@ -29,6 +30,9 @@ const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // socket.current =
   // const []
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
@@ -55,7 +59,60 @@ const DealerComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
+  const startStream = async () => {
+    // if (!videoRef.current) return; // Ensure the video element is rendered before starting the stream
+    const socket2 = new WebSocket('ws://localhost:4200');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStartLive(true);
+      if (videoRef.current) {
+        // Check if videoRef.current exists
+        videoRef.current.srcObject = stream;
+      }
 
+      // const socket = new WebSocket('ws://localhost:4200');
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              console.log(reader?.result);
+              // Ensure reader.result is a valid ArrayBuffer
+              // if (!(reader.result instanceof ArrayBuffer)) {
+              //   throw new Error('Invalid data format. Expected ArrayBuffer');
+              // }
+              if (reader?.result !== null) {
+                const base64String = reader?.result && reader?.result?.replace(/^data:(.*?);base64,/, '');
+                console.log(base64String);
+                // const base64String = reader?.result?.split(',')[1];
+                const obj = { streamKey: '', frame: base64String };
+
+                if (socket2.readyState === WebSocket.OPEN) {
+                  const message = JSON.stringify({
+                    eventName: 'sendFrame',
+                    data: obj,
+                  });
+                  await socket2.send(message);
+                } else {
+                  console.error('WebSocket connection is not open');
+                }
+              }
+            } catch (error) {
+              console.error('Error sending frame:', error);
+              // Optionally send an error message to the backend
+            }
+          };
+          reader.readAsDataURL(event.data);
+        }
+      };
+
+      mediaRecorder.start(1000);
+    } catch (err) {
+      console.error('Error accessing webcam:', err);
+    }
+  };
   useEffect(() => {
     if (roundDetails) {
       const futureTime = parseISO(roundDetails.message.data?.createdAt);
@@ -85,7 +142,12 @@ const DealerComponent = () => {
   const [cameraId, setCameraId] = useState('');
   const [cameratoken, setCameratoken] = useState('');
   const { username } = useProfile();
-
+  // useEffect(() => {
+  //   // Ensure that the stream starts after the video element is rendered
+  //   if (startLive && videoRef.current) {
+  //     startStream();
+  //   }
+  // }, [startLive, videoRef]);
   const { data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
     queryFn: async () => getRoomDetailService(roomId || ''),
@@ -113,6 +175,7 @@ const DealerComponent = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
 
   return (
     <div className="dealer-container">
@@ -127,14 +190,18 @@ const DealerComponent = () => {
                 </div>
               </div>
               <div className="w-[30rem]  overflow-hidden mt-5">
-                {startLive ? (
-                  <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} player="1" />
-                ) : (
-                <div className="flex justify-center items-center bg-white h-[200px] ">Live Need to Start from Bottom</div>
-              )}
-            </div>
-            <div className="w-1/4  mt-40">
-              {/* <div className="table w-full text-white p-2 ">
+                {/* {startLive ? ( */}
+                <video ref={videoRef} autoPlay muted>
+                  Live Need to Start from Bottom
+                </video>
+                {/* ) : (
+                  <div className="flex justify-center items-center bg-white h-[200px] ">
+                    Live Need to Start from Bottom
+                  </div>
+                )} */}
+              </div>
+              <div className="w-1/4  mt-40">
+                {/* <div className="table w-full text-white p-2 ">
                 <div className="table-header-group">
                   <div className="table-row  rounded-xl p-2">
                     <div className="table-cell text-center ...">Bet</div>
@@ -156,13 +223,13 @@ const DealerComponent = () => {
                   </div>
                 </div>
               </div> */}
-            </div>
+              </div>
             </div>
             <div className="flex items-center justify-between px-10 gap-x-4">
               <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
               <div className="w-1/4 bg-slate-50 h-64">
                 {startLive ? (
-                  <SpeakerScreen2 meetingId={cameraId} authToken={cameratoken} player="2" />
+                  <video ref={videoRef} />
                 ) : (
                   <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
                 )}
@@ -171,7 +238,7 @@ const DealerComponent = () => {
             </div>
             {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
               <>
-                <MeetingProvider
+                {/* <MeetingProvider
                   config={{
                     meetingId: roomDetails?.dealerLiveStreamId,
                     mode: 'CONFERENCE',
@@ -182,28 +249,29 @@ const DealerComponent = () => {
                   }}
                   token={roomDetails?.streamingToken}
                   joinWithoutUserInteraction
-                >
-                  <DealerFooter
-                    roomId={roomId}
-                    round={roundDetails?.message}
-                    setMeetingId={setMeetingId}
-                    setStartLive={setStartLive}
-                    startLive={startLive}
-                    setAuthToken={setAuthToken}
-                    cameraId={cameraId}
-                    setCameraId={setCameraId}
-                    cameraToken={cameratoken}
-                    setCameraToken={setCameratoken}
-                    meetingId={meetingId}
-                    authToken={authToken}
-                    selectResult={selectResult}
-                    setSelectResult={setSelectResult}
-                    resultDeclare={handleDeclareResult}
-                    roundStatus={roundDetails?.message?.data?.roundStatus}
-                    countdown={countdown}
-                    setCountDown={setCountdown}
-                  />
-                </MeetingProvider>
+                > */}
+                <DealerFooter
+                  roomId={roomId}
+                  round={roundDetails?.message}
+                  setMeetingId={setMeetingId}
+                  setStartLive={setStartLive}
+                  startLive={startLive}
+                  setAuthToken={setAuthToken}
+                  cameraId={cameraId}
+                  setCameraId={setCameraId}
+                  startStream={startStream}
+                  cameraToken={cameratoken}
+                  setCameraToken={setCameratoken}
+                  meetingId={meetingId}
+                  authToken={authToken}
+                  selectResult={selectResult}
+                  setSelectResult={setSelectResult}
+                  resultDeclare={handleDeclareResult}
+                  roundStatus={roundDetails?.message?.data?.roundStatus}
+                  countdown={countdown}
+                  setCountDown={setCountdown}
+                />
+                {/* </MeetingProvider> */}
               </>
             )}
           </div>

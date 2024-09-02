@@ -2,7 +2,7 @@ import config from '@/config';
 import axios from 'axios';
 import io from 'socket.io-client';
 
-export const socket = io(config.env.baseUrl);
+export const socket = io('http://localhost:4200');
 
 export const http = axios.create({
   baseURL: config.env.baseUrl,
