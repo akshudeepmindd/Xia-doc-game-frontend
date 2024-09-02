@@ -28,8 +28,14 @@ const BetType = {
 const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
-  const [selectResult, setSelectResult] = useState<string>();
-  // const []
+  const [selectResult, setSelectResult] = useState<string>('');
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const { mutateAsync: updateResult } = useMutation({
+    mutationFn: updateRound,
+  });
+
   useEffect(() => {
     socket.on(SOCKET_ROUND_START, (data: any) => {
       console.log('SOCKET DATA', data);
@@ -40,9 +46,7 @@ const DealerComponent = () => {
       socket.off(SOCKET_ROUND_START);
     };
   }, []);
-  const { mutateAsync: updateResult } = useMutation({
-    mutationFn: updateRound,
-  });
+
   const handleResultSelect = (result: string) => {
     setSelectResult(result);
     updateResult({ roundId: roundDetails?.message?.data?._id, round: { roundResult: result } });
@@ -55,17 +59,14 @@ const DealerComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
-
+  const { mutateAsync: declareResult } = useMutation({
+    mutationFn: declareResultService,
+  });
   useEffect(() => {
     if (roundDetails) {
       const futureTime = parseISO(roundDetails.message.data?.createdAt);
-
-      // Get current time
       const currentTime = new Date();
-
-      // Calculate difference in seconds
       const secondsLeft = differenceInSeconds(currentTime, futureTime);
-
       setCountdown(45 - secondsLeft);
     }
   }, [roundDetails?.message?.data?.createdAt]);
@@ -79,12 +80,8 @@ const DealerComponent = () => {
     }
   }, [countdown, roundDetails?.message?.data?.createdAt]);
 
-  const [meetingId, setMeetingId] = useState('');
-  const [startLive, setStartLive] = useState(false);
-  const [authToken, setAuthToken] = useState('');
-  const [cameraId, setCameraId] = useState('');
-  const [cameratoken, setCameratoken] = useState('');
-  const { username } = useProfile();
+  const [streamKey, setStreamKey] = useState('');
+  const [muxPlaybackId, setMuxPlaybackId] = useState('');
 
   const { data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
@@ -93,16 +90,41 @@ const DealerComponent = () => {
 
   useEffect(() => {
     if (roomDetails) {
-      setMeetingId(roomDetails?.dealerLiveStreamId);
-      setAuthToken(roomDetails?.streamingToken);
-      setCameraId(roomDetails?.cameraLiveStreamId);
-      setCameratoken(roomDetails?.camerastreamingToken);
+      setStreamKey(roomDetails?.muxStreamKey);
+      setMuxPlaybackId(roomDetails?.muxPlaybackId);
     }
   }, [roomDetails]);
 
-  const { mutateAsync: declareResult } = useMutation({
-    mutationFn: declareResultService,
-  });
+  const startStreaming = async () => {
+    if (!streamKey) return;
+
+    try {
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+
+      const mediaRecorder = new MediaRecorder(streamRef.current, {
+        mimeType: 'video/webm',
+      });
+
+      mediaRecorder.ondataavailable = async (event) => {
+        if (event.data.size > 0) {
+          const formData = new FormData();
+          formData.append('file', event.data, 'video.webm');
+
+          await fetch(`https://stream.mux.com/${streamKey}`, {
+            method: 'POST',
+            body: formData,
+          });
+        }
+      };
+
+      mediaRecorder.start(1000); // Send data every second
+    } catch (err) {
+      console.error('Error starting stream:', err);
+    }
+  };
 
   const handleDeclareResult = async (result: string) => {
     if (roundDetails?.message?.data?._id) {
@@ -110,13 +132,19 @@ const DealerComponent = () => {
     }
   };
 
+  useEffect(() => {
+    if (streamKey) {
+      startStreaming();
+    }
+  }, [streamKey]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="bg-auto bg-no-repeat bg-center bg-cover bg-[url('/game.png')] relative h-[100vh]">
-      <div className="flex flex-col h-screen ">
+      <div className="flex flex-col h-screen">
         <Navbar roomId={roomId} isDealer={true} />
         <div className="flex-1 flex flex-col gap-y-2">
           <div className="flex items-center justify-between px-10 gap-x-4">
@@ -125,33 +153,29 @@ const DealerComponent = () => {
                 {countdown > 0 ? countdown : <span className="text-xl">Start</span>}
               </div>
             </div>
-            <div className="w-[43rem]  overflow-hidden">
-              {startLive ? (
-                <SpeakerScreen meetingId={meetingId} name={username} authToken={authToken} player="1" />
-              ) : (
-                <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
-              )}
+            <div className="w-[43rem] overflow-hidden">
+              <video ref={videoRef} autoPlay muted className="w-full h-full" />
             </div>
             <div className="w-1/4 border rounded-xl mt-40">
               <div className="table w-full text-white p-2 ">
                 <div className="table-header-group">
-                  <div className="table-row  rounded-xl p-2">
-                    <div className="table-cell text-center ...">Bet</div>
-                    <div className="table-cell  text-center">Win</div>
+                  <div className="table-row rounded-xl p-2">
+                    <div className="table-cell text-center">Bet</div>
+                    <div className="table-cell text-center">Win</div>
                   </div>
                 </div>
                 <div className="table-row-group">
                   <div className="table-row text-center">
-                    <div className="table-cell ...">$2500</div>
-                    <div className="table-cell ...">$3000</div>
+                    <div className="table-cell">$2500</div>
+                    <div className="table-cell">$3000</div>
                   </div>
                   <div className="table-row text-center">
-                    <div className="table-cell ...">$2500</div>
-                    <div className="table-cell ...">$3000</div>
+                    <div className="table-cell">$2500</div>
+                    <div className="table-cell">$3000</div>
                   </div>
                   <div className="table-row text-center">
-                    <div className="table-cell ...">$2500</div>
-                    <div className="table-cell ...">$3000</div>
+                    <div className="table-cell">$2500</div>
+                    <div className="table-cell">$3000</div>
                   </div>
                 </div>
               </div>
@@ -160,56 +184,16 @@ const DealerComponent = () => {
           <div className="flex items-center justify-between px-10 gap-x-4">
             <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
             <div className="w-1/4 bg-slate-50 h-64">
-              {startLive ? (
-                <SpeakerScreen2 meetingId={cameraId} authToken={cameratoken} player="2" />
-              ) : (
-                <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
-              )}
+              <div className="flex justify-center items-center h-25">Webcam Streaming to Mux</div>
             </div>
             <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
           </div>
-          {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
-            <>
-              <MeetingProvider
-                config={{
-                  meetingId: roomDetails?.dealerLiveStreamId,
-                  mode: 'CONFERENCE',
-                  name: 'Name',
-                  micEnabled: true,
-                  webcamEnabled: true,
-                  debugMode: false,
-                }}
-                token={roomDetails?.streamingToken}
-                joinWithoutUserInteraction
-              >
-                <DealerFooter
-                  roomId={roomId}
-                  round={roundDetails?.message}
-                  setMeetingId={setMeetingId}
-                  setStartLive={setStartLive}
-                  startLive={startLive}
-                  setAuthToken={setAuthToken}
-                  cameraId={cameraId}
-                  setCameraId={setCameraId}
-                  cameraToken={cameratoken}
-                  setCameraToken={setCameratoken}
-                  meetingId={meetingId}
-                  authToken={authToken}
-                  selectResult={selectResult}
-                  setSelectResult={setSelectResult}
-                  resultDeclare={handleDeclareResult}
-                  roundStatus={roundDetails?.message?.data?.roundStatus}
-                  countdown={countdown}
-                  setCountDown={setCountdown}
-                />
-              </MeetingProvider>
-            </>
-          )}
         </div>
       </div>
     </div>
   );
 };
+
 
 export const RedCircle = () => {
   return <div className="w-8 h-8 bg-red-500 rounded-full"></div>;

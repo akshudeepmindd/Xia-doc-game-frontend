@@ -18,7 +18,9 @@ const HomeComponent = () => {
               Elevate Your <span className="text-[#155BE6]">Gaming</span> Experience
             </h1>
             <p className="text-white my-4">Rent private gaming rooms and control your game like never before.</p>
-            <Button className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500">Get Started</Button>
+            <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
+              Get Started
+            </Button>
           </div>
         </div>
         <div className="gap-3 columns-3 container">

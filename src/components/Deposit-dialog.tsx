@@ -46,7 +46,7 @@ export default function DepositDiaglog({ children, roomId }: { children: React.R
         </DialogHeader>
 
         <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-        <Button onClick={() => handleSubmit()} className="w-full" disabled={loading}>
+        <Button onClick={() => handleSubmit()} className="w-full buttoncss" disabled={loading}>
           {loading ? (
             <span className="flex items-center gap-x-1">
               <Loader2 className="w-4 h-4 animate-spin" />
