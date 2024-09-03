@@ -150,14 +150,14 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div className="text-2xl font-semibold">
-          <a href="#" className="text-white">
+          <a href="/" className="text-white">
             <img className="w-[70px]" src="/Union.png" />
           </a>
         </div>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-6">
-          <a href="#" className="rounded-full rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6] px-1">
+          <a href="/" className="rounded-full rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6] px-1">
             Home
           </a>
           <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
@@ -203,253 +203,263 @@ const Navbar = () => {
                   </Button>
                 </DialogContent>
               </Dialog>
-              <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                My Rooms
-              </a>
+              {userDetail?.dealer ? (
+                <a href="/dealerpanel" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                  Dashboard
+                </a>
+              ) : (
+                <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                  My Rooms
+                </a>
+              )}
 
               <Dialog open={open} onOpenChange={() => setOpen(!open)}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-28 mt-2"
-                    size="sm"
-                    disabled={isDeductLoading}
-                  >
-                    {isDeductLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-5 mr-1 animate-spin" /> Please wait
-                      </>
-                    ) : (
-                      'Buy rooms'
-                    )}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogTitle>Buy Room</DialogTitle>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem className="relative">
-                            <FormLabel>Room name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter username" {...field} />
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
-
-                      {form.getValues('roomType') === 'private' && (
+                {!userDetail?.dealer && (
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-28 mt-2"
+                      size="sm"
+                      disabled={isDeductLoading}
+                    >
+                      {isDeductLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-5 mr-1 animate-spin" /> Please wait
+                        </>
+                      ) : (
+                        'Buy rooms'
+                      )}
+                    </Button>
+                  </DialogTrigger>
+                )}
+                {
+                  <DialogContent>
+                    <DialogTitle>Buy Room</DialogTitle>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
                         <FormField
                           control={form.control}
-                          name="password"
+                          name="name"
                           render={({ field }) => (
                             <FormItem className="relative">
-                              <FormLabel>Room password</FormLabel>
+                              <FormLabel>Room name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter password" type="password" {...field} />
+                                <Input placeholder="Enter username" {...field} />
                               </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
                           )}
                         />
-                      )}
 
-                      <FormField
-                        control={form.control}
-                        name="roomType"
-                        render={({ field }) => (
-                          <FormItem className="relative">
-                            <FormLabel>Room Type</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                orientation="horizontal"
-                                className="flex items-center"
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="private" id="r1" />
-                                  <Label htmlFor="r1">Private</Label>
-                                </div>
-                                {/* <div className="flex items-center space-x-2">
+                        {form.getValues('roomType') === 'private' && (
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                <FormLabel>Room password</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter password" type="password" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+
+                        <FormField
+                          control={form.control}
+                          name="roomType"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>Room Type</FormLabel>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  orientation="horizontal"
+                                  className="flex items-center"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="private" id="r1" />
+                                    <Label htmlFor="r1">Private</Label>
+                                  </div>
+                                  {/* <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="public" id="r2" />
                                 <Label htmlFor="r2">Public</Label>
                               </div> */}
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
+                                </RadioGroup>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="houseEdgeFee"
-                        render={({ field }) => (
-                          <FormItem className="relative">
-                            <FormLabel>House edge fee</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter House Edge fee" type="text" {...field} />
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
+                        <FormField
+                          control={form.control}
+                          name="houseEdgeFee"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>House edge fee</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter House Edge fee" type="text" {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
 
-                      <div className="flex flex-col gap-y-2 mt-2">
-                        <Label className="text-lg">Set rules for the Room</Label>
-                        <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
-                          <FormField
-                            control={form.control}
-                            name="even"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Even</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for even" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="odd"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Odd</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for odd" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="4-white-0-red"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>4 White 0 Red</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 4 white 0 red" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="4-red-0-white"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>4 Red 0 White</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 4 red 0 white" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="3-white-1-red"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>3 White 1 Red</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 3 white 1 red" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="3-red-1-white"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>3 Red 1 White</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 3 red 1 white" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="even-10-9"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Even 10:9</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for even 10:9" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="even-9-10"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Even 9:10</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for even 9:10" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
+                        <div className="flex flex-col gap-y-2 mt-2">
+                          <Label className="text-lg">Set rules for the Room</Label>
+                          <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
+                            <FormField
+                              control={form.control}
+                              name="even"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Even</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for even" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="odd"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Odd</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for odd" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="4-white-0-red"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>4 White 0 Red</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for 4 white 0 red" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="4-red-0-white"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>4 Red 0 White</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for 4 red 0 white" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="3-white-1-red"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>3 White 1 Red</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for 3 white 1 red" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="3-red-1-white"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>3 Red 1 White</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for 3 red 1 white" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="even-10-9"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Even 10:9</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for even 10:9" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="even-9-10"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Even 9:10</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for even 9:10" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
 
-                          <FormField
-                            control={form.control}
-                            name="odd-10-9"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Odd 10:9</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for odd 10:9" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="odd-9-10"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Odd 9:10</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 9:10" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
+                            <FormField
+                              control={form.control}
+                              name="odd-10-9"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Odd 10:9</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for odd 10:9" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="odd-9-10"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Odd 9:10</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder="Enter rule for 9:10" type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      <Button type="submit" className="w-full buttoncss" disabled={isPending}>
-                        {isPending ? (
-                          <span className="flex items-center gap-x-1">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Please wait
-                          </span>
-                        ) : (
-                          'Buy Room'
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                </DialogContent>
+                        <Button type="submit" className="w-full buttoncss" disabled={isPending}>
+                          {isPending ? (
+                            <span className="flex items-center gap-x-1">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Please wait
+                            </span>
+                          ) : (
+                            'Buy Room'
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                }
               </Dialog>
               <Button
                 variant="secondary"

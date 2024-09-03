@@ -42,6 +42,10 @@ export const updateRoom = async (payload: { id: string | undefined; game: unknow
   const { data } = await http.patch(`/gameroom/update/${payload.id}`, payload.game);
   return data;
 };
+export const dealerRoom = async (id: string) => {
+  const { data } = await http.get(`/gameroom/dealerrooms/${id}`);
+  return data;
+};
 
 export const rejectjoinrequestservice = async (id: string, game: unknown) => {
   try {

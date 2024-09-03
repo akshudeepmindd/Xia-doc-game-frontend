@@ -24,6 +24,7 @@ const DealerFooter = ({
   setMeetingId,
   setStartLive,
   setAuthToken,
+  toggleCamera,
   startLive,
   meetingId,
   roomId,
@@ -33,6 +34,8 @@ const DealerFooter = ({
   roundStatus,
   countdown,
   setSelectResult,
+  isCameraOn,
+  stopStream,
   cameraId,
   setCameraId,
   cameraToken,
@@ -41,16 +44,19 @@ const DealerFooter = ({
 }: {
   setMeetingId: (meetingId: string) => void;
   startStream: () => void;
+  toggleCamera: () => void;
   setStartLive: (startLive: boolean) => void;
   setAuthToken: (authToken: string) => void;
   setCameraId: (cameraId: string) => void;
   setCameraToken: (cameraToken: string) => void;
+  stopStream: () => void;
   cameraId: string;
   cameraToken: string;
   startLive: boolean;
   meetingId: string;
   authToken: string;
   roomId: string;
+  isCameraOn: boolean;
   round: any;
   selectResult: string | undefined;
   resultDeclare: any;
@@ -70,7 +76,7 @@ const DealerFooter = ({
 
   const isLive = true;
   const isMuted = true;
-  const isCameraOn = true;
+  // const isCameraOn = true;
 
   const createRound = useMutation({
     mutationFn: addRound,
@@ -161,7 +167,7 @@ const DealerFooter = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => toggleWebcam()}>
+              <DropdownMenuItem onClick={() => toggleCamera()}>
                 {!isCameraOn ? <Camera className="w-4 h-4 mr-1" /> : <CameraOff className="w-4 h-4 mr-1" />}
                 {!isCameraOn ? 'Turn on camera' : 'Turn off camera'}
               </DropdownMenuItem>
@@ -171,13 +177,20 @@ const DealerFooter = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" onClick={() => startStream()}>
-            <PlaySquare className="w-4 h-4 mr-1" />
-            {startLive ? 'Stop live' : 'Start live'}
-          </Button>
+          {startLive == false ? (
+            <Button variant="outline" size="sm" onClick={() => startStream()}>
+              <PlaySquare className="w-4 h-4 mr-1" />
+              Start Live
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => stopStream()}>
+              <PlaySquare className="w-4 h-4 mr-1" />
+              Stop Live
+            </Button>
+          )}
         </div>
         {selectResult && countdown <= 0 && roundStatus === 'roundend' && (
-          <Button variant="outline" size="sm" onClick={() => resultDeclare(selectResult)}>
+          <Button className="rounded-xl bg-[#0EA66E]" size="sm" onClick={() => resultDeclare(selectResult)}>
             Result declare
           </Button>
         )}

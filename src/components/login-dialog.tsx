@@ -43,7 +43,7 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
         username: response.message.user.telegramusername,
         roomOwner: response.message.user.roomowner,
       });
-      navigate({ to: response.message.user.roomowner ? '/room' : '/' });
+      navigate({ to: '/' });
       toast.success('Login successful');
     } catch (error: unknown | any) {
       toast.error(error.message || 'Failed to login');

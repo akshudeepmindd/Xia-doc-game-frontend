@@ -7,6 +7,7 @@ import { createLazyFileRoute } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 const HomeComponent = () => {
+  
   return (
     <>
       <Navbar />

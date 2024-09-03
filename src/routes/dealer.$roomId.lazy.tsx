@@ -15,6 +15,7 @@ import { differenceInSeconds, parseISO } from 'date-fns';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import SpeakerScreen2 from '@/components/livestream/participants2';
+import { eventNames } from 'node:process';
 
 const BetType = {
   FOUR_BLACK: 'FOUR_BLACK',
@@ -31,7 +32,9 @@ const DealerComponent = () => {
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
   const videoRef = useRef<HTMLVideoElement>(null);
-
+  const [livestream, setStream] = useState<MediaStream | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [isCameraOn, setIsCameraOn] = useState(false);
   // socket.current =
   // const []
   useEffect(() => {
@@ -59,13 +62,42 @@ const DealerComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
+  const toggleCamera = async () => {
+    if (isCameraOn) {
+      stopStream();
+    } else {
+      startStream();
+      setStartLive(true);
+    }
+  };
+
+  const stopStream = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+    }
+    if (livestream) {
+      livestream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setIsCameraOn(false);
+    setStartLive(false);
+  };
   const startStream = async () => {
     // if (!videoRef.current) return; // Ensure the video element is rendered before starting the stream
-    const socket2 = new WebSocket('ws://localhost:4200');
+    const socket2 = new WebSocket('https://deepminddsvisualss.com/ws/');
+    // const socket2 = new WebSocket('ws://localhost:4200');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStream(stream);
+      setIsCameraOn(true);
       setStartLive(true);
       if (videoRef.current) {
+        socket2.send(
+          JSON.stringify({
+            eventName: 'createLiveStream',
+            roomId: roomId,
+          }),
+        );
         // Check if videoRef.current exists
         videoRef.current.srcObject = stream;
       }
@@ -87,7 +119,7 @@ const DealerComponent = () => {
                 const base64String = reader?.result && reader?.result?.replace(/^data:(.*?);base64,/, '');
                 console.log(base64String);
                 // const base64String = reader?.result?.split(',')[1];
-                const obj = { streamKey: '', frame: base64String };
+                const obj = { roomId: roomId, frame: base64String };
 
                 if (socket2.readyState === WebSocket.OPEN) {
                   const message = JSON.stringify({
@@ -113,6 +145,7 @@ const DealerComponent = () => {
       console.error('Error accessing webcam:', err);
     }
   };
+
   useEffect(() => {
     if (roundDetails) {
       const futureTime = parseISO(roundDetails.message.data?.createdAt);
@@ -258,12 +291,15 @@ const DealerComponent = () => {
                   startLive={startLive}
                   setAuthToken={setAuthToken}
                   cameraId={cameraId}
+                  isCameraOn={isCameraOn}
+                  stopStream={stopStream}
                   setCameraId={setCameraId}
                   startStream={startStream}
                   cameraToken={cameratoken}
                   setCameraToken={setCameratoken}
                   meetingId={meetingId}
                   authToken={authToken}
+                  toggleCamera={toggleCamera}
                   selectResult={selectResult}
                   setSelectResult={setSelectResult}
                   resultDeclare={handleDeclareResult}
