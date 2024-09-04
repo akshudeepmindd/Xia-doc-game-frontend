@@ -269,9 +269,9 @@ const DealerComponent = () => {
               </div>
               <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
             </div>
-            {roomId && roomDetails?.dealerLiveStreamId && roomDetails?.streamingToken && (
-              <>
-                {/* <MeetingProvider
+            {/* {roomId && ( */}
+            <>
+              {/* <MeetingProvider
                   config={{
                     meetingId: roomDetails?.dealerLiveStreamId,
                     mode: 'CONFERENCE',
@@ -283,33 +283,33 @@ const DealerComponent = () => {
                   token={roomDetails?.streamingToken}
                   joinWithoutUserInteraction
                 > */}
-                <DealerFooter
-                  roomId={roomId}
-                  round={roundDetails?.message}
-                  setMeetingId={setMeetingId}
-                  setStartLive={setStartLive}
-                  startLive={startLive}
-                  setAuthToken={setAuthToken}
-                  cameraId={cameraId}
-                  isCameraOn={isCameraOn}
-                  stopStream={stopStream}
-                  setCameraId={setCameraId}
-                  startStream={startStream}
-                  cameraToken={cameratoken}
-                  setCameraToken={setCameratoken}
-                  meetingId={meetingId}
-                  authToken={authToken}
-                  toggleCamera={toggleCamera}
-                  selectResult={selectResult}
-                  setSelectResult={setSelectResult}
-                  resultDeclare={handleDeclareResult}
-                  roundStatus={roundDetails?.message?.data?.roundStatus}
-                  countdown={countdown}
-                  setCountDown={setCountdown}
-                />
-                {/* </MeetingProvider> */}
-              </>
-            )}
+              <DealerFooter
+                roomId={roomId ?? ''}
+                round={roundDetails?.message}
+                setMeetingId={setMeetingId}
+                setStartLive={setStartLive}
+                startLive={startLive}
+                setAuthToken={setAuthToken}
+                cameraId={cameraId}
+                isCameraOn={isCameraOn}
+                stopStream={stopStream}
+                setCameraId={setCameraId}
+                startStream={startStream}
+                cameraToken={cameratoken}
+                setCameraToken={setCameratoken}
+                meetingId={meetingId}
+                authToken={authToken}
+                toggleCamera={toggleCamera}
+                selectResult={selectResult}
+                setSelectResult={setSelectResult}
+                resultDeclare={handleDeclareResult}
+                roundStatus={roundDetails?.message?.data?.roundStatus}
+                countdown={countdown}
+                setCountDown={setCountdown}
+              />
+              {/* </MeetingProvider> */}
+            </>
+            {/* )} */}
           </div>
         </div>
       </div>

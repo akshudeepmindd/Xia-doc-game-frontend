@@ -92,7 +92,7 @@ const DealerFooter = ({
       roundId += round.roundNumber;
     }
     setSelectResult('');
-    return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId } });
+    return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId, roundCountdown: true } });
   };
 
   const handleUpdateRoundStatus = () => {
@@ -189,7 +189,7 @@ const DealerFooter = ({
             </Button>
           )}
         </div>
-        {selectResult && countdown <= 0 && roundStatus === 'roundend' && (
+        {selectResult && countdown <= 0 && roundStatus === 'resultdeclare' && (
           <Button className="rounded-xl bg-[#0EA66E]" size="sm" onClick={() => resultDeclare(selectResult)}>
             Result declare
           </Button>

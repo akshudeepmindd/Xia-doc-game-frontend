@@ -5,7 +5,10 @@ export const getRoundDetails = async (roomId: string) => {
   return data;
 };
 
-export const addRound = async (payload: { roomId: string, round: { roundNumber: number, gameroom: string } }) => {
+export const addRound = async (payload: {
+  roomId: string;
+  round: { roundNumber: number; gameroom: string; roundCountdown: boolean };
+}) => {
   const { data } = await http.post(`/gameroom/addround/${payload.roomId}`, payload.round);
   return data;
 };
