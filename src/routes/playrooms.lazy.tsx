@@ -59,7 +59,7 @@ const PlayRoomsPanel = () => {
       <div className='h-screen bg-auto bg-no-repeat bg-center bg-cover bg-[url("/bigbg.png")]'>
         <div className="flex justify-center flex-col align-center container w-9/12">
           <h1 className="text-white text-3xl mt-2 mb-2 my-3 text-center">Play Room</h1>
-          <Table className="bg-[white]">
+          <Table className="bg-[white] ">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Room Name</TableHead>

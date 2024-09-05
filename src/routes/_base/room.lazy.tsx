@@ -23,14 +23,16 @@ const RoomsComponent = () => {
   return (
     <div className="bg-auto bg-no-repeat bg-center bg-cover bg-[url('/bigbg.png')] pb-10">
       <Navbar />
-      <div className="h-[100vh] bg-auto bg-no-repeat bg-center bg-cover bg-[url('/bg.png')] ">
-        <div className="flex justify-center items-center flex-col h-[100vh]">
-          <h1 className="text-4xl font-bold text-white">
-            <span className="text-[#155BE6]">Your Gaming</span> Rooms
-          </h1>
-        </div>
-      </div>
-      <div className="grid grid-cols-3">
+      <div className="relative h-screen bg-auto bg-no-repeat bg-center bg-cover bg-[url('/bg.png')]">
+  <div className="flex justify-center items-center flex-col h-full px-4 sm:px-6 md:px-8 lg:px-12">
+    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center">
+      <span className="text-[#155BE6]">Your Gaming</span> Rooms
+    </h1>
+  </div>
+</div>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
+
         {data?.map((room: { name: string; _id: string; players: string[]; playersRequested: string[] }) => (
           // <Card className="w-full h-[28rem]">
           //   <CardContent className="p-0 h-80 overflow-hidden rounded">

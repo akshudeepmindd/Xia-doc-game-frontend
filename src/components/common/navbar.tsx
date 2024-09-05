@@ -513,18 +513,353 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-gray-800`}>
-        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
-          Home
-        </a>
-        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
-          About
-        </a>
-        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
-          Services
-        </a>
-        <a href="#" className="block px-4 py-2 text-white rounded-full hover:bg-gray-700">
-          Contact
-        </a>
+        <div className="flex flex-col justify-center items-center">
+          <a href="/" className="rounded-full rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6] px-1">
+            Home
+          </a>
+          <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+            Features
+          </a>
+          <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+            Pricing
+          </a>
+        </div>
+
+
+        {localStorage.getItem('token') ? (
+          <>
+        <div className="flex flex-col justify-center items-center">
+
+            <Dialog open={depositeopen} onOpenChange={setdepositeopen}>
+              <DialogTrigger asChild>
+                <div className="flex items-center py-2 relative">
+                  <input
+                    className="appearance-none bg-transparent border w-auto text-white-700 ml-2 py-2 px-1.5  rounded-full text-xs leading-tight focus:outline-none "
+                    disabled
+                    type="text"
+                    value={userDetail?.user?.walletBalance ? `${userDetail?.user?.walletBalance} xUSDT` : `0`}
+                  />
+                  <img className="w-[30px] absolute right-0" src="/input.png" />
+                </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Deposit</DialogTitle>
+                  <DialogDescription>Enter your amount (in USDT) to deposit to your account</DialogDescription>
+                </DialogHeader>
+
+                <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
+                <Button
+                  onClick={() => handleWalletRecharge()}
+                  className="w-full buttoncss"
+                  disabled={RechargewalletPending}
+                >
+                  {RechargewalletPending ? (
+                    <span className="flex items-center gap-x-1">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Deposit is in progress
+                    </span>
+                  ) : (
+                    'Submit'
+                  )}
+                </Button>
+              </DialogContent>
+            </Dialog>
+            {userDetail?.dealer ? (
+              <a href="/dealerpanel" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                Dashboard
+              </a>
+            ) : (
+              <>
+                <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                  My Rooms
+                </a>
+                {userDetail?.user?.role === 'user' && (
+                  <a href="/playrooms" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                    Play Rooms
+                  </a>
+                )}
+              </>
+            )}
+
+            <Dialog open={open} onOpenChange={() => setOpen(!open)}>
+              {!userDetail?.dealer && (
+                <DialogTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-28 mt-2"
+                    size="sm"
+                    disabled={isDeductLoading}
+                  >
+                    {isDeductLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-5 mr-1 animate-spin" /> Please wait
+                      </>
+                    ) : (
+                      'Buy rooms'
+                    )}
+                  </Button>
+                </DialogTrigger>
+              )}
+              {
+                <DialogContent>
+                  <DialogTitle>Buy Room</DialogTitle>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className="relative">
+                            <FormLabel>Room name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter username" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.getValues('roomType') === 'private' && (
+                        <FormField
+                          control={form.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>Room password</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter password" type="password" {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      <FormField
+                        control={form.control}
+                        name="roomType"
+                        render={({ field }) => (
+                          <FormItem className="relative">
+                            <FormLabel>Room Type</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                orientation="horizontal"
+                                className="flex items-center"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="private" id="r1" />
+                                  <Label htmlFor="r1">Private</Label>
+                                </div>
+                                {/* <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="public" id="r2" />
+                                <Label htmlFor="r2">Public</Label>
+                              </div> */}
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="houseEdgeFee"
+                        render={({ field }) => (
+                          <FormItem className="relative">
+                            <FormLabel>House edge fee</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter House Edge fee" type="text" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex flex-col gap-y-2 mt-2">
+                        <Label className="text-lg">Set rules for the Room</Label>
+                        <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
+                          <FormField
+                            control={form.control}
+                            name="even"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>Even</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for even" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="odd"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>Odd</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for odd" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="4-white-0-red"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>4 White 0 Red</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for 4 white 0 red" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="4-red-0-white"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>4 Red 0 White</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for 4 red 0 white" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="3-white-1-red"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>3 White 1 Red</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for 3 white 1 red" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="3-red-1-white"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>3 Red 1 White</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for 3 red 1 white" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="even-10-9"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>Even 10:9</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for even 10:9" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="even-9-10"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>Even 9:10</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for even 9:10" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="odd-10-9"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>Odd 10:9</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for odd 10:9" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="odd-9-10"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                {/* <FormLabel>Odd 9:10</FormLabel> */}
+                                <FormControl>
+                                  <Input placeholder="Enter rule for 9:10" type="text" {...field} />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <Button type="submit" className="w-full buttoncss" disabled={isPending}>
+                        {isPending ? (
+                          <span className="flex items-center gap-x-1">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Please wait
+                          </span>
+                        ) : (
+                          'Buy Room'
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                </DialogContent>
+              }
+            </Dialog>
+            <Button
+              variant="secondary"
+              className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-15 mt-2"
+              size="sm"
+              disabled={isDeductLoading}
+              onClick={() => {
+                handleLogout();
+                window.location.reload();
+              }}
+            >
+              Logout
+            </Button>
+            </div>
+          </>
+          
+        ) : (
+          <>
+            <LoginDialog>
+              <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1">
+                LOGIN
+              </Button>
+            </LoginDialog>
+            <RegisterDialog>
+              <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1">
+                JOIN
+              </Button>
+            </RegisterDialog>
+            
+          </>
+        )}
       </div>
     </nav>
   );
