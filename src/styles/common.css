@@ -9,3 +9,22 @@
 .box-container{
     height: -1rem;
 }
+
+@media only screen and (max-device-width: 768px) and (orientation: portrait) {
+  .game-container {
+    display: none;
+  }
+
+  .landscape-warning {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    background: black;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+  }
+}
