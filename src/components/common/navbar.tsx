@@ -212,8 +212,8 @@ const Navbar = () => {
                   <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
                     My Rooms
                   </a>
-                  {userDetail.role === 'user' && (
-                    <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                  {userDetail?.user?.role === 'user' && (
+                    <a href="/playrooms" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
                       Play Rooms
                     </a>
                   )}
