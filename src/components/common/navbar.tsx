@@ -208,9 +208,16 @@ const Navbar = () => {
                   Dashboard
                 </a>
               ) : (
-                <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                  My Rooms
-                </a>
+                <>
+                  <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                    My Rooms
+                  </a>
+                  {userDetail.role === 'user' && (
+                    <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                      Play Rooms
+                    </a>
+                  )}
+                </>
               )}
 
               <Dialog open={open} onOpenChange={() => setOpen(!open)}>

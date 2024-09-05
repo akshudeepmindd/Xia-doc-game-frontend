@@ -46,6 +46,10 @@ export const dealerRoom = async (id: string) => {
   const { data } = await http.get(`/gameroom/dealerrooms/${id}`);
   return data;
 };
+export const playRoom = async () => {
+  const { data } = await http.get(`/gameroom/playroom`);
+  return data;
+};
 
 export const rejectjoinrequestservice = async (id: string, game: unknown) => {
   try {

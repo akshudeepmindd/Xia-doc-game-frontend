@@ -17,6 +17,7 @@ import { Route as BaseImport } from './routes/_base'
 
 // Create Virtual Routes
 
+const PlayroomsLazyImport = createFileRoute('/playrooms')()
 const DealerpanelLazyImport = createFileRoute('/dealerpanel')()
 const BaseIndexLazyImport = createFileRoute('/_base/')()
 const PlayRoomIdLazyImport = createFileRoute('/play/$roomId')()
@@ -25,6 +26,11 @@ const BaseRoomLazyImport = createFileRoute('/_base/room')()
 const BaseGameLazyImport = createFileRoute('/_base/game')()
 
 // Create/Update Routes
+
+const PlayroomsLazyRoute = PlayroomsLazyImport.update({
+  path: '/playrooms',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/playrooms.lazy').then((d) => d.Route))
 
 const DealerpanelLazyRoute = DealerpanelLazyImport.update({
   path: '/dealerpanel',
@@ -81,6 +87,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DealerpanelLazyImport
       parentRoute: typeof rootRoute
     }
+    '/playrooms': {
+      id: '/playrooms'
+      path: '/playrooms'
+      fullPath: '/playrooms'
+      preLoaderRoute: typeof PlayroomsLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/_base/game': {
       id: '/_base/game'
       path: '/game'
@@ -128,6 +141,7 @@ export const routeTree = rootRoute.addChildren({
     BaseIndexLazyRoute,
   }),
   DealerpanelLazyRoute,
+  PlayroomsLazyRoute,
   DealerRoomIdLazyRoute,
   PlayRoomIdLazyRoute,
 })
@@ -142,6 +156,7 @@ export const routeTree = rootRoute.addChildren({
       "children": [
         "/_base",
         "/dealerpanel",
+        "/playrooms",
         "/dealer/$roomId",
         "/play/$roomId"
       ]
@@ -156,6 +171,9 @@ export const routeTree = rootRoute.addChildren({
     },
     "/dealerpanel": {
       "filePath": "dealerpanel.lazy.tsx"
+    },
+    "/playrooms": {
+      "filePath": "playrooms.lazy.tsx"
     },
     "/_base/game": {
       "filePath": "_base/game.lazy.tsx",
