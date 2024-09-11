@@ -407,10 +407,10 @@ export default function Navbar({ roomId, isDealer }: NavbarProps) {
       </div>
       {/* {roomOwner && <Button size="sm">Distribute coins</Button>} */}
       {/* <Button size="sm" onClick={handleMakeSpo}>Request for SPO</Button> */}
-      <div className="flex items-center px-4 gap-x-4">
+      {/* <div className="flex items-center px-4 gap-x-4">
       <Button className="rounded-xl bg-[#0EA66E]">Result Declare</Button>
          
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { GET_DEALER_ROOM } from '@/lib/constants';
 import { dealerRoom } from '@/services/room';
 import useProfile from '@/hooks/useProfile';
+import { FormattedMessage } from 'react-intl';
 const DealerPanel = () => {
   const navigate = useNavigate();
   const { userId } = useProfile();
@@ -32,21 +33,30 @@ const DealerPanel = () => {
           <Table className="bg-[white]">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Room Name</TableHead>
-                <TableHead>Players in Room</TableHead>
-                <TableHead>Players Requested</TableHead>
-                <TableHead>Room Owner</TableHead>
-                <TableHead>Action</TableHead>
+                <TableRow>
+                  <TableHead className="w-[100px]">
+                    <FormattedMessage id="app.roomname" />
+                  </TableHead>
+                  <TableHead>
+                    <FormattedMessage id="app.playersinroom" />
+                  </TableHead>
+                  <TableHead>
+                    <FormattedMessage id="app.roomowner" />
+                  </TableHead>
+                  <TableHead>
+                    <FormattedMessage id="app.action" />
+                  </TableHead>
+                </TableRow>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!isEmpty(dealerroomdetail) ? (
                 dealerroomdetail.map((player: Player, index: number) => (
                   <TableRow>
-                    <TableCell>{player.name}</TableCell>
-                    <TableCell>{player.players.length}</TableCell>
-                    <TableCell>{player.playersRequested.length}</TableCell>
-                    <TableCell>{player.owner.telegramusername}</TableCell>
+                    <TableCell>{player?.name}</TableCell>
+                    <TableCell>{player?.players?.length}</TableCell>
+                    <TableCell>{player?.playersRequested?.length}</TableCell>
+                    <TableCell>{player?.owner?.telegramusername}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Hint content="Get In Room">
@@ -68,7 +78,9 @@ const DealerPanel = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow>No Users Have Requested</TableRow>
+                <TableRow>
+                  <FormattedMessage id="nouserrequested" />
+                </TableRow>
               )}
             </TableBody>
           </Table>

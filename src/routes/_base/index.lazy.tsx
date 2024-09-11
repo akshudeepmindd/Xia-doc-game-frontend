@@ -1,11 +1,10 @@
-import GamesGrid from '@/components/games-grid';
 import Navbar from '@/components/common/navbar';
 import { Button } from '@/components/ui/button';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { Card, CardContent } from '@/components/ui/card';
+
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { FormattedMessage } from 'react-intl';
 const HomeComponent = () => {
   return (
     <>
@@ -15,13 +14,17 @@ const HomeComponent = () => {
         <div className="h-[100vh] bg-auto bg-no-repeat bg-center bg-cover bg-[url('/bg.png')]">
           <div className="flex justify-center items-center flex-col h-full px-4 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-              Elevate Your <span className="text-[#155BE6]">Gaming</span> Experience
+              <FormattedMessage id="app.elevate" />{' '}
+              <span className="text-[#155BE6]">
+                <FormattedMessage id="app.gaming" />
+              </span>{' '}
+              <FormattedMessage id="app.experience" />
             </h1>
             <p className="text-white my-4 text-sm md:text-base lg:text-lg">
-              Rent private gaming rooms and control your game like never before.
+              <FormattedMessage id="app.renturroom" />
             </p>
             <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm md:text-base lg:text-lg">
-              Get Started
+              <FormattedMessage id="app.getstarted" />
             </Button>
           </div>
         </div>
@@ -31,7 +34,9 @@ const HomeComponent = () => {
             <img className="w-full h-auto" src="/image1.png" alt="Private Rooms" />
             <div className="flex flex-row justify-between w-full py-4">
               <div className="border-indigo-500 border-t-5 flex-grow"></div>
-              <h6 className="text-2xl font-bold text-[#155BE6]">Private Rooms</h6>
+              <h6 className="text-2xl font-bold text-[#155BE6]">
+                <FormattedMessage id="app.privaterooms" />
+              </h6>
               <div className="border-indigo-500 border-t-2 flex-grow"></div>
             </div>
             <p className="text-center">
@@ -39,7 +44,7 @@ const HomeComponent = () => {
               a fringilla turpis. Nulla volutpat.
             </p>
             <Button className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
-              EXPLORE
+              <FormattedMessage id="app.explore" />
               <img className="ms-1" src="/button.png" alt="Button Icon" />
             </Button>
           </div>
@@ -48,7 +53,9 @@ const HomeComponent = () => {
             <img className="w-full h-auto" src="/image2.png" alt="Virtual Room Currency" />
             <div className="flex flex-row justify-between w-full py-4">
               <div className="border-indigo-500 border-t-5 flex-grow"></div>
-              <h6 className="text-2xl font-bold text-[#155BE6]">Virtual Room Currency</h6>
+              <h6 className="text-2xl font-bold text-[#155BE6]">
+                <FormattedMessage id="app.virutalcurrency" />
+              </h6>
               <div className="border-indigo-500 border-t-2 flex-grow"></div>
             </div>
             <p className="text-center">
@@ -56,7 +63,7 @@ const HomeComponent = () => {
               a fringilla turpis. Nulla volutpat.
             </p>
             <Button className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
-              EXPLORE
+              <FormattedMessage id="app.explore" />
               <img className="ms-1" src="/button.png" alt="Button Icon" />
             </Button>
           </div>
@@ -65,7 +72,9 @@ const HomeComponent = () => {
             <img className="w-full h-auto" src="/image3.png" alt="USDT Payments" />
             <div className="flex flex-row justify-between w-full py-4">
               <div className="border-indigo-500 border-t-5 flex-grow"></div>
-              <h6 className="text-2xl font-bold text-[#155BE6]">USDT Payments</h6>
+              <h6 className="text-2xl font-bold text-[#155BE6]">
+                <FormattedMessage id="app.usdtpayments" />
+              </h6>
               <div className="border-indigo-500 border-t-2 flex-grow"></div>
             </div>
             <p className="text-center">
@@ -73,7 +82,7 @@ const HomeComponent = () => {
               a fringilla turpis. Nulla volutpat.
             </p>
             <Button className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500">
-              EXPLORE
+              <FormattedMessage id="app.explore" />
               <img className="ms-1" src="/button.png" alt="Button Icon" />
             </Button>
           </div>
@@ -86,7 +95,8 @@ const HomeComponent = () => {
               <img className="absolute top-[-155px]" src="/work.png" />
             </div>
             <p className="text-center mt-40 text-[#155BE6]">
-              How It Works? Lorem ipsum dolor sit amet consectetur. Tortor etiam aliquam mi porttitor eget mattis
+              <FormattedMessage id="app.howitworks" /> Lorem ipsum dolor sit amet consectetur. Tortor etiam aliquam mi
+              porttitor eget mattis
               <br /> odio. Fermentum sit a fringilla turpis. Nulla volutpat
             </p>
             {/* <div className="container w-[700px] mt-10 flex flex-col justify-center">
@@ -142,8 +152,8 @@ const HomeComponent = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-center">
                   <img className="w-[80px] sm:w-[100px] m-2" src="/icon1.png" alt="Recharge Wallet Icon" />
                   <h6 className="text-white text-base sm:text-lg uppercase text-center my-2">
-                    recharge
-                    <br /> Wallet
+                    <FormattedMessage id="app.recharge" />
+                    <br /> <FormattedMessage id="app.wallet" />
                   </h6>
                   <p className="text-[#AE9BD6] text-xs sm:text-sm w-full sm:w-[300px] border rounded-full p-4 sm:p-5 my-2 sm:my-0">
                     Lorem ipsum dolor sit amet consectetur. Tortor etiam aliquam mi porttitor eget mattis odio.
@@ -163,8 +173,8 @@ const HomeComponent = () => {
                     Fermentum sit a fringilla turpis. Nulla volutpat.
                   </p>
                   <h6 className="text-white text-base sm:text-lg uppercase text-center my-2">
-                    buy
-                    <br /> room
+                    <FormattedMessage id="app.buy" />
+                    <br /> <FormattedMessage id="app.room" />
                   </h6>
                   <img className="w-[80px] sm:w-[100px] m-2" src="/icon2.png" alt="Buy Room Icon" />
                 </div>
@@ -178,8 +188,8 @@ const HomeComponent = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-center">
                   <img className="w-[80px] sm:w-[100px] m-2" src="/icon3.png" alt="Play and Manage Icon" />
                   <h6 className="text-white text-base sm:text-lg uppercase text-center my-2">
-                    play and
-                    <br /> manage
+                    <FormattedMessage id="app.play" /> <FormattedMessage id="app.and" />
+                    <br /> <FormattedMessage id="app.manage" />
                   </h6>
                   <p className="text-[#AE9BD6] text-xs sm:text-sm w-full sm:w-[300px] border rounded-full p-4 sm:p-5 my-2 sm:my-0">
                     Lorem ipsum dolor sit amet consectetur. Tortor etiam aliquam mi porttitor eget mattis odio.
@@ -254,10 +264,14 @@ const HomeComponent = () => {
           <div className="w-full relative">
             <div className="bg-[#211140] mt-20 p-6 md:p-10 rounded-2xl absolute w-full mx-auto xs:bottom-[553px] md:-bottom-[94px] sm:bottom-[-123px] ">
               <div className="flex flex-col items-center text-center">
-                <h6 className="text-white text-xs md:text-sm mb-1">Join us right now!</h6>
-                <h3 className="text-lg md:text-2xl text-[#17D1D1] font-semibold uppercase my-2">Join The Community</h3>
+                <h6 className="text-white text-xs md:text-sm mb-1">
+                  <FormattedMessage id="app.joinus" />
+                </h6>
+                <h3 className="text-lg md:text-2xl text-[#17D1D1] font-semibold uppercase my-2">
+                  <FormattedMessage id="app.joincommunity" />
+                </h3>
                 <p className="text-white text-xs md:text-sm">
-                  Join us in the arena and stay connected with exclusive content and updates in our communities!
+                  <FormattedMessage id="app.joincommunitytext" />
                 </p>
                 <div className="flex flex-col md:flex-row justify-between mt-4 gap-4 md:gap-6">
                   <Button className="rounded-full bg-[#8BA3D3] border px-4 py-2 md:px-6 md:py-3 flex items-center">
@@ -330,10 +344,18 @@ const HomeComponent = () => {
             <div className="mb-6 md:mb-0">
               <span className="text-white font-bold text-lg md:text-2xl">Quick Links</span>
               <ul className="mt-4 space-y-2">
-                <li className="text-white">About us</li>
-                <li className="text-white">How to buy</li>
-                <li className="text-white">Roadmap</li>
-                <li className="text-white">FAQs</li>
+                <li className="text-white">
+                  <FormattedMessage id="app.aboutus" />
+                </li>
+                <li className="text-white">
+                  <FormattedMessage id="app.howtobuy" />
+                </li>
+                <li className="text-white">
+                  <FormattedMessage id="app.roadmap" />
+                </li>
+                <li className="text-white">
+                  <FormattedMessage id="app.faq" />
+                </li>
               </ul>
             </div>
 
@@ -341,20 +363,32 @@ const HomeComponent = () => {
             <div className="mb-6 md:mb-0">
               <span className="text-white font-bold text-lg md:text-2xl">Legal</span>
               <ul className="mt-4 space-y-2">
-                <li className="text-white">Terms of Service</li>
-                <li className="text-white">Privacy Policy</li>
-                <li className="text-white">Cookies Policy</li>
-                <li className="text-white">FAQs</li>
+                <li className="text-white">
+                  <FormattedMessage id="app.terms" />
+                </li>
+                <li className="text-white">
+                  <FormattedMessage id="app.privacy" />
+                </li>
+                <li className="text-white">
+                  <FormattedMessage id="app.cookiepolicy" />
+                </li>
+                <li className="text-white">
+                  <FormattedMessage id="app.faq" />
+                </li>
               </ul>
             </div>
 
             {/* Contact */}
             <div className="mb-6 md:mb-0">
-              <span className="text-white font-bold text-lg md:text-2xl">Contact</span>
+              <span className="text-white font-bold text-lg md:text-2xl">
+                <FormattedMessage id="app.contact" />
+              </span>
               <div className="flex mt-4">
                 <img src="/mail.png" className="w-[30px] h-[30px] md:w-[40px] md:h-[40px]" />
                 <div className="ml-4 text-white">
-                  <span>Email Address</span>
+                  <span>
+                    <FormattedMessage id="app.email" />
+                  </span>
                   <br />
                   <span className="block">companyemail@gmail.com</span>
                 </div>
@@ -367,11 +401,11 @@ const HomeComponent = () => {
 
           {/* Footer */}
           <div className="text-white text-center md:text-left">
-            <h5 className="mb-2 text-sm md:text-base">©2024 by Company Name All Rights Reserved.</h5>
+            <h5 className="mb-2 text-sm md:text-base">
+              <FormattedMessage id="app.rightreserved" />
+            </h5>
             <p className="font-extralight text-xs md:text-sm">
-              Disclaimer: Cryptocurrency may be unregulated in your jurisdiction. The value of cryptocurrencies may go
-              down as well as up. Profits may be subject to capital gains or other taxes applicable in your
-              jurisdiction.
+              <FormattedMessage id="app.disclaimer" />
             </p>
           </div>
         </div>

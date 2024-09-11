@@ -13,6 +13,7 @@ import useProfile from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@radix-ui/react-dialog';
 import { DialogHeader } from '@/components/ui/dialog';
+import { FormattedMessage } from 'react-intl';
 const PlayRoomsPanel = () => {
   const navigate = useNavigate();
   const { userId } = useProfile();
@@ -56,25 +57,41 @@ const PlayRoomsPanel = () => {
   return (
     <>
       <Navbar />
-      <div className='h-screen bg-auto bg-no-repeat bg-center bg-cover bg-[url("/bigbg.png")]'>
+      <div
+        className='h-screen bg-auto bg-no-repeat bg-center bg-cover bg-[url("/bigbg.png")]'
+        style={{
+          minHeight: '100vh',
+          height: '100%',
+        }}
+      >
         <div className="flex justify-center flex-col align-center container w-9/12">
-          <h1 className="text-white text-3xl mt-2 mb-2 my-3 text-center">Play Room</h1>
+          <h1 className="text-white text-3xl mt-2 mb-2 my-3 text-center">
+            <FormattedMessage id="app.playroom" />
+          </h1>
           <Table className="bg-[white] ">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Room Name</TableHead>
-                <TableHead>Players in Room</TableHead>
-                <TableHead>Room Owner</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead className="w-[100px]">
+                  <FormattedMessage id="app.roomname" />
+                </TableHead>
+                <TableHead>
+                  <FormattedMessage id="app.playersinroom" />
+                </TableHead>
+                <TableHead>
+                  <FormattedMessage id="app.roomowner" />
+                </TableHead>
+                <TableHead>
+                  <FormattedMessage id="app.action" />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!isEmpty(dealerroomdetail) ? (
                 dealerroomdetail?.message?.map((player: Player, index: number) => (
                   <TableRow>
-                    <TableCell>{player.name}</TableCell>
-                    <TableCell>{player.players.length}</TableCell>
-                    <TableCell>{player.owner.telegramusername}</TableCell>
+                    <TableCell>{player?.name}</TableCell>
+                    <TableCell>{player?.players?.length}</TableCell>
+                    <TableCell>{player?.owner?.telegramusername}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Hint content="Join">
@@ -95,9 +112,11 @@ const PlayRoomsPanel = () => {
                                     <Loader2 className="w-8 h-8 animate-spin" />
                                   </div>
                                   <div>
-                                    <DialogTitle>Your request has been sent to the Admin</DialogTitle>
+                                    <DialogTitle>
+                                      <FormattedMessage id="app.requestsent" />
+                                    </DialogTitle>
                                     <DialogDescription>
-                                      Thank you for your interest. We will get back to you soon.
+                                      <FormattedMessage id="app.requestsenttext" />
                                     </DialogDescription>
                                   </div>
                                 </DialogHeader>
@@ -115,7 +134,9 @@ const PlayRoomsPanel = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow>No Rooms Available</TableRow>
+                <TableRow>
+                  <FormattedMessage id="app.norooms" />
+                </TableRow>
               )}
             </TableBody>
           </Table>

@@ -11,21 +11,24 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { setAuthToken, setAuthUser } from '@/services';
 import { useNavigate } from '@tanstack/react-router';
+import { FormattedMessage, useIntl } from 'react-intl';
 
 interface RegisterProps {
   children: ReactNode;
   className?: string;
 }
 
-const loginSchema = z.object({
-  telegramusername: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
-});
-
 const Register = ({ children }: RegisterProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const intl = useIntl();
+
   const [open, setOpen] = useState(false);
+  const loginSchema = z.object({
+    telegramusername: z.string().min(1, intl.formatMessage({ id: 'app.televalidation' })),
+    username: z.string().min(1, intl.formatMessage({ id: 'app.usernamevalidation' })),
+    password: z.string().min(1, intl.formatMessage({ id: 'app.usernamevalidation' })),
+  });
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -53,19 +56,25 @@ const Register = ({ children }: RegisterProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create an Account</DialogTitle>
-          <DialogDescription>Enter your details to create your account</DialogDescription>
+          <DialogTitle>
+            <FormattedMessage id="app.createacount" />
+          </DialogTitle>
+          <DialogDescription>
+            <FormattedMessage id="app.accountsubhead" />
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="telegramusername"
+              name="username"
               render={({ field }) => (
                 <FormItem className="relative">
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>
+                    <FormattedMessage id="app.username" />
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter username" {...field} />
+                    <Input placeholder={intl.formatMessage({ id: 'app.enteruname' })} {...field} />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
@@ -76,9 +85,26 @@ const Register = ({ children }: RegisterProps) => {
               name="password"
               render={({ field }) => (
                 <FormItem className="relative">
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>
+                    <FormattedMessage id="app.password" />
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter password" type="password" {...field} />
+                    <Input placeholder={intl.formatMessage({ id: 'app.enterpassword' })} type="password" {...field} />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="telegramusername"
+              render={({ field }) => (
+                <FormItem className="relative">
+                  <FormLabel>
+                    <FormattedMessage id="app.telegram" />
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder={intl.formatMessage({ id: 'app.entertelegramusername' })} {...field} />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
@@ -89,10 +115,10 @@ const Register = ({ children }: RegisterProps) => {
               {loading ? (
                 <span className="flex items-center gap-x-1">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Please wait
+                  <FormattedMessage id="app.pleasewait" />
                 </span>
               ) : (
-                'Register'
+                <FormattedMessage id="app.register" />
               )}
             </Button>
           </form>

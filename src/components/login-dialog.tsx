@@ -11,17 +11,18 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { setAuthToken, setAuthUser } from '@/services';
 import { useNavigate } from '@tanstack/react-router';
+import { FormattedMessage, useIntl } from 'react-intl';
 
 interface LoginDialogProps {
   children: ReactNode;
 }
 
-const loginSchema = z.object({
-  telegramusername: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
-});
-
 const LoginDialog = ({ children }: LoginDialogProps) => {
+  const intl = useIntl();
+  const loginSchema = z.object({
+    telegramusername: z.string().min(1, intl.formatMessage({ id: 'app.usernamevalidation' })),
+    password: z.string().min(1, intl.formatMessage({ id: 'app.passwordvalidation' })),
+  });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -59,8 +60,12 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Login</DialogTitle>
-          <DialogDescription>Enter your details to login to your account</DialogDescription>
+          <DialogTitle>
+            <FormattedMessage id="app.login" />
+          </DialogTitle>
+          <DialogDescription>
+            <FormattedMessage id="app.logintext" />
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -69,9 +74,12 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
               name="telegramusername"
               render={({ field }) => (
                 <FormItem className="relative">
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>
+                    {' '}
+                    <FormattedMessage id="app.username" />
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter username" {...field} />
+                    <Input placeholder={intl.formatMessage({ id: 'app.enteruname' })} {...field} />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
@@ -82,9 +90,11 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
               name="password"
               render={({ field }) => (
                 <FormItem className="relative">
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>
+                    <FormattedMessage id="app.password" />
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter password" type="password" {...field} />
+                    <Input placeholder={intl.formatMessage({ id: 'app.enterpassword' })} type="password" {...field} />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
@@ -95,10 +105,10 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
               {loading ? (
                 <span className="flex items-center gap-x-1">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Please wait
+                  <FormattedMessage id="app.pleasewait" />
                 </span>
               ) : (
-                'Login'
+                <FormattedMessage id="app.login" />
               )}
             </Button>
           </form>

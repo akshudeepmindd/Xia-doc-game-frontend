@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@radix-ui/react-label';
 import { RadioGroup, RadioGroupItem } from '@radix-ui/react-radio-group';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User2Icon, UserCircle2Icon } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '../ui/input';
 import useProfile from '@/hooks/useProfile';
@@ -27,12 +27,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { addHours } from 'date-fns';
 import { z } from 'zod';
+import { FormattedMessage, useIntl } from 'react-intl';
 const CreateRoom = z
   .object({
     name: z.string().min(1, 'Room name is required'),
     password: z.string(),
     roomType: z.enum(['private', 'public']),
     houseEdgeFee: z.string().min(0).max(100),
+    startTime: z.string(),
     even: z.string().min(0).max(100),
     odd: z.string().min(0).max(100),
     '4-white-0-red': z.string().min(0).max(100),
@@ -70,6 +72,7 @@ const Navbar = () => {
     refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
+  const intl = useIntl();
   const [open, setOpen] = useState(false);
   const [depositeopen, setdepositeopen] = useState(false);
   const [amount, setAmount] = useState(0);
@@ -94,6 +97,7 @@ const Navbar = () => {
       name: '',
       password: '',
       roomType: 'private',
+      startTime: '',
     },
   });
 
@@ -124,8 +128,8 @@ const Navbar = () => {
       const payload = {
         name: response.name,
         password: response.password,
-        startTime: new Date(),
-        endTime: addHours(new Date(), 5),
+        startTime: response.startTime,
+        endTime: addHours(new Date(response.startTime), 5),
         status: 'active',
         owner: userId,
         roomType: response.roomType,
@@ -145,6 +149,9 @@ const Navbar = () => {
     console.log(amount, 'amount');
     await sendToken('0xebE3B38b9BADD80452809987E353E03a88C13387', amount);
   };
+  const formatmessage = (message: string) => {
+    return intl.formatMessage({ id: message });
+  };
   return (
     <nav className="text-white shadow-md bg-[#100820]">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -158,63 +165,28 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-6">
           <a href="/" className="rounded-full rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6] px-1">
-            Home
+            <FormattedMessage id="app.home" />
           </a>
           <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-            Features
+            <FormattedMessage id="app.features" />
           </a>
           <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-            Pricing
+            <FormattedMessage id="app.pricing" />
           </a>
           {localStorage.getItem('token') ? (
             <>
-              <Dialog open={depositeopen} onOpenChange={setdepositeopen}>
-                <DialogTrigger asChild>
-                  <div className="flex items-center py-2 relative">
-                    <input
-                      className="appearance-none bg-transparent border w-auto text-white-700 ml-2 py-2 px-1.5  rounded-full text-xs leading-tight focus:outline-none "
-                      disabled
-                      type="text"
-                      value={userDetail?.user?.walletBalance ? `${userDetail?.user?.walletBalance} xUSDT` : `0`}
-                    />
-                    <img className="w-[30px] absolute right-0" src="/input.png" />
-                  </div>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Deposit</DialogTitle>
-                    <DialogDescription>Enter your amount (in USDT) to deposit to your account</DialogDescription>
-                  </DialogHeader>
-
-                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-                  <Button
-                    onClick={() => handleWalletRecharge()}
-                    className="w-full buttoncss"
-                    disabled={RechargewalletPending}
-                  >
-                    {RechargewalletPending ? (
-                      <span className="flex items-center gap-x-1">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Deposit is in progress
-                      </span>
-                    ) : (
-                      'Submit'
-                    )}
-                  </Button>
-                </DialogContent>
-              </Dialog>
               {userDetail?.dealer ? (
                 <a href="/dealerpanel" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                  Dashboard
+                  <FormattedMessage id="app.dashboard" />
                 </a>
               ) : (
                 <>
                   <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                    My Rooms
+                    <FormattedMessage id="app.myrooms" />
                   </a>
                   {userDetail?.user?.role === 'user' && (
                     <a href="/playrooms" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                      Play Rooms
+                      <FormattedMessage id="app.playrooms" />
                     </a>
                   )}
                 </>
@@ -231,27 +203,46 @@ const Navbar = () => {
                     >
                       {isDeductLoading ? (
                         <>
-                          <Loader2 className="w-4 h-5 mr-1 animate-spin" /> Please wait
+                          <Loader2 className="w-4 h-5 mr-1 animate-spin" /> <FormattedMessage id="app.pleasewait" />
                         </>
                       ) : (
-                        'Buy rooms'
+                        <FormattedMessage id="app.buyroom" />
                       )}
                     </Button>
                   </DialogTrigger>
                 )}
                 {
                   <DialogContent>
-                    <DialogTitle>Buy Room</DialogTitle>
+                    <DialogTitle>
+                      <FormattedMessage id="app.buyroom" />
+                    </DialogTitle>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
+                        <FormField
+                          control={form.control}
+                          name="startTime"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>
+                                <FormattedMessage id="app.startdatetime" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder={formatmessage('app.enterusername')} {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
                         <FormField
                           control={form.control}
                           name="name"
                           render={({ field }) => (
                             <FormItem className="relative">
-                              <FormLabel>Room name</FormLabel>
+                              <FormLabel>
+                                <FormattedMessage id="app.startdatetime" />
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter username" {...field} />
+                                <Input placeholder={formatmessage('app.enterusername')} {...field} />
                               </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
@@ -264,9 +255,15 @@ const Navbar = () => {
                             name="password"
                             render={({ field }) => (
                               <FormItem className="relative">
-                                <FormLabel>Room password</FormLabel>
+                                <FormLabel>
+                                  <FormattedMessage id="app.roompassword" />
+                                </FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Enter password" type="password" {...field} />
+                                  <Input
+                                    placeholder={intl.formatMessage({ id: 'app.enterpassword' })}
+                                    type="password"
+                                    {...field}
+                                  />
                                 </FormControl>
                                 <FormMessage className="text-xs" />
                               </FormItem>
@@ -279,7 +276,9 @@ const Navbar = () => {
                           name="roomType"
                           render={({ field }) => (
                             <FormItem className="relative">
-                              <FormLabel>Room Type</FormLabel>
+                              <FormLabel>
+                                <FormattedMessage id="app.roomtype" />
+                              </FormLabel>
                               <FormControl>
                                 <RadioGroup
                                   onValueChange={field.onChange}
@@ -289,7 +288,9 @@ const Navbar = () => {
                                 >
                                   <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="private" id="r1" />
-                                    <Label htmlFor="r1">Private</Label>
+                                    <Label htmlFor="r1">
+                                      <FormattedMessage id="app.private" />
+                                    </Label>
                                   </div>
                                   {/* <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="public" id="r2" />
@@ -307,9 +308,11 @@ const Navbar = () => {
                           name="houseEdgeFee"
                           render={({ field }) => (
                             <FormItem className="relative">
-                              <FormLabel>House edge fee</FormLabel>
+                              <FormLabel>
+                                <FormattedMessage id="app.houseedgefee" />
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter House Edge fee" type="text" {...field} />
+                                <Input placeholder={formatmessage('app.enterhouseedgefee')} type="text" {...field} />
                               </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
@@ -317,7 +320,9 @@ const Navbar = () => {
                         />
 
                         <div className="flex flex-col gap-y-2 mt-2">
-                          <Label className="text-lg">Set rules for the Room</Label>
+                          <Label className="text-lg">
+                            <FormattedMessage id="app.setrules" />
+                          </Label>
                           <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
                             <FormField
                               control={form.control}
@@ -326,7 +331,7 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>Even</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for even" type="text" {...field} />
+                                    <Input placeholder={formatmessage('app.enterevenrule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -339,7 +344,7 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>Odd</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for odd" type="text" {...field} />
+                                    <Input placeholder={formatmessage('app.enteroddrule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -352,7 +357,11 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>4 White 0 Red</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for 4 white 0 red" type="text" {...field} />
+                                    <Input
+                                      placeholder={formatmessage('app.enterfourwhiterule')}
+                                      type="text"
+                                      {...field}
+                                    />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -365,7 +374,11 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>4 Red 0 White</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for 4 red 0 white" type="text" {...field} />
+                                    <Input
+                                      placeholder={formatmessage('app.enterfourblackrule')}
+                                      type="text"
+                                      {...field}
+                                    />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -378,7 +391,11 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>3 White 1 Red</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for 3 white 1 red" type="text" {...field} />
+                                    <Input
+                                      placeholder={formatmessage('app.enterthreewhiterule')}
+                                      type="text"
+                                      {...field}
+                                    />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -391,7 +408,11 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>3 Red 1 White</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for 3 red 1 white" type="text" {...field} />
+                                    <Input
+                                      placeholder={formatmessage('app.enterthreeredrule')}
+                                      type="text"
+                                      {...field}
+                                    />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -404,7 +425,7 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>Even 10:9</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for even 10:9" type="text" {...field} />
+                                    <Input placeholder={formatmessage('app.entereven10rule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -417,7 +438,7 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>Even 9:10</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for even 9:10" type="text" {...field} />
+                                    <Input placeholder={formatmessage('app.entereven9rule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -431,7 +452,7 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>Odd 10:9</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for odd 10:9" type="text" {...field} />
+                                    <Input placeholder={formatmessage('app.enterodd10rule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -444,7 +465,7 @@ const Navbar = () => {
                                 <FormItem className="relative">
                                   {/* <FormLabel>Odd 9:10</FormLabel> */}
                                   <FormControl>
-                                    <Input placeholder="Enter rule for 9:10" type="text" {...field} />
+                                    <Input placeholder={formatmessage('app.enterodd9rule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -457,10 +478,10 @@ const Navbar = () => {
                           {isPending ? (
                             <span className="flex items-center gap-x-1">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              Please wait
+                              <FormattedMessage id="app.pleasewait" />
                             </span>
                           ) : (
-                            'Buy Room'
+                            <FormattedMessage id="app.buyroom" />
                           )}
                         </Button>
                       </form>
@@ -468,6 +489,50 @@ const Navbar = () => {
                   </DialogContent>
                 }
               </Dialog>
+              <Dialog open={depositeopen} onOpenChange={setdepositeopen}>
+                <DialogTrigger asChild>
+                  <div className="flex items-center py-2 relative">
+                    <input
+                      className="appearance-none bg-transparent border w-auto text-white-700 ml-2 py-2 px-1.5  rounded-full text-xs leading-tight focus:outline-none "
+                      disabled
+                      type="text"
+                      value={userDetail?.user?.walletBalance ? `${userDetail?.user?.walletBalance} xUSDT` : `0`}
+                    />
+                    <img className="w-[30px] absolute right-0" src="/input.png" />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {' '}
+                      <FormattedMessage id="app.deposite" />
+                    </DialogTitle>
+                    <DialogDescription>
+                      <FormattedMessage id="app.depositetext" />
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
+                  <Button
+                    onClick={() => handleWalletRecharge()}
+                    className="w-full buttoncss"
+                    disabled={RechargewalletPending}
+                  >
+                    {RechargewalletPending ? (
+                      <span className="flex items-center gap-x-1">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <FormattedMessage id="app.depositpending" />
+                      </span>
+                    ) : (
+                      <FormattedMessage id="app.submit" />
+                    )}
+                  </Button>
+                </DialogContent>
+              </Dialog>
+              <div className="mt-3 flex justify-between ">
+                <UserCircle2Icon size={30} />
+                <p className="pl-2">{userDetail?.user?.telegramusername}</p>
+              </div>
               <Button
                 variant="secondary"
                 className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-15 mt-2"
@@ -478,19 +543,19 @@ const Navbar = () => {
                   window.location.reload();
                 }}
               >
-                Logout
+                <FormattedMessage id="app.logout" />
               </Button>
             </>
           ) : (
             <>
               <LoginDialog>
                 <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1">
-                  LOGIN
+                  <FormattedMessage id="app.login" />
                 </Button>
               </LoginDialog>
               <RegisterDialog>
                 <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1">
-                  JOIN
+                  <FormattedMessage id="app.join" />
                 </Button>
               </RegisterDialog>
             </>
@@ -515,350 +580,408 @@ const Navbar = () => {
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-gray-800`}>
         <div className="flex flex-col justify-center items-center">
           <a href="/" className="rounded-full rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6] px-1">
-            Home
+            <FormattedMessage id="app.home" />
           </a>
           <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-            Features
+            <FormattedMessage id="app.features" />
           </a>
           <a href="#" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-            Pricing
+            <FormattedMessage id="app.pricing" />
           </a>
         </div>
 
-
         {localStorage.getItem('token') ? (
           <>
-        <div className="flex flex-col justify-center items-center">
-
-            <Dialog open={depositeopen} onOpenChange={setdepositeopen}>
-              <DialogTrigger asChild>
-                <div className="flex items-center py-2 relative">
-                  <input
-                    className="appearance-none bg-transparent border w-auto text-white-700 ml-2 py-2 px-1.5  rounded-full text-xs leading-tight focus:outline-none "
-                    disabled
-                    type="text"
-                    value={userDetail?.user?.walletBalance ? `${userDetail?.user?.walletBalance} xUSDT` : `0`}
-                  />
-                  <img className="w-[30px] absolute right-0" src="/input.png" />
-                </div>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Deposit</DialogTitle>
-                  <DialogDescription>Enter your amount (in USDT) to deposit to your account</DialogDescription>
-                </DialogHeader>
-
-                <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-                <Button
-                  onClick={() => handleWalletRecharge()}
-                  className="w-full buttoncss"
-                  disabled={RechargewalletPending}
-                >
-                  {RechargewalletPending ? (
-                    <span className="flex items-center gap-x-1">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Deposit is in progress
-                    </span>
-                  ) : (
-                    'Submit'
-                  )}
-                </Button>
-              </DialogContent>
-            </Dialog>
-            {userDetail?.dealer ? (
-              <a href="/dealerpanel" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                Dashboard
-              </a>
-            ) : (
-              <>
-                <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                  My Rooms
+            <div className="flex flex-col justify-center items-center">
+              {userDetail?.dealer ? (
+                <a href="/dealerpanel" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                  <FormattedMessage id="app.dashboard" />
                 </a>
-                {userDetail?.user?.role === 'user' && (
-                  <a href="/playrooms" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
-                    Play Rooms
+              ) : (
+                <>
+                  <a href="/room" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                    <FormattedMessage id="app.myrooms" />
                   </a>
-                )}
-              </>
-            )}
-
-            <Dialog open={open} onOpenChange={() => setOpen(!open)}>
-              {!userDetail?.dealer && (
-                <DialogTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-28 mt-2"
-                    size="sm"
-                    disabled={isDeductLoading}
-                  >
-                    {isDeductLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-5 mr-1 animate-spin" /> Please wait
-                      </>
-                    ) : (
-                      'Buy rooms'
-                    )}
-                  </Button>
-                </DialogTrigger>
+                  {userDetail?.user?.role === 'user' && (
+                    <a href="/playrooms" className="rounded-full hover:bg-gray-700 px-3 py-4 rounded text-[#AE9BD6]">
+                      <FormattedMessage id="app.playrooms" />
+                    </a>
+                  )}
+                </>
               )}
-              {
-                <DialogContent>
-                  <DialogTitle>Buy Room</DialogTitle>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem className="relative">
-                            <FormLabel>Room name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter username" {...field} />
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
 
-                      {form.getValues('roomType') === 'private' && (
+              <Dialog open={open} onOpenChange={() => setOpen(!open)}>
+                {!userDetail?.dealer && (
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-28 mt-2"
+                      size="sm"
+                      disabled={isDeductLoading}
+                    >
+                      {isDeductLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-5 mr-1 animate-spin" /> <FormattedMessage id="app.pleasewait" />
+                        </>
+                      ) : (
+                        <FormattedMessage id="app.buyroom" />
+                      )}
+                    </Button>
+                  </DialogTrigger>
+                )}
+                {
+                  <DialogContent>
+                    <DialogTitle>
+                      <FormattedMessage id="app.buyroom" />
+                    </DialogTitle>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
                         <FormField
                           control={form.control}
-                          name="password"
+                          name="name"
                           render={({ field }) => (
                             <FormItem className="relative">
-                              <FormLabel>Room password</FormLabel>
+                              <FormLabel>
+                                <FormattedMessage id="app.roomname" />
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter password" type="password" {...field} />
+                                <Input placeholder={formatmessage('app.enterusername')} {...field} />
                               </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
                           )}
                         />
-                      )}
+                        <FormField
+                          control={form.control}
+                          name="startTime"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>
+                                <FormattedMessage id="app.startdatetime" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="datetime-local"
+                                  placeholder={formatmessage('app.enterusername')}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        {form.getValues('roomType') === 'private' && (
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                <FormLabel>
+                                  <FormattedMessage id="app.roompassword" />
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder={intl.formatMessage({ id: 'app.enterpassword' })}
+                                    type="password"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                        )}
 
-                      <FormField
-                        control={form.control}
-                        name="roomType"
-                        render={({ field }) => (
-                          <FormItem className="relative">
-                            <FormLabel>Room Type</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                orientation="horizontal"
-                                className="flex items-center"
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="private" id="r1" />
-                                  <Label htmlFor="r1">Private</Label>
-                                </div>
-                                {/* <div className="flex items-center space-x-2">
+                        <FormField
+                          control={form.control}
+                          name="roomType"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>
+                                <FormattedMessage id="app.roomtype" />
+                              </FormLabel>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  orientation="horizontal"
+                                  className="flex items-center"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="private" id="r1" />
+                                    <Label htmlFor="r1">
+                                      <FormattedMessage id="app.private" />
+                                    </Label>
+                                  </div>
+                                  {/* <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="public" id="r2" />
                                 <Label htmlFor="r2">Public</Label>
                               </div> */}
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
+                                </RadioGroup>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="houseEdgeFee"
-                        render={({ field }) => (
-                          <FormItem className="relative">
-                            <FormLabel>House edge fee</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter House Edge fee" type="text" {...field} />
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
+                        <FormField
+                          control={form.control}
+                          name="houseEdgeFee"
+                          render={({ field }) => (
+                            <FormItem className="relative">
+                              <FormLabel>
+                                <FormattedMessage id="app.houseedgefee" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder={formatmessage('app.enterhouseedgefee')} type="text" {...field} />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
 
-                      <div className="flex flex-col gap-y-2 mt-2">
-                        <Label className="text-lg">Set rules for the Room</Label>
-                        <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
-                          <FormField
-                            control={form.control}
-                            name="even"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Even</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for even" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="odd"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Odd</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for odd" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="4-white-0-red"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>4 White 0 Red</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 4 white 0 red" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="4-red-0-white"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>4 Red 0 White</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 4 red 0 white" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="3-white-1-red"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>3 White 1 Red</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 3 white 1 red" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="3-red-1-white"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>3 Red 1 White</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 3 red 1 white" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="even-10-9"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Even 10:9</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for even 10:9" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="even-9-10"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Even 9:10</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for even 9:10" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
+                        <div className="flex flex-col gap-y-2 mt-2">
+                          <Label className="text-lg">
+                            <FormattedMessage id="app.setrules" />
+                          </Label>
+                          <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
+                            <FormField
+                              control={form.control}
+                              name="even"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Even</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder={formatmessage('app.enterevenrule')} type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="odd"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Odd</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder={formatmessage('app.enteroddrule')} type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="4-white-0-red"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>4 White 0 Red</FormLabel> */}
+                                  <FormControl>
+                                    <Input
+                                      placeholder={formatmessage('app.enterfourwhiterule')}
+                                      type="text"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="4-red-0-white"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>4 Red 0 White</FormLabel> */}
+                                  <FormControl>
+                                    <Input
+                                      placeholder={formatmessage('app.enterfourblackrule')}
+                                      type="text"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="3-white-1-red"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>3 White 1 Red</FormLabel> */}
+                                  <FormControl>
+                                    <Input
+                                      placeholder={formatmessage('app.enterthreewhiterule')}
+                                      type="text"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="3-red-1-white"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>3 Red 1 White</FormLabel> */}
+                                  <FormControl>
+                                    <Input
+                                      placeholder={formatmessage('app.enterthreeredrule')}
+                                      type="text"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="even-10-9"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Even 10:9</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder={formatmessage('app.entereven10rule')} type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="even-9-10"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Even 9:10</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder={formatmessage('app.entereven9rule')} type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
 
-                          <FormField
-                            control={form.control}
-                            name="odd-10-9"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Odd 10:9</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for odd 10:9" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="odd-9-10"
-                            render={({ field }) => (
-                              <FormItem className="relative">
-                                {/* <FormLabel>Odd 9:10</FormLabel> */}
-                                <FormControl>
-                                  <Input placeholder="Enter rule for 9:10" type="text" {...field} />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
+                            <FormField
+                              control={form.control}
+                              name="odd-10-9"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Odd 10:9</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder={formatmessage('app.enterodd10rule')} type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="odd-9-10"
+                              render={({ field }) => (
+                                <FormItem className="relative">
+                                  {/* <FormLabel>Odd 9:10</FormLabel> */}
+                                  <FormControl>
+                                    <Input placeholder={formatmessage('app.enterodd9rule')} type="text" {...field} />
+                                  </FormControl>
+                                  <FormMessage className="text-xs" />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      <Button type="submit" className="w-full buttoncss" disabled={isPending}>
-                        {isPending ? (
-                          <span className="flex items-center gap-x-1">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Please wait
-                          </span>
-                        ) : (
-                          'Buy Room'
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
+                        <Button type="submit" className="w-full buttoncss" disabled={isPending}>
+                          {isPending ? (
+                            <span className="flex items-center gap-x-1">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <FormattedMessage id="app.pleasewait" />
+                            </span>
+                          ) : (
+                            <FormattedMessage id="app.buyroom" />
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                }
+              </Dialog>
+              <Dialog open={depositeopen} onOpenChange={setdepositeopen}>
+                <DialogTrigger asChild>
+                  <div className="flex items-center py-2 relative">
+                    <input
+                      className="appearance-none bg-transparent border w-auto text-white-700 ml-2 py-2 px-1.5  rounded-full text-xs leading-tight focus:outline-none "
+                      disabled
+                      type="text"
+                      value={userDetail?.user?.walletBalance ? `${userDetail?.user?.walletBalance} xUSDT` : `0`}
+                    />
+                    <img className="w-[30px] absolute right-0" src="/input.png" />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {' '}
+                      <FormattedMessage id="app.deposite" />
+                    </DialogTitle>
+                    <DialogDescription>
+                      <FormattedMessage id="app.depositetext" />
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
+                  <Button
+                    onClick={() => handleWalletRecharge()}
+                    className="w-full buttoncss"
+                    disabled={RechargewalletPending}
+                  >
+                    {RechargewalletPending ? (
+                      <span className="flex items-center gap-x-1">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <FormattedMessage id="app.depositpending" />
+                      </span>
+                    ) : (
+                      <FormattedMessage id="app.submit" />
+                    )}
+                  </Button>
                 </DialogContent>
-              }
-            </Dialog>
-            <Button
-              variant="secondary"
-              className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-15 mt-2"
-              size="sm"
-              disabled={isDeductLoading}
-              onClick={() => {
-                handleLogout();
-                window.location.reload();
-              }}
-            >
-              Logout
-            </Button>
+              </Dialog>
+              <div>
+                <User2Icon size={20} />
+              </div>
+              <Button
+                variant="secondary"
+                className="buttoncss rounded-full bg-gradient-to-r text-color-white from-violet-500 to-fuchsia-500 w-15 mt-2"
+                size="sm"
+                disabled={isDeductLoading}
+                onClick={() => {
+                  handleLogout();
+                  window.location.reload();
+                }}
+              >
+                <FormattedMessage id="app.logout" />
+              </Button>
             </div>
           </>
-          
         ) : (
-          <>
+          <div className="flex flex-col items-center justify-center gap-y-3">
+            {/* <> */}
             <LoginDialog>
               <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1">
-                LOGIN
+                <FormattedMessage id="app.login" />
               </Button>
             </LoginDialog>
             <RegisterDialog>
               <Button className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1">
-                JOIN
+                <FormattedMessage id="app.join" />
               </Button>
             </RegisterDialog>
-            
-          </>
+            {/* </> */}
+          </div>
         )}
       </div>
     </nav>

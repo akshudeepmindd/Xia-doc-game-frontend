@@ -7,6 +7,7 @@ import { createDealerLive } from '@/services/room';
 import { addRound, updateRound } from '@/services/round';
 import { MeetingProvider, useMeeting } from '@videosdk.live/react-sdk';
 import { useEffect } from 'react';
+import { FormattedMessage } from 'react-intl';
 
 const config: any = {
   layout: {
@@ -98,7 +99,7 @@ const DealerFooter = ({
   const handleUpdateRoundStatus = () => {
     const roundId = round?.data?._id;
     setSelectResult('');
-    setCountDown(0)
+    setCountDown(0);
     return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
   };
 
@@ -163,7 +164,7 @@ const DealerFooter = ({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-1" />
-                Settings camera
+                <FormattedMessage id="app.settingcamera" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -180,18 +181,18 @@ const DealerFooter = ({
           {startLive == false ? (
             <Button variant="outline" size="sm" onClick={() => startStream()}>
               <PlaySquare className="w-4 h-4 mr-1" />
-              Start Live
+              <FormattedMessage id="app.startlive" />
             </Button>
           ) : (
             <Button variant="outline" size="sm" onClick={() => stopStream()}>
               <PlaySquare className="w-4 h-4 mr-1" />
-              Stop Live
+              <FormattedMessage id="app.stoplive" />
             </Button>
           )}
         </div>
         {selectResult && countdown <= 0 && roundStatus === 'resultdeclare' && (
           <Button className="rounded-xl bg-[#0EA66E]" size="sm" onClick={() => resultDeclare(selectResult)}>
-            Result declare
+            <FormattedMessage id="app.result" />
           </Button>
         )}
         <div className="flex items-center gap-x-2">
@@ -200,10 +201,10 @@ const DealerFooter = ({
             {username}
           </span>
           <Button variant="outline" size="sm" onClick={handleRoundStart}>
-            Start round
+            <FormattedMessage id="app.startround" />
           </Button>
           <Button variant="outline" size="sm" onClick={handleUpdateRoundStatus}>
-            End round
+            <FormattedMessage id="app.endround" />
           </Button>
         </div>
       </footer>

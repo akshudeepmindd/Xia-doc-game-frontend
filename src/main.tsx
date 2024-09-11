@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -7,7 +8,16 @@ import { routeTree } from './routeTree.gen';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 
 import { BSCTestnet, Config, DAppProvider } from '@usedapp/core';
-
+import { IntlProvider } from 'react-intl';
+import Vitenamese from './lang/vi.json';
+import English from './lang/en.json';
+const locale = navigator.language;
+let lang;
+if (locale === 'vi') {
+  lang = Vitenamese;
+} else {
+  lang = English;
+}
 // Create a new router instance
 const router = createRouter({ routeTree });
 
@@ -21,14 +31,16 @@ declare module '@tanstack/react-router' {
 const config: Config = {
   readOnlyChainId: BSCTestnet.chainId,
   readOnlyUrls: {
-    [BSCTestnet.chainId]: BSCTestnet.rpcUrl || ""
-  }
-}
+    [BSCTestnet.chainId]: BSCTestnet.rpcUrl || '',
+  },
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <DAppProvider config={config}>
-      <RouterProvider router={router} />
-    </DAppProvider>
+    <IntlProvider locale={locale} messages={locale == 'vi' ? Vitenamese : English}>
+      <DAppProvider config={config}>
+        <RouterProvider router={router} />
+      </DAppProvider>
+    </IntlProvider>
   </React.StrictMode>,
 );

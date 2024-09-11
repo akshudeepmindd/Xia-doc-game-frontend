@@ -7,6 +7,7 @@ import { getGamebyOwnerService } from '@/services/room';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { createLazyFileRoute } from '@tanstack/react-router';
+import { FormattedMessage } from 'react-intl';
 
 const RoomsComponent = () => {
   const { userId } = useProfile();
@@ -24,15 +25,17 @@ const RoomsComponent = () => {
     <div className="bg-auto bg-no-repeat bg-center bg-cover bg-[url('/bigbg.png')] pb-10">
       <Navbar />
       <div className="relative h-screen bg-auto bg-no-repeat bg-center bg-cover bg-[url('/bg.png')]">
-  <div className="flex justify-center items-center flex-col h-full px-4 sm:px-6 md:px-8 lg:px-12">
-    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center">
-      <span className="text-[#155BE6]">Your Gaming</span> Rooms
-    </h1>
-  </div>
-</div>
+        <div className="flex justify-center items-center flex-col h-full px-4 sm:px-6 md:px-8 lg:px-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center">
+            <span className="text-[#155BE6]">
+              <FormattedMessage id="app.urgaming" />
+            </span>
+            <FormattedMessage id="app.rooms" />
+          </h1>
+        </div>
+      </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
         {data?.map((room: { name: string; _id: string; players: string[]; playersRequested: string[] }) => (
           // <Card className="w-full h-[28rem]">
           //   <CardContent className="p-0 h-80 overflow-hidden rounded">
@@ -59,15 +62,20 @@ const RoomsComponent = () => {
                 <div className="border-indigo-500 border-t-2"></div>
               </div>
               <p className="text-center pb-4">
-                <span className="text-foreground">Players: {room.players.length}</span><br/>
-                <span className="text-foreground">Requested: {room.playersRequested.length}</span>
+                <span className="text-foreground">
+                  <FormattedMessage id="app.players" />: {room.players.length}
+                </span>
+                <br />
+                <span className="text-foreground">
+                  <FormattedMessage id="app.playersrequested" />: {room.playersRequested.length}
+                </span>
               </p>
               <div className="absolute -bottom-8">
                 <Link
                   to={`/play/${room._id}`}
                   className="buttoncss text-white rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2 py-2"
                 >
-                  View room
+                 <FormattedMessage id="app.viewrooms"/>
                 </Link>
               </div>
             </div>

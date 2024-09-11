@@ -16,6 +16,7 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import SpeakerScreen2 from '@/components/livestream/participants2';
 import { eventNames } from 'node:process';
+import { FormattedMessage } from 'react-intl';
 
 const BetType = {
   FOUR_BLACK: 'FOUR_BLACK',
@@ -84,13 +85,25 @@ const DealerComponent = () => {
   };
   const startStream = async () => {
     // if (!videoRef.current) return; // Ensure the video element is rendered before starting the stream
-    const socket2 = new WebSocket('https://deepminddsvisualss.com/ws/');
-    // const socket2 = new WebSocket('ws://localhost:4200');
+    // const socket2 = new WebSocket('https://deepminddsvisualss.com/ws/');
+    const socket2 = new WebSocket('ws://localhost:4200');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setStream(stream);
       setIsCameraOn(true);
       setStartLive(true);
+      const videoTrack = stream.getVideoTracks()[0];
+
+      // Get the capabilities of the video track
+      const capabilities = videoTrack.getCapabilities();
+
+      console.log('Video Capabilities:');
+      console.log('Width range: ', capabilities.width);
+      console.log('Height range: ', capabilities.height);
+      console.log('Frame rate range: ', capabilities.frameRate);
+      console.log('Aspect ratio: ', capabilities.aspectRatio);
+      // console.log('Facing mode: ', capabilities.);
+      // console.log('Resize mode: ', capabilities.resizeMode);
       if (videoRef.current) {
         socket2.send(
           JSON.stringify({
@@ -219,17 +232,23 @@ const DealerComponent = () => {
             <div className="flex items-center justify-between px-10 gap-x-4">
               <div className="w-1/4 h-40 flex items-center justify-center">
                 <div className="w-24 h-24 flex items-center justify-center text-background border-2 rounded-full text-3xl font-medium font-mono">
-                  {countdown > 0 ? countdown : <span className="text-xl">Start</span>}
+                  {countdown > 0 ? (
+                    countdown
+                  ) : (
+                    <span className="text-xl">
+                      <FormattedMessage id="app.start" />{' '}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="w-[30rem]  overflow-hidden mt-5">
                 {/* {startLive ? ( */}
                 <video ref={videoRef} autoPlay muted>
-                  Live Need to Start from Bottom
+                  <FormattedMessage id="app.liveneedtostart" />
                 </video>
                 {/* ) : (
                   <div className="flex justify-center items-center bg-white h-[200px] ">
-                    Live Need to Start from Bottom
+                    <FormattedMessage id="app.liveneedtostart"/>
                   </div>
                 )} */}
               </div>
@@ -264,7 +283,9 @@ const DealerComponent = () => {
                 {startLive ? (
                   <video ref={videoRef} />
                 ) : (
-                  <div className="flex justify-center items-center h-25">Live Need to Start from Bottom</div>
+                  <div className="flex justify-center items-center h-25">
+                    <FormattedMessage id="app.liveneedtostart" />
+                  </div>
                 )}
               </div>
               <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
@@ -342,7 +363,9 @@ const EvenSelectionBoard = ({
           )}
           onClick={() => setSelectResult(BetType.EVEN)}
         >
-          <h2 className="text-center text-white p-8 text-xl">Even</h2>
+          <h2 className="text-center text-white p-8 text-xl">
+            <FormattedMessage id="app.even" />
+          </h2>
         </div>
         <div
           className={cn(
@@ -352,8 +375,12 @@ const EvenSelectionBoard = ({
           onClick={() => setSelectResult(BetType.FOUR_WHITE)}
         >
           <h3 className="flex items-center justify-between w-full p-2">
-            <span className="text-background text-sm">White 4</span>
-            <span className="text-background text-sm">Red 0</span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.white" /> 4
+            </span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.red" /> 0
+            </span>
           </h3>
           <div className="w-full flex items-center justify-center gap-4 pb-2">
             <WhiteCircle />
@@ -370,8 +397,12 @@ const EvenSelectionBoard = ({
           onClick={() => setSelectResult(BetType.FOUR_BLACK)}
         >
           <h3 className="flex items-center justify-between w-full p-2">
-            <span className="text-background text-sm">White 0</span>
-            <span className="text-background text-sm">Red 4</span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.white" /> 0
+            </span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.red" /> 4
+            </span>
           </h3>
           <div className="w-full flex items-center justify-center gap-4 pb-2">
             <RedCircle />
@@ -388,8 +419,12 @@ const EvenSelectionBoard = ({
           onClick={() => setSelectResult(BetType.TWO_BLACK_TWO_WHITE)}
         >
           <h3 className="flex items-center justify-between w-full p-2">
-            <span className="text-background text-sm">White 2</span>
-            <span className="text-background text-sm">Red 2</span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.white" /> 2
+            </span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.red" /> 2
+            </span>
           </h3>
           <div className="w-full flex items-center justify-center gap-2 pb-2">
             <RedCircle />
@@ -417,7 +452,9 @@ const OddSelectionBoard = ({
           className={cn('bg-[#972b46] rounded-lg p-8', selectResult === BetType.ODD ? 'bg-white/10 glow' : '')}
           onClick={() => setSelectResult(BetType.ODD)}
         >
-          <h1 className="text-background text-2xl font-medium text-center">Odd</h1>
+          <h1 className="text-background text-2xl font-medium text-center">
+            <FormattedMessage id="app.odd" />{' '}
+          </h1>
         </div>
         <div
           className={cn(
@@ -427,8 +464,12 @@ const OddSelectionBoard = ({
           onClick={() => setSelectResult(BetType.THREE_WHITE_ONE_BLACK)}
         >
           <h3 className="flex items-center justify-between w-full">
-            <span className="text-background text-sm">White 3</span>
-            <span className="text-background text-sm">Red 1</span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.white" /> 3
+            </span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.red" /> 1
+            </span>
           </h3>
           <div className="w-full flex items-center justify-center gap-3">
             <WhiteCircle />
@@ -445,8 +486,12 @@ const OddSelectionBoard = ({
           onClick={() => setSelectResult(BetType.THREE_BLACK_ONE_WHITE)}
         >
           <h3 className="flex items-center justify-between w-full">
-            <span className="text-background text-sm">White 1</span>
-            <span className="text-background text-sm">Red 3</span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.white" /> 1
+            </span>
+            <span className="text-background text-sm">
+              <FormattedMessage id="app.red" /> 3
+            </span>
           </h3>
           <div className="w-full flex items-center justify-center gap-4 pb-2">
             <WhiteCircle />
