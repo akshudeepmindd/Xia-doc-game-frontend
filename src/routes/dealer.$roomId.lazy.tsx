@@ -1,6 +1,7 @@
 import DealerFooter from '@/components/dealer-footer';
 import SpeakerScreen from '@/components/livestream/speaker';
 import io from 'socket.io-client';
+import Webcam from 'react-webcam';
 import Navbar from '@/components/navbar';
 import { GET_ROUND_DETAILS, SOCKET_ROUND_START } from '@/lib/constants';
 import { socket } from '@/services';
@@ -32,10 +33,11 @@ const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
   const [selectResult, setSelectResult] = useState<string>();
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<Webcam>(null);
   const [livestream, setStream] = useState<MediaStream | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
+  const [c1streamkey, setc1streamkey] = useState('');
   // socket.current =
   // const []
   useEffect(() => {
@@ -71,7 +73,64 @@ const DealerComponent = () => {
       setStartLive(true);
     }
   };
+  const socket2 = new WebSocket('https://deepminddsvisualss.com/ws/');
+  const capture = () => {
+    if (videoRef.current) {
+      const videoElement = videoRef.current.video as HTMLVideoElement;
+      if (videoElement && videoElement.srcObject) {
+        console.log('Video Call');
+        const videoSrc = videoElement.srcObject as MediaStream;
 
+        setStartLive(true);
+        setStream(videoSrc);
+        setIsCameraOn(true);
+        if (socket2 && socket2.readyState === WebSocket.OPEN) {
+          socket2.send(
+            JSON.stringify({
+              eventName: 'createLiveStream',
+              data: { roomId },
+            }),
+          );
+          socket2.onmessage = (event) => {
+            // console.log(.data);
+            const streamkey = JSON.parse(event.data)?.data;
+            console.log(streamkey, 'streamkey');
+            setc1streamkey(streamkey);
+            sendVideoStream(videoSrc, streamkey);
+          };
+        }
+      } else {
+        console.error('Video source is not available');
+      }
+    }
+  };
+  const sendVideoStream = (videoSrc: MediaStream, streamkey: string) => {
+    console.log(streamkey, 'streakeyyyyy');
+    if (streamkey) {
+      // const socketConnection = new WebSocket(`ws://deepminddsvisualss.com/live/?roomId=${streamkey}`);
+      const socketConnection = new WebSocket(`https://deepminddsvisualss.com/live/?roomId=${streamkey}`);
+      const mediaRecorder = new MediaRecorder(videoSrc, {
+        mimeType: 'video/webm',
+      });
+
+      mediaRecorder.ondataavailable = async (event: BlobEvent) => {
+        if (event.data && event.data.size > 0) {
+          console.log(event.data);
+
+          // // Example: Using WebSocket to send data chunks
+          // const obj = { roomId: roomId, frame: event.data };
+          // const message = JSON.stringify({
+          //   eventName: 'sendFrame',
+          //   data: obj,
+          // });
+          await socketConnection.send(event.data);
+          // socket.send(event.data);
+        }
+      };
+
+      mediaRecorder.start(1000); // Send data every second
+    }
+  };
   const stopStream = () => {
     if (mediaRecorder) {
       mediaRecorder.stop();
@@ -243,9 +302,16 @@ const DealerComponent = () => {
               </div>
               <div className="w-[30rem]  overflow-hidden mt-5">
                 {/* {startLive ? ( */}
-                <video ref={videoRef} autoPlay muted>
-                  <FormattedMessage id="app.liveneedtostart" />
-                </video>
+                <Webcam
+                  audio={true}
+                  ref={videoRef}
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={{
+                    width: 1280,
+                    height: 720,
+                    facingMode: 'user',
+                  }}
+                />
                 {/* ) : (
                   <div className="flex justify-center items-center bg-white h-[200px] ">
                     <FormattedMessage id="app.liveneedtostart"/>
@@ -315,7 +381,7 @@ const DealerComponent = () => {
                 isCameraOn={isCameraOn}
                 stopStream={stopStream}
                 setCameraId={setCameraId}
-                startStream={startStream}
+                startStream={capture}
                 cameraToken={cameratoken}
                 setCameraToken={setCameratoken}
                 meetingId={meetingId}
