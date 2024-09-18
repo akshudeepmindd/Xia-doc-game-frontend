@@ -6,12 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { userLoginService } from '@/services/auth';
+import { userLoginService, userProfile } from '@/services/auth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { setAuthToken, setAuthUser } from '@/services';
 import { useNavigate } from '@tanstack/react-router';
 import { FormattedMessage, useIntl } from 'react-intl';
+import { USER_PROFILE } from '@/lib/constants';
+import { useQuery } from '@tanstack/react-query';
 
 interface LoginDialogProps {
   children: ReactNode;
@@ -23,6 +25,12 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
     telegramusername: z.string().min(1, intl.formatMessage({ id: 'app.usernamevalidation' })),
     password: z.string().min(1, intl.formatMessage({ id: 'app.passwordvalidation' })),
   });
+  // const { isLoading: isLoading3, data: userDetail } = useQuery({
+  //   queryKey: [USER_PROFILE],
+  //   queryFn: (userId: string) => userProfile(userId),
+  //   refetchInterval: 2000,
+  //   refetchIntervalInBackground: true,
+  // });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -44,6 +52,7 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
         username: response.message.user.telegramusername,
         roomOwner: response.message.user.roomowner,
       });
+      userProfile(response.message.user._id);
       navigate({ to: '/' });
       toast.success('Login successful');
     } catch (error: unknown | any) {
