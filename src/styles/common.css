@@ -9,7 +9,31 @@
 .box-container{
     height: -1rem;
 }
-
+.live-stream-container{
+      z-index: 1;
+    position: absolute;
+    top: 24%;
+    left: 34%;
+    width: 31% !important;
+    height: 31% !important;
+}
+.live-stream-container video{
+  position: absolute;
+}
+.live-stream-container2{
+    z-index: 1;
+    position: absolute;
+    top: 24%;
+    left: 34%;
+    width: 7% !important;
+    height: 25% !important;
+}
+.live-stream-container2 video{
+  position: absolute;
+  border-radius: 50%;
+  height: 54% !important;
+    width: 120px !important;
+}
 @media only screen and (max-device-width: 768px) and (orientation: portrait) {
   .game-container {
     display: none;

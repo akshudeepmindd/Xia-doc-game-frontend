@@ -78,6 +78,8 @@
   "app.startround": "Start Round",
   "app.endround": "End Round",
   "app.settingcamera": "Setting Camera",
+  "app.camera1": "máy ảnh 1",
+  "app.camera2": "máy ảnh 2",
   "app.enterusername": "Enter Room Name",
   "app.enterpassword": "Enter password",
   "app.enterhouseedgefee": "Enter House Edge fee",

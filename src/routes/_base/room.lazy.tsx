@@ -71,12 +71,12 @@ const RoomsComponent = () => {
                 </span>
               </p>
               <div className="absolute -bottom-8">
-                <Link
-                  to={`/play/${room._id}`}
+                <a
+                  href={`/play/${room._id}`}
                   className="buttoncss text-white rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2 py-2"
                 >
-                 <FormattedMessage id="app.viewrooms"/>
-                </Link>
+                  <FormattedMessage id="app.viewrooms" />
+                </a>
               </div>
             </div>
           </div>

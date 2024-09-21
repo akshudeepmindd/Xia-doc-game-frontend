@@ -26,12 +26,16 @@ const DealerFooter = ({
   setStartLive,
   setAuthToken,
   toggleCamera,
+  setSelectedCamera1Index,
+  setSelectedCamera2Index,
   startLive,
   meetingId,
+  videoDevices,
   roomId,
   round,
   selectResult,
   resultDeclare,
+  startStream2,
   roundStatus,
   countdown,
   setSelectResult,
@@ -44,7 +48,10 @@ const DealerFooter = ({
   setCountDown,
 }: {
   setMeetingId: (meetingId: string) => void;
+  setSelectedCamera1Index: (index: number) => void;
+  setSelectedCamera2Index: (index: number) => void;
   startStream: () => void;
+  startStream2: () => void;
   toggleCamera: () => void;
   setStartLive: (startLive: boolean) => void;
   setAuthToken: (authToken: string) => void;
@@ -52,6 +59,7 @@ const DealerFooter = ({
   setCameraToken: (cameraToken: string) => void;
   stopStream: () => void;
   cameraId: string;
+  videoDevices: MediaDeviceInfo[];
   cameraToken: string;
   startLive: boolean;
   meetingId: string;
@@ -164,31 +172,64 @@ const DealerFooter = ({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-1" />
-                <FormattedMessage id="app.settingcamera" />
+                <FormattedMessage id="app.camera1" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => toggleCamera()}>
-                {!isCameraOn ? <Camera className="w-4 h-4 mr-1" /> : <CameraOff className="w-4 h-4 mr-1" />}
-                {!isCameraOn ? 'Turn on camera' : 'Turn off camera'}
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                {!isMuted ? <Mic className="w-4 h-4 mr-1" /> : <MicOff className="w-4 h-4 mr-1" />}
-                {!isMuted ? 'Turn on mic' : 'Turn off mic'}
-              </DropdownMenuItem>
+              {videoDevices.map((device, index) => (
+                <DropdownMenuItem onClick={() => setSelectedCamera1Index(index)}>{device.label}</DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          {startLive == false ? (
-            <Button variant="outline" size="sm" onClick={() => startStream()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Camera className="w-4 h-4 mr-1" />
+                <FormattedMessage id="app.camera2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {videoDevices.map((device, index) => (
+                <DropdownMenuItem onClick={() => setSelectedCamera2Index(index)}>{device.label}</DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {/* {startLive == false ? ( */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                startStream();
+                // startStream2();
+              }}
+            >
               <PlaySquare className="w-4 h-4 mr-1" />
               <FormattedMessage id="app.startlive" />
             </Button>
-          ) : (
+          {/* // ) : (
+          //   <Button variant="outline" size="sm" onClick={() => stopStream()}>
+          //     <PlaySquare className="w-4 h-4 mr-1" />
+          //     <FormattedMessage id="app.stoplive" />
+          //   </Button>
+          // )} */}
+          {/* {startLive == false ? ( */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // startStream();
+                startStream2();
+              }}
+            >
+              <PlaySquare className="w-4 h-4 mr-1" />
+              <FormattedMessage id="app.startlive" />
+            </Button>
+          {/* ) : (
             <Button variant="outline" size="sm" onClick={() => stopStream()}>
               <PlaySquare className="w-4 h-4 mr-1" />
               <FormattedMessage id="app.stoplive" />
             </Button>
-          )}
+          )} */}
         </div>
         {selectResult && countdown <= 0 && roundStatus === 'resultdeclare' && (
           <Button className="rounded-xl bg-[#0EA66E]" size="sm" onClick={() => resultDeclare(selectResult)}>

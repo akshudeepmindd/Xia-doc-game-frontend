@@ -37,7 +37,7 @@ const config: Config = {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <IntlProvider locale={locale} messages={locale == 'vi' ? Vitenamese : English}>
+    <IntlProvider locale={locale} messages={Vitenamese}>
       <DAppProvider config={config}>
         <RouterProvider router={router} />
       </DAppProvider>
