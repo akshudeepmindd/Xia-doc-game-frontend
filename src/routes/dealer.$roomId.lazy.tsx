@@ -1,23 +1,19 @@
 import DealerFooter from '@/components/dealer-footer';
-import SpeakerScreen from '@/components/livestream/speaker';
-import io from 'socket.io-client';
 import Webcam from 'react-webcam';
 import Navbar from '@/components/navbar';
-import { GET_ROUND_DETAILS, SOCKET_ROUND_START } from '@/lib/constants';
-import { socket } from '@/services';
+import { GET_ROUND_DETAILS } from '@/lib/constants';
 import { declareResultService, getRoundDetails, updateRound } from '@/services/round';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
-import useProfile from '@/hooks/useProfile';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
 import { getRoomDetailService } from '@/services/room';
-import { MeetingProvider } from '@videosdk.live/react-sdk';
 import { differenceInSeconds, parseISO } from 'date-fns';
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import SpeakerScreen2 from '@/components/livestream/participants2';
-import { eventNames } from 'node:process';
 import { FormattedMessage } from 'react-intl';
+import PrivateRoute from '@/components/PrivateRoute';
+import Camera1SignalServer from '../utils/Camera1Serverclass';
+import Camera2SignalServer from '../utils/Camera2Serverclass';
 
 const BetType = {
   FOUR_BLACK: 'FOUR_BLACK',
@@ -28,6 +24,10 @@ const BetType = {
   EVEN: 'EVEN',
   ODD: 'ODD',
 };
+type Camera1SignalServertype = {
+  postMessage: (message: any) => void;
+  onmessage: ((event: { data: any }) => void) | null;
+};
 
 const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
@@ -35,20 +35,26 @@ const DealerComponent = () => {
   const [selectResult, setSelectResult] = useState<string>();
   const [selectedCamera1Index, setSelectedCamera1Index] = useState(0);
   const [selectedCamera2Index, setSelectedCamera2Index] = useState(1);
-  const socketConnect1 = useRef<WebSocket | null>(null);
-  const socketConnect2 = useRef<WebSocket | null>(null);
   const videoRef = useRef<Webcam>(null);
   const videoRef2 = useRef<Webcam>(null);
+  const localVideoRef1 = useRef<HTMLVideoElement | null>(null); // To reference the local video element
+  const localVideoRef2 = useRef<HTMLVideoElement | null>(null); // To reference the local video element
+  const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null); // Track peer connection state
+  const [peerConnection2, setPeerConnection2] = useState<RTCPeerConnection | null>(null); // Track peer connection state
+  const [streamEnabled, setStreamEnabled] = useState<boolean>(false); // Control stream button
+  const signalServerRef = useRef<Camera1SignalServer | null>(null);
+  const signalServerRef2 = useRef<Camera1SignalServer | null>(null);
   const mediaRecorderRef1 = useRef<MediaRecorder | null>(null);
   const mediaRecorderRef2 = useRef<MediaRecorder | null>(null);
   const [livestream, setStream] = useState<MediaStream | null>(null);
   const [livestream2, setStream2] = useState<MediaStream | null>(null);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [isCameraOn, setIsCameraOn] = useState(false);
   const [c1streamkey, setc1streamkey] = useState('');
   const [c2streamkey, setc2streamkey] = useState('');
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const socketConnect1 = useRef<WebSocket | null>(null);
+  const socketConnect2 = useRef<WebSocket | null>(null);
 
+  // Fetch available video devices
   const getVideoDevices = async () => {
     const deviceInfos = await navigator.mediaDevices.enumerateDevices();
     const filteredDevices = deviceInfos.filter(
@@ -60,22 +66,200 @@ const DealerComponent = () => {
   useEffect(() => {
     getVideoDevices();
   }, []);
-
-  // socket.current =
-  // const []
   useEffect(() => {
-    socket.on(SOCKET_ROUND_START, (data: any) => {
-      console.log('SOCKET DATA', data);
-      setCountdown(45);
-    });
+    // Load the SignalServer from the external script
+    const signalServer = new Camera1SignalServer(roomId);
+    const signalServer2 = new Camera1SignalServer(roomId);
+    signalServerRef.current = signalServer;
+    signalServerRef2.current = signalServer2;
+
+    if (signalServerRef.current != null) {
+      signalServerRef.current.onmessage = (e) => {
+        if (e.data.type === 'icecandidate') {
+          console.log(e.data);
+          peerConnection?.addIceCandidate(e.data.candidate);
+        } else if (e.data.type === 'answer') {
+          console.log('Received answer');
+          peerConnection?.setRemoteDescription(e.data);
+        }
+      };
+    }
+    if (signalServerRef2.current != null) {
+      signalServerRef2.current.onmessage = (e) => {
+        if (e.data.type === 'icecandidate') {
+          console.log(e.data);
+          peerConnection2?.addIceCandidate(e.data.candidate);
+        } else if (e.data.type === 'answer') {
+          console.log('Received answer');
+          peerConnection2?.setRemoteDescription(e.data);
+        }
+      };
+    }
 
     return () => {
-      socket.off(SOCKET_ROUND_START);
+      // Cleanup on component unmount
+      if (peerConnection) {
+        peerConnection.close();
+      }
+      if (peerConnection2) {
+        peerConnection2.close();
+      }
     };
+  }, [peerConnection, peerConnection2]);
+
+  useEffect(() => {
+    const requestMediaPermissions = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true,
+        });
+
+        // If the permission is granted, stream to the video element
+        if (localVideoRef1.current) {
+          localVideoRef1.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Permission denied or error accessing media devices', error);
+      }
+    };
+    requestMediaPermissions();
   }, []);
+  const StartCamer1Streaming = async () => {
+    const config = {};
+    const newPeerConnection = new RTCPeerConnection(config);
+    setPeerConnection(newPeerConnection);
+
+    newPeerConnection.addEventListener('icecandidate', (e) => {
+      let candidate = null;
+      if (e.candidate !== null) {
+        candidate = {
+          candidate: e.candidate.candidate,
+          sdpMid: e.candidate.sdpMid,
+          sdpMLineIndex: e.candidate.sdpMLineIndex,
+        };
+      }
+      signalServerRef.current.postMessage({ type: 'icecandidate', candidate });
+    });
+
+    // Ensure that we have valid selected camera indices
+    if (videoDevices.length > 0) {
+      const selectedCamera1 = videoDevices[selectedCamera1Index];
+      const selectedCamera2 = videoDevices[selectedCamera2Index];
+
+      try {
+        // Request media stream from the selected camera
+        const stream1 = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: selectedCamera1 ? { exact: selectedCamera1.deviceId } : undefined,
+          },
+        });
+
+        // const stream2 = await navigator.mediaDevices.getUserMedia({
+        //   video: {
+        //     deviceId: selectedCamera2 ? { exact: selectedCamera2.deviceId } : undefined,
+        //   },
+        // });
+
+        // Attach streams to local video elements
+        if (localVideoRef1.current && stream1) {
+          localVideoRef1.current.srcObject = stream1;
+        }
+
+        // if (localVideoRef1.current && stream2) {
+        //   // Assuming you want to handle both streams in the same element
+        //   localVideoRef1.current.srcObject = stream2; // Alternatively, use a different ref for stream2
+        // }
+
+        // Add tracks from the selected cameras to the peer connection
+        stream1.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream1));
+        // stream2.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream2));
+
+        // Create and send an offer to the remote peer
+        const offer = await newPeerConnection.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        });
+
+        await newPeerConnection.setLocalDescription(offer);
+        console.log('Created offer, sending...');
+        signalServerRef.current.postMessage({ type: 'offer', sdp: offer.sdp });
+        setStartLive(true);
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+      }
+    }
+  };
+  const StartCamer2Streaming = async () => {
+    const config = {};
+    const newPeerConnection = new RTCPeerConnection(config);
+    setPeerConnection2(newPeerConnection);
+
+    newPeerConnection.addEventListener('icecandidate', (e) => {
+      let candidate = null;
+      if (e.candidate !== null) {
+        candidate = {
+          candidate: e.candidate.candidate,
+          sdpMid: e.candidate.sdpMid,
+          sdpMLineIndex: e.candidate.sdpMLineIndex,
+        };
+      }
+      signalServerRef2.current && signalServerRef2.current.postMessage({ type: 'icecandidate', candidate });
+    });
+
+    // Ensure that we have valid selected camera indices
+    if (videoDevices.length > 0) {
+      const selectedCamera1 = videoDevices[selectedCamera1Index];
+      const selectedCamera2 = videoDevices[selectedCamera2Index];
+
+      try {
+        // Request media stream from the selected camera
+        // const stream1 = await navigator.mediaDevices.getUserMedia({
+        //   video: {
+        //     deviceId: selectedCamera1 ? { exact: selectedCamera1.deviceId } : undefined,
+        //   },
+        // });
+
+        const stream2 = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: selectedCamera2 ? { exact: selectedCamera2.deviceId } : undefined,
+          },
+        });
+
+        // Attach streams to local video elements
+        // if (localVideoRef1.current && stream1) {
+        //   localVideoRef1.current.srcObject = stream1;
+        // }
+
+        if (localVideoRef2.current && stream2) {
+          // Assuming you want to handle both streams in the same element
+          localVideoRef2.current.srcObject = stream2; // Alternatively, use a different ref for stream2
+        }
+
+        // Add tracks from the selected cameras to the peer connection
+        // stream1.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream1));
+        stream2.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream2));
+
+        // Create and send an offer to the remote peer
+        const offer = await newPeerConnection.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        });
+
+        await newPeerConnection.setLocalDescription(offer);
+        console.log('Created offer, sending...');
+        signalServerRef2.current && signalServerRef2.current.postMessage({ type: 'offer', sdp: offer.sdp });
+        setStartLive(true);
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+      }
+    }
+  };
+
   const { mutateAsync: updateResult } = useMutation({
     mutationFn: updateRound,
   });
+
   const handleResultSelect = (result: string) => {
     setSelectResult(result);
     updateResult({ roundId: roundDetails?.message?.data?._id, round: { roundResult: result } });
@@ -88,311 +272,12 @@ const DealerComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
-  const toggleCamera = async () => {
-    if (isCameraOn) {
-      stopStream();
-    } else {
-      capture();
-      setStartLive(true);
-    }
-  };
-  const socket2 = new WebSocket('https://deepminddsvisualss.com/ws/');
-  // Capture the first camera stream
-  const capture = async () => {
-    try {
-      const deviceInfos = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = deviceInfos.filter(
-        (device) => device.kind === 'videoinput' && !device.label.includes('OBS'),
-      );
-
-      if (videoDevices.length === 0) {
-        console.error('No video input devices found');
-        return;
-      }
-
-      const firstCamera = videoDevices[selectedCamera1Index];
-      console.log('Selected camera 1:', firstCamera);
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: firstCamera.deviceId } },
-      });
-
-      if (videoRef.current) {
-        const videoElement = videoRef.current.video as HTMLVideoElement;
-        videoElement.srcObject = stream;
-
-        console.log('Video Call 1');
-        // setStartLive(true);
-        setStream(stream);
-        // setIsCameraOn(true);
-
-        // WebSocket logic for first stream
-        if (socket2 && socket2.readyState === WebSocket.OPEN) {
-          socket2.send(
-            JSON.stringify({
-              eventName: 'createLiveStream',
-              data: { roomId, cameraNumber: 1 },
-            }),
-          );
-
-          const handleSocketMessage1 = (event) => {
-            const streamkey = JSON.parse(event.data)?.data;
-            console.log(streamkey, 'streamkey 1');
-            setc1streamkey(streamkey);
-            sendVideoStream(stream, streamkey);
-          };
-
-          // Attach a listener for the first stream, ensure the listener is not overwritten by the second stream
-          socket2.addEventListener('message', handleSocketMessage1);
-        }
-      } else {
-        console.error('Video element is not available');
-      }
-    } catch (error) {
-      console.error('Error capturing video:', error);
-    }
-  };
-
-  // Capture the second camera stream
-  const capture2 = async () => {
-    try {
-      const deviceInfos = await navigator.mediaDevices.enumerateDevices();
-      console.log('Available video devices:', deviceInfos);
-      const videoDevices = deviceInfos.filter(
-        (device) => device.kind === 'videoinput' && !device.label.includes('OBS'),
-      );
-
-      if (videoDevices.length < 2) {
-        console.error('Not enough video devices available');
-        return;
-      }
-
-      const secondCamera = videoDevices[selectedCamera2Index];
-      console.log('Selected camera 2:', secondCamera);
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: secondCamera.deviceId } },
-        audio: true,
-      });
-      console.log('Stream for camera 2:', stream);
-
-      if (videoRef2.current) {
-        const videoElement = videoRef2.current.video as HTMLVideoElement;
-        videoElement.srcObject = stream;
-
-        console.log('Video Call 2');
-        // setStartLive(true);
-        setStream2(stream);
-        // setIsCameraOn(true);
-
-        // WebSocket logic for second stream
-        if (socket2 && socket2.readyState === WebSocket.OPEN) {
-          socket2.send(
-            JSON.stringify({
-              eventName: 'createLiveStream',
-              data: { roomId, cameraNumber: 2 },
-            }),
-          );
-
-          const handleSocketMessage2 = (event) => {
-            const streamkey = JSON.parse(event.data)?.data;
-            console.log(streamkey, 'streamkey 2');
-            setc2streamkey(streamkey);
-            sendVideoStream2(stream, streamkey);
-          };
-
-          // Attach a listener for the second stream, ensure the listener is specific to the second stream
-          socket2.addEventListener('message', handleSocketMessage2);
-        }
-      } else {
-        console.error('Video element is not available');
-      }
-    } catch (error) {
-      console.error('Error capturing video from the second camera:', error);
-    }
-  };
-
-  const HandleSettingMediaStream1 = async (index) => {
-    setSelectedCamera1Index(index);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        deviceId: videoDevices[selectedCamera1Index].deviceId
-          ? { exact: videoDevices[selectedCamera1Index].deviceId }
-          : undefined,
-      },
-      audio: true,
-    });
-    if (videoRef.current) {
-      const videoElement = videoRef.current.video as HTMLVideoElement;
-      videoElement.srcObject = stream;
-    }
-  };
-  const HandleSettingMediaStream2 = async (index) => {
-    setSelectedCamera2Index(index);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        deviceId: videoDevices[selectedCamera2Index].deviceId
-          ? { exact: videoDevices[selectedCamera2Index].deviceId }
-          : undefined,
-      },
-      audio: true,
-    });
-    if (videoRef2.current) {
-      const videoElement = videoRef2.current.video as HTMLVideoElement;
-      videoElement.srcObject = stream;
-    }
-  };
-  const sendVideoStream = (videoSrc: MediaStream, streamkey: string) => {
-    console.log(streamkey, 'streakeyyyyy');
-    if (streamkey) {
-      console.log('GETSTREAM KEY');
-      // const socketConnection = new WebSocket(https://deepminddsvisualss.com/live/?roomId=${streamkey});
-      socketConnect1.current = new WebSocket(`https://deepminddsvisualss.com/live/?roomId=${streamkey}`);
-      mediaRecorderRef1.current = new MediaRecorder(videoSrc, { mimeType: 'video/webm' });
-
-      mediaRecorderRef1.current.ondataavailable = async (event: BlobEvent) => {
-        if (event.data && event.data.size > 0) {
-          console.log(event.data, 'stream');
-
-          // // Example: Using WebSocket to send data chunks
-          // const obj = { roomId: roomId, frame: event.data };
-          // const message = JSON.stringify({
-          //   eventName: 'sendFrame',
-          //   data: obj,
-          // });
-          if (socketConnect1.current) await socketConnect1.current.send(event.data);
-          // socket.send(event.data);
-        }
-      };
-
-      mediaRecorderRef1.current.start(1000); // Send data every second
-    }
-  };
-  const sendVideoStream2 = (videoSrc: MediaStream, streamkey: string) => {
-    console.log(streamkey, 'streakeyyyyy');
-    if (streamkey) {
-      console.log('GETSTREAM KEY');
-      // const socketConnection = new WebSocket(https://deepminddsvisualss.com/live/?roomId=${streamkey});
-      socketConnect2.current = new WebSocket(`https://deepminddsvisualss.com/live2/?roomId=${streamkey}`);
-      mediaRecorderRef2.current = new MediaRecorder(videoSrc, { mimeType: 'video/webm' });
-
-      mediaRecorderRef2.current.ondataavailable = async (event: BlobEvent) => {
-        if (event.data && event.data.size > 0) {
-          console.log(event.data, 'Stream 2');
-
-          // // Example: Using WebSocket to send data chunks
-          // const obj = { roomId: roomId, frame: event.data };
-          // const message = JSON.stringify({
-          //   eventName: 'sendFrame',
-          //   data: obj,
-          // });
-          if (socketConnect2.current) await socketConnect2.current.send(event.data);
-          // socket.send(event.data);
-        }
-      };
-
-      mediaRecorderRef2.current.start(1000); // Send data every second
-    }
-  };
-  const stopStream = () => {
-    if (mediaRecorder) {
-      const socketConnection = new WebSocket(`https://deepminddsvisualss.com/live/?roomId=${c1streamkey}`);
-      socketConnection.send('stop');
-      mediaRecorder.stop();
-    }
-    if (livestream) {
-      livestream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-    setIsCameraOn(false);
-    setStartLive(false);
-  };
-  const startStream = async () => {
-    // if (!videoRef.current) return; // Ensure the video element is rendered before starting the stream
-    // const socket2 = new WebSocket('https://deepminddsvisualss.com/ws/');
-    const socket2 = new WebSocket('https://localhost:4200');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setStream(stream);
-      setIsCameraOn(true);
-      setStartLive(true);
-      const videoTrack = stream.getVideoTracks()[0];
-
-      // Get the capabilities of the video track
-      const capabilities = videoTrack.getCapabilities();
-
-      console.log('Video Capabilities:');
-      console.log('Width range: ', capabilities.width);
-      console.log('Height range: ', capabilities.height);
-      console.log('Frame rate range: ', capabilities.frameRate);
-      console.log('Aspect ratio: ', capabilities.aspectRatio);
-      // console.log('Facing mode: ', capabilities.);
-      // console.log('Resize mode: ', capabilities.resizeMode);
-      if (videoRef.current) {
-        socket2.send(
-          JSON.stringify({
-            eventName: 'createLiveStream',
-            roomId: roomId,
-          }),
-        );
-        // Check if videoRef.current exists
-        videoRef.current.srcObject = stream;
-      }
-
-      // const socket = new WebSocket('https://localhost:4200');
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          const reader = new FileReader();
-          reader.onload = async () => {
-            try {
-              console.log(reader?.result);
-              // Ensure reader.result is a valid ArrayBuffer
-              // if (!(reader.result instanceof ArrayBuffer)) {
-              //   throw new Error('Invalid data format. Expected ArrayBuffer');
-              // }
-              if (reader?.result !== null) {
-                const base64String = reader?.result && reader?.result?.replace(/^data:(.*?);base64,/, '');
-                console.log(base64String);
-                // const base64String = reader?.result?.split(',')[1];
-                const obj = { roomId: roomId, frame: base64String };
-
-                if (socket2.readyState === WebSocket.OPEN) {
-                  const message = JSON.stringify({
-                    eventName: 'sendFrame',
-                    data: obj,
-                  });
-                  await socket2.send(message);
-                } else {
-                  console.error('WebSocket connection is not open');
-                }
-              }
-            } catch (error) {
-              console.error('Error sending frame:', error);
-              // Optionally send an error message to the backend
-            }
-          };
-          reader.readAsDataURL(event.data);
-        }
-      };
-
-      mediaRecorder.start(1000);
-    } catch (err) {
-      console.error('Error accessing webcam:', err);
-    }
-  };
 
   useEffect(() => {
     if (roundDetails) {
       const futureTime = parseISO(roundDetails.message.data?.createdAt);
-
-      // Get current time
       const currentTime = new Date();
-
-      // Calculate difference in seconds
       const secondsLeft = differenceInSeconds(currentTime, futureTime);
-
       setCountdown(45 - secondsLeft);
     }
   }, [roundDetails?.message?.data?.createdAt]);
@@ -411,13 +296,7 @@ const DealerComponent = () => {
   const [authToken, setAuthToken] = useState('');
   const [cameraId, setCameraId] = useState('');
   const [cameratoken, setCameratoken] = useState('');
-  const { username } = useProfile();
-  // useEffect(() => {
-  //   // Ensure that the stream starts after the video element is rendered
-  //   if (startLive && videoRef.current) {
-  //     startStream();
-  //   }
-  // }, [startLive, videoRef]);
+
   const { data: roomDetails } = useQuery({
     queryKey: [GET_ROOMS_DETAILS],
     queryFn: async () => getRoomDetailService(roomId || ''),
@@ -445,7 +324,6 @@ const DealerComponent = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  // eslint-disable-next-line react-hooks/rules-of-hooks
 
   return (
     <div className="dealer-container">
@@ -466,109 +344,45 @@ const DealerComponent = () => {
                 </div>
               </div>
               <div className="w-[30rem]  overflow-hidden mt-5">
-                {/* {startLive ? ( */}
-                <Webcam
-                  audio={true}
-                  ref={videoRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{
-                    width: 1280,
-                    height: 720,
-                    facingMode: 'user',
-                  }}
-                />
-                {/* ) : (
-                  <div className="flex justify-center items-center bg-white h-[200px] ">
-                    <FormattedMessage id="app.liveneedtostart"/>
-                  </div>
-                )} */}
+                <video ref={localVideoRef1} autoPlay />
               </div>
-              <div className="w-1/4  mt-40">
-                {/* <div className="table w-full text-white p-2 ">
-                <div className="table-header-group">
-                  <div className="table-row  rounded-xl p-2">
-                    <div className="table-cell text-center ...">Bet</div>
-                    <div className="table-cell  text-center">Win</div>
-                  </div>
-                </div>
-                <div className="table-row-group">
-                  <div className="table-row text-center">
-                    <div className="table-cell ...">$2500</div>
-                    <div className="table-cell ...">$3000</div>
-                  </div>
-                  <div className="table-row text-center">
-                    <div className="table-cell ...">$2500</div>
-                    <div className="table-cell ...">$3000</div>
-                  </div>
-                  <div className="table-row text-center">
-                    <div className="table-cell ...">$2500</div>
-                    <div className="table-cell ...">$3000</div>
-                  </div>
-                </div>
-              </div> */}
-              </div>
+              <div className="w-1/4  mt-40"></div>
             </div>
             <div className="flex items-center justify-between px-10 gap-x-4">
               <EvenSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
               <div className="w-1/4 bg-slate-50 h-64">
-                <Webcam
-                  audio={true}
-                  ref={videoRef2}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{
-                    width: 1280,
-                    height: 720,
-                    facingMode: 'user',
-                  }}
-                />
+                <video ref={localVideoRef2} autoPlay />
               </div>
               <OddSelectionBoard selectResult={selectResult} setSelectResult={handleResultSelect} />
             </div>
-            {/* {roomId && ( */}
-            <>
-              {/* <MeetingProvider
-                  config={{
-                    meetingId: roomDetails?.dealerLiveStreamId,
-                    mode: 'CONFERENCE',
-                    name: 'Name',
-                    micEnabled: true,
-                    webcamEnabled: true,
-                    debugMode: false,
-                  }}
-                  token={roomDetails?.streamingToken}
-                  joinWithoutUserInteraction
-                > */}
-              <DealerFooter
-                roomId={roomId ?? ''}
-                round={roundDetails?.message}
-                setMeetingId={setMeetingId}
-                setStartLive={setStartLive}
-                startLive={startLive}
-                setAuthToken={setAuthToken}
-                cameraId={cameraId}
-                isCameraOn={isCameraOn}
-                stopStream={stopStream}
-                setCameraId={setCameraId}
-                startStream={capture}
-                startStream2={capture2}
-                videoDevices={videoDevices}
-                setSelectedCamera1Index={HandleSettingMediaStream1}
-                setSelectedCamera2Index={HandleSettingMediaStream2}
-                cameraToken={cameratoken}
-                setCameraToken={setCameratoken}
-                meetingId={meetingId}
-                authToken={authToken}
-                toggleCamera={toggleCamera}
-                selectResult={selectResult}
-                setSelectResult={setSelectResult}
-                resultDeclare={handleDeclareResult}
-                roundStatus={roundDetails?.message?.data?.roundStatus}
-                countdown={countdown}
-                setCountDown={setCountdown}
-              />
-              {/* </MeetingProvider> */}
-            </>
-            {/* )} */}
+            <DealerFooter
+              roomId={roomId ?? ''}
+              round={roundDetails?.message}
+              setMeetingId={setMeetingId}
+              setStartLive={setStartLive}
+              startLive={startLive}
+              setAuthToken={setAuthToken}
+              cameraId={cameraId}
+              isCameraOn={false}
+              stopStream={StartCamer1Streaming}
+              setCameraId={setCameraId}
+              startStream={StartCamer1Streaming}
+              startStream2={StartCamer2Streaming}
+              videoDevices={videoDevices}
+              setSelectedCamera1Index={setSelectedCamera1Index}
+              setSelectedCamera2Index={setSelectedCamera2Index}
+              cameraToken={cameratoken}
+              setCameraToken={setCameratoken}
+              meetingId={meetingId}
+              authToken={authToken}
+              toggleCamera={() => {}}
+              selectResult={selectResult}
+              setSelectResult={setSelectResult}
+              resultDeclare={handleDeclareResult}
+              roundStatus={roundDetails?.message?.data?.roundStatus}
+              countdown={countdown}
+              setCountDown={setCountdown}
+            />
           </div>
         </div>
       </div>
@@ -576,7 +390,7 @@ const DealerComponent = () => {
   );
 };
 
-
+export default DealerComponent;
 
 export const RedCircle = () => {
   return <div className="w-8 h-8 bg-red-500 rounded-full"></div>;
@@ -746,5 +560,9 @@ const OddSelectionBoard = ({
 };
 
 export const Route = createLazyFileRoute('/dealer/$roomId')({
-  component: DealerComponent,
+  component: () => (
+    <PrivateRoute>
+      <DealerComponent />
+    </PrivateRoute>
+  ),
 });

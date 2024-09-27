@@ -10,12 +10,12 @@
     height: -1rem;
 }
 .live-stream-container{
-      z-index: 1;
+ z-index: 1;
     position: absolute;
-    top: 24%;
-    left: 34%;
-    width: 31% !important;
-    height: 31% !important;
+    top: 21%;
+    left: 38.5%;
+    width: 23% !important;
+    height: 23% !important;
 }
 .live-stream-container video{
   position: absolute;

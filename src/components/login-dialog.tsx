@@ -52,7 +52,7 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
         username: response.message.user.telegramusername,
         roomOwner: response.message.user.roomowner,
       });
-      userProfile(response.message.user._id);
+      window.location.reload();
       navigate({ to: '/' });
       toast.success('Login successful');
     } catch (error: unknown | any) {
