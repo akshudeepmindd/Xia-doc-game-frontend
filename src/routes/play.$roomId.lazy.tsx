@@ -40,22 +40,22 @@ const GameComponent = () => {
     const channel = new Camera1SignalServer(roomId);
 
     channel.onmessage = (e: { data: SignalServerMessage }) => {
-      if (e.data.type === 'icecandidate' && peerConnection.current) {
+      if (e.data.type === 'icecandidate' && peerConnection2.current) {
         peerConnection2.current.addIceCandidate(e.data.candidate);
       } else if (e.data.type === 'offer') {
-        console.log('Received offer');
-        handleOffer(e.data);
+        console.log('Received offer for Camera 1');
+        handleOfferForCamera1(e.data);
       }
     };
 
-    const handleOffer = (offer: RTCSessionDescriptionInit) => {
+    const handleOfferForCamera1 = (offer: RTCSessionDescriptionInit) => {
       const config: RTCConfiguration = {};
       peerConnection2.current = new RTCPeerConnection(config);
 
       // Add track event listener
       peerConnection2.current.addEventListener('track', (e: RTCTrackEvent) => {
         if (remote) {
-          remote.srcObject = e.streams[0];
+          remote.srcObject = e.streams[0]; // Camera 1's stream
         }
       });
 
@@ -78,7 +78,7 @@ const GameComponent = () => {
         .then(async (answer) => {
           if (peerConnection2.current) {
             await peerConnection2.current.setLocalDescription(answer);
-            console.log('Created answer, sending...');
+            console.log('Created answer for Camera 1, sending...');
             channel.postMessage({
               type: 'answer',
               sdp: answer.sdp,
@@ -87,13 +87,13 @@ const GameComponent = () => {
         });
     };
 
-    // Optional cleanup function on component unmount
     return () => {
       if (peerConnection2.current) {
         peerConnection2.current.close();
       }
     };
-  }, []);
+  }, [roomId]); // Removed peerConnection2 from dependencies
+
   useEffect(() => {
     const remote = remoteVideoRef2.current;
     const channel = new Camera2SignalServer(roomId);
@@ -102,19 +102,19 @@ const GameComponent = () => {
       if (e.data.type === 'icecandidate' && peerConnection.current) {
         peerConnection.current.addIceCandidate(e.data.candidate);
       } else if (e.data.type === 'offer') {
-        console.log('Received offer');
-        handleOffer(e.data);
+        console.log('Received offer for Camera 2');
+        handleOfferForCamera2(e.data);
       }
     };
 
-    const handleOffer = (offer: RTCSessionDescriptionInit) => {
+    const handleOfferForCamera2 = (offer: RTCSessionDescriptionInit) => {
       const config: RTCConfiguration = {};
       peerConnection.current = new RTCPeerConnection(config);
 
       // Add track event listener
       peerConnection.current.addEventListener('track', (e: RTCTrackEvent) => {
         if (remote) {
-          remote.srcObject = e.streams[0];
+          remote.srcObject = e.streams[0]; // Camera 2's stream
         }
       });
 
@@ -137,7 +137,7 @@ const GameComponent = () => {
         .then(async (answer) => {
           if (peerConnection.current) {
             await peerConnection.current.setLocalDescription(answer);
-            console.log('Created answer, sending...');
+            console.log('Created answer for Camera 2, sending...');
             channel.postMessage({
               type: 'answer',
               sdp: answer.sdp,
@@ -146,13 +146,13 @@ const GameComponent = () => {
         });
     };
 
-    // Optional cleanup function on component unmount
     return () => {
       if (peerConnection.current) {
         peerConnection.current.close();
       }
     };
-  }, []);
+  }, [roomId]); // Removed peerConnection from dependencies
+
   // Update size based on orientation
   const isMobile = window.innerWidth <= 768;
   const isLandscape = window.innerWidth > window.innerHeight;
@@ -239,10 +239,10 @@ const GameComponent = () => {
           className="live-stream-container2"
           style={{
             position: 'absolute',
-            top: '24%',
-            left: '34%',
-            height: '25% !important',
-            visibility: isLoaded ? 'visible' : 'hidden',
+            top: '20%',
+            left: '32%',
+            height: '26% !important',
+            // visibility: isLoaded ? 'visible' : 'hidden',
           }}
         >
           <video ref={remoteVideoRef2} autoPlay></video>

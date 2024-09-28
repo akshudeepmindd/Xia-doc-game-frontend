@@ -43,7 +43,7 @@ const DealerComponent = () => {
   const [peerConnection2, setPeerConnection2] = useState<RTCPeerConnection | null>(null); // Track peer connection state
   const [streamEnabled, setStreamEnabled] = useState<boolean>(false); // Control stream button
   const signalServerRef = useRef<Camera1SignalServer | null>(null);
-  const signalServerRef2 = useRef<Camera1SignalServer | null>(null);
+  const signalServerRef2 = useRef<Camera2SignalServer | null>(null);
   const mediaRecorderRef1 = useRef<MediaRecorder | null>(null);
   const mediaRecorderRef2 = useRef<MediaRecorder | null>(null);
   const [livestream, setStream] = useState<MediaStream | null>(null);
@@ -69,7 +69,7 @@ const DealerComponent = () => {
   useEffect(() => {
     // Load the SignalServer from the external script
     const signalServer = new Camera1SignalServer(roomId);
-    const signalServer2 = new Camera1SignalServer(roomId);
+    const signalServer2 = new Camera2SignalServer(roomId);
     signalServerRef.current = signalServer;
     signalServerRef2.current = signalServer2;
 
