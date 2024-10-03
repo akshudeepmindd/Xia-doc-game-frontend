@@ -3,8 +3,9 @@ export default class Camera1SignalServer {
 
   constructor(channel: string) {
     // The channel is a string type
-    // this.socket = new WebSocket(`http://deepminddsvisualss.com/live/?roomId=${channel}`);
-this.socket = new WebSocket(`ws://localhost:8000/?roomId=${channel}`);
+    // this.socket = new WebSocket(`ws://deepminddsvisualss.com/live/?roomId=${channel}`);
+    this.socket = new WebSocket(`ws://deepminddsvisualss.com/live/?roomId=${channel}`);
+
     this.socket.addEventListener('open', () => {
       this.postMessage({ type: 'join-channel', channel });
     });
@@ -25,12 +26,15 @@ this.socket = new WebSocket(`ws://localhost:8000/?roomId=${channel}`);
   // By default, it's a no-op method.
   onmessage(e: { data: any }): void {
     // Override this method to handle messages
+    console.log('ONMESSAGE');
   }
 
   // postMessage takes an object and sends it as a stringified JSON message
   postMessage(data: Record<string, any>): void {
-    if (this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
-    }
+    console.log(this.socket.readyState, WebSocket.OPEN, 'CONNECTIONNNNN');
+    // if (this.socket.readyState === WebSocket.OPEN) {
+    console.log(data, 'data');
+    this.socket.send(JSON.stringify(data));
+    // }
   }
 }

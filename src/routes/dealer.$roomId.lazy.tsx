@@ -32,27 +32,17 @@ type Camera1SignalServertype = {
 const DealerComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [countdown, setCountdown] = useState(0);
+  const [isVideoStarted, setIsVideoStarted] = useState(false);
   const [selectResult, setSelectResult] = useState<string>();
   const [selectedCamera1Index, setSelectedCamera1Index] = useState(0);
   const [selectedCamera2Index, setSelectedCamera2Index] = useState(1);
-  const videoRef = useRef<Webcam>(null);
-  const videoRef2 = useRef<Webcam>(null);
   const localVideoRef1 = useRef<HTMLVideoElement | null>(null); // To reference the local video element
   const localVideoRef2 = useRef<HTMLVideoElement | null>(null); // To reference the local video element
-  const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null); // Track peer connection state
+  const peerConnection = useRef<RTCPeerConnection | null>(null);
   const [peerConnection2, setPeerConnection2] = useState<RTCPeerConnection | null>(null); // Track peer connection state
-  const [streamEnabled, setStreamEnabled] = useState<boolean>(false); // Control stream button
   const signalServerRef = useRef<Camera1SignalServer | null>(null);
   const signalServerRef2 = useRef<Camera2SignalServer | null>(null);
-  const mediaRecorderRef1 = useRef<MediaRecorder | null>(null);
-  const mediaRecorderRef2 = useRef<MediaRecorder | null>(null);
-  const [livestream, setStream] = useState<MediaStream | null>(null);
-  const [livestream2, setStream2] = useState<MediaStream | null>(null);
-  const [c1streamkey, setc1streamkey] = useState('');
-  const [c2streamkey, setc2streamkey] = useState('');
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
-  const socketConnect1 = useRef<WebSocket | null>(null);
-  const socketConnect2 = useRef<WebSocket | null>(null);
 
   // Fetch available video devices
   const getVideoDevices = async () => {
@@ -67,136 +57,219 @@ const DealerComponent = () => {
     getVideoDevices();
   }, []);
   useEffect(() => {
-    // Load the SignalServer from the external script
-    const signalServer = new Camera1SignalServer(roomId);
-    const signalServer2 = new Camera2SignalServer(roomId);
-    signalServerRef.current = signalServer;
-    signalServerRef2.current = signalServer2;
+    // Initialize signaling servers only once
+    if (!signalServerRef.current) {
+      const signalServer = new Camera1SignalServer(roomId);
+      signalServerRef.current = signalServer;
 
-    if (signalServerRef.current != null) {
-      signalServerRef.current.onmessage = (e) => {
+      signalServer.onmessage = (e) => {
         if (e.data.type === 'icecandidate') {
           console.log(e.data);
-          peerConnection?.addIceCandidate(e.data.candidate);
+          peerConnection.current?.addIceCandidate(e.data.candidate);
         } else if (e.data.type === 'answer') {
           console.log('Received answer');
-          peerConnection?.setRemoteDescription(e.data);
+          peerConnection.current?.setRemoteDescription(e.data);
         }
       };
     }
-    if (signalServerRef2.current != null) {
-      signalServerRef2.current.onmessage = (e) => {
-        if (e.data.type === 'icecandidate') {
-          console.log(e.data);
-          peerConnection2?.addIceCandidate(e.data.candidate);
-        } else if (e.data.type === 'answer') {
-          console.log('Received answer');
-          peerConnection2?.setRemoteDescription(e.data);
-        }
-      };
-    }
+
+    // if (!signalServerRef2.current) {
+    //   const signalServer2 = new Camera2SignalServer(roomId);
+    //   signalServerRef2.current = signalServer2;
+
+    //   signalServer2.onmessage = (e) => {
+    //     if (e.data.type === 'icecandidate') {
+    //       console.log(e.data);
+    //       peerConnection2?.addIceCandidate(e.data.candidate);
+    //     } else if (e.data.type === 'answer') {
+    //       console.log('Received answer');
+    //       peerConnection2?.setRemoteDescription(e.data);
+    //     }
+    //   };
+    // }
 
     return () => {
       // Cleanup on component unmount
-      if (peerConnection) {
-        peerConnection.close();
+      if (peerConnection.current) {
+        peerConnection.current.close();
       }
-      if (peerConnection2) {
-        peerConnection2.close();
-      }
+      // if (peerConnection2) {
+      //   peerConnection2.close();
+      // }
     };
-  }, [peerConnection, peerConnection2]);
+  }, [roomId]);
 
-  useEffect(() => {
-    const requestMediaPermissions = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: true,
+  // useEffect(() => {
+
+  // }, []);
+  const requestMediaPermissions = () => {
+    return new Promise<MediaStream>((resolve, reject) => {
+      setIsVideoStarted(true); // Set video started state
+
+      // Request camera and microphone access
+      navigator.mediaDevices
+        .getUserMedia({ audio: true, video: true })
+        .then((stream) => {
+          if (localVideoRef1.current) {
+            localVideoRef1.current.srcObject = stream; // Set the stream to video element
+          }
+          resolve(stream); // Resolve the promise with the stream
+        })
+        .catch((err) => {
+          console.error('Error accessing media devices.', err);
+          reject(err); // Reject the promise with the error
         });
+    });
+  };
 
-        // If the permission is granted, stream to the video element
-        if (localVideoRef1.current) {
-          localVideoRef1.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error('Permission denied or error accessing media devices', error);
-      }
+  const startStreaming = async () => {
+    // setIsStreaming(true);
+    await requestMediaPermissions();
+    // Define ICE servers
+    const config = {
+      iceServers: [
+        { urls: 'stun:64.20.39.42:3478' }, // Public STUN server
+        {
+          urls: 'turn:64.20.39.42:3478',
+          username: 'xocdia',
+          credential: 'xocdia1234',
+        },
+      ],
     };
-    requestMediaPermissions();
-  }, []);
-  const StartCamer1Streaming = async () => {
-    const config = {};
-    const newPeerConnection = new RTCPeerConnection(config);
-    setPeerConnection(newPeerConnection);
 
-    newPeerConnection.addEventListener('icecandidate', (e) => {
-      let candidate = null;
-      if (e.candidate !== null) {
-        candidate = {
+    // Create PeerConnection
+    peerConnection.current = new RTCPeerConnection(config);
+
+    // Send ICE candidates to the signaling server
+    peerConnection.current.addEventListener('icecandidate', (e) => {
+      if (e.candidate) {
+        const candidate = {
           candidate: e.candidate.candidate,
           sdpMid: e.candidate.sdpMid,
           sdpMLineIndex: e.candidate.sdpMLineIndex,
         };
+        signalServerRef.current?.postMessage({ type: 'icecandidate', candidate });
       }
-      signalServerRef.current.postMessage({ type: 'icecandidate', candidate });
     });
 
-    // Ensure that we have valid selected camera indices
-    if (videoDevices.length > 0) {
-      const selectedCamera1 = videoDevices[selectedCamera1Index];
-      const selectedCamera2 = videoDevices[selectedCamera2Index];
+    // Add media tracks to peer connection
+    const stream = localVideoRef1.current?.srcObject as MediaStream;
 
-      try {
-        // Request media stream from the selected camera
-        const stream1 = await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: selectedCamera1 ? { exact: selectedCamera1.deviceId } : undefined,
-          },
-        });
+    stream?.getTracks().forEach((track) => {
+      peerConnection.current?.addTrack(track, stream);
+    });
 
-        // const stream2 = await navigator.mediaDevices.getUserMedia({
-        //   video: {
-        //     deviceId: selectedCamera2 ? { exact: selectedCamera2.deviceId } : undefined,
-        //   },
-        // });
+    // Create and send offer
+    const offer = await peerConnection.current?.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true,
+    });
+    await peerConnection.current?.setLocalDescription(offer);
 
-        // Attach streams to local video elements
-        if (localVideoRef1.current && stream1) {
-          localVideoRef1.current.srcObject = stream1;
-        }
-
-        // if (localVideoRef1.current && stream2) {
-        //   // Assuming you want to handle both streams in the same element
-        //   localVideoRef1.current.srcObject = stream2; // Alternatively, use a different ref for stream2
-        // }
-
-        // Add tracks from the selected cameras to the peer connection
-        stream1.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream1));
-        // stream2.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream2));
-
-        // Create and send an offer to the remote peer
-        const offer = await newPeerConnection.createOffer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: true,
-        });
-
-        await newPeerConnection.setLocalDescription(offer);
-        console.log('Created offer, sending...');
-        signalServerRef.current.postMessage({ type: 'offer', sdp: offer.sdp });
-        setStartLive(true);
-      } catch (error) {
-        console.error('Error accessing media devices:', error);
-      }
-    }
+    console.log('Created offer, sending...');
+    signalServerRef.current?.postMessage({ type: 'offer', sdp: offer?.sdp });
   };
+  // const StartCamer1Streaming = async () => {
+  //   // if (peerConnection) {
+  //   //   console.log('Peer connection already established');
+  //   //   return; // If connection is already established, exit
+  //   // }
+  //   const config = {
+  //     iceServers: [
+  //       { urls: 'stun:64.20.39.42:3478' }, // Public STUN server
+  //       {
+  //         urls: 'turn:64.20.39.42:3478',
+  //         username: 'xocdia',
+  //         credential: 'xocdia1234',
+  //       },
+  //     ],
+  //   };
+  //   const newPeerConnection = new RTCPeerConnection(config);
+  //   setPeerConnection(newPeerConnection);
+
+  //   newPeerConnection.addEventListener('icecandidate', (e) => {
+  //     let candidate = null;
+  //     if (e.candidate !== null) {
+  //       candidate = {
+  //         candidate: e.candidate.candidate,
+  //         sdpMid: e.candidate.sdpMid,
+  //         sdpMLineIndex: e.candidate.sdpMLineIndex,
+  //       };
+  //     }
+  //     signalServerRef.current && signalServerRef.current.postMessage({ type: 'icecandidate', candidate });
+  //   });
+
+  //   // Ensure that we have valid selected camera indices
+  //   if (videoDevices.length > 0) {
+  //     const selectedCamera1 = videoDevices[selectedCamera1Index];
+  //     const selectedCamera2 = videoDevices[selectedCamera2Index];
+
+  //     try {
+  //       // Request media stream from the selected camera
+  //       const stream1 = await navigator.mediaDevices.getUserMedia({
+  //         video: {
+  //           deviceId: selectedCamera1 ? { exact: selectedCamera1.deviceId } : undefined,
+  //         },
+  //       });
+
+  //       // const stream2 = await navigator.mediaDevices.getUserMedia({
+  //       //   video: {
+  //       //     deviceId: selectedCamera2 ? { exact: selectedCamera2.deviceId } : undefined,
+  //       //   },
+  //       // });
+
+  //       // Attach streams to local video elements
+  //       if (localVideoRef1.current && stream1) {
+  //         localVideoRef1.current.srcObject = stream1;
+  //       }
+
+  //       // if (localVideoRef1.current && stream2) {
+  //       //   // Assuming you want to handle both streams in the same element
+  //       //   localVideoRef1.current.srcObject = stream2; // Alternatively, use a different ref for stream2
+  //       // }
+
+  //       // Add tracks from the selected cameras to the peer connection
+  //       stream1.getTracks().forEach((track) => {
+  //         console.log(track);
+  //         return newPeerConnection.addTrack(track, localVideoRef1.current.srcObject);
+  //       });
+  //       // stream2.getTracks().forEach((track) => newPeerConnection.addTrack(track, stream2));
+
+  //       // Create and send an offer to the remote peer
+  //       const offer = await newPeerConnection.createOffer({
+  //         offerToReceiveAudio: true,
+  //         offerToReceiveVideo: true,
+  //       });
+
+  //       await newPeerConnection.setLocalDescription(offer);
+  //       console.log('Created offer, sending...');
+  //       signalServerRef.current && signalServerRef.current.postMessage({ type: 'offer', sdp: offer.sdp });
+  //       setStartLive(true);
+  //     } catch (error) {
+  //       console.error('Error accessing media devices:', error);
+  //     }
+  //   }
+  // };
   const StartCamer2Streaming = async () => {
-    const config = {};
+    // if (peerConnection2) {
+    //   console.log('Peer connection 2 already established');
+    //   return;
+    // }
+    const config = {
+      iceServers: [
+        { urls: 'stun:64.20.39.42:3478' }, // Public STUN server
+        {
+          url: 'turn:numb.viagenie.ca',
+          credential: 'muazkh',
+          username: 'webrtc@live.com',
+        },
+      ],
+    };
     const newPeerConnection = new RTCPeerConnection(config);
     setPeerConnection2(newPeerConnection);
-
+    signalServerRef2.current.postMessage({ type: 'icecandidate', candidate });
     newPeerConnection.addEventListener('icecandidate', (e) => {
-      let candidate = null;
+      let candidate;
       if (e.candidate !== null) {
         candidate = {
           candidate: e.candidate.candidate,
@@ -364,9 +437,9 @@ const DealerComponent = () => {
               setAuthToken={setAuthToken}
               cameraId={cameraId}
               isCameraOn={false}
-              stopStream={StartCamer1Streaming}
+              stopStream={startStreaming}
               setCameraId={setCameraId}
-              startStream={StartCamer1Streaming}
+              startStream={startStreaming}
               startStream2={StartCamer2Streaming}
               videoDevices={videoDevices}
               setSelectedCamera1Index={setSelectedCamera1Index}
@@ -558,7 +631,6 @@ const OddSelectionBoard = ({
     </div>
   );
 };
-
 export const Route = createLazyFileRoute('/dealer/$roomId')({
   component: () => (
     <PrivateRoute>
@@ -566,3 +638,4 @@ export const Route = createLazyFileRoute('/dealer/$roomId')({
     </PrivateRoute>
   ),
 });
+
