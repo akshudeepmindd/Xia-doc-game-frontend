@@ -417,7 +417,10 @@ const DealerComponent = () => {
                 </div>
               </div>
               <div className="w-[30rem]  overflow-hidden mt-5">
-                <video ref={localVideoRef1} autoPlay />
+                {/* <div className="live-stream-container" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}> */}
+                <iframe src="https://video.thietkewebcobac.com/XocDiaA/" height={250} width={400} />
+                {/* <RemoteStream roomId={roomId} userId={localStorage.getItem('userId')} /> */}
+                {/* </div> */}
               </div>
               <div className="w-1/4  mt-40"></div>
             </div>

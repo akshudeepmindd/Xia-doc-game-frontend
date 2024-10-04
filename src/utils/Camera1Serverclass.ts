@@ -1,10 +1,10 @@
 export default class Camera1SignalServer {
   private socket: WebSocket; // Explicitly type the WebSocket instance
 
-  constructor(channel: string) {
+  constructor(channel: string, userId: string, stream: boolean) {
     // The channel is a string type
-    // this.socket = new WebSocket(`ws://deepminddsvisualss.com/live/?roomId=${channel}`);
     this.socket = new WebSocket(`ws://deepminddsvisualss.com/live/?roomId=${channel}`);
+    // this.socket = new WebSocket(`ws://localhost:8000/?roomId=${channel}&userId=${userId}&streamer=${stream}`);
 
     this.socket.addEventListener('open', () => {
       this.postMessage({ type: 'join-channel', channel });
@@ -33,7 +33,7 @@ export default class Camera1SignalServer {
   postMessage(data: Record<string, any>): void {
     console.log(this.socket.readyState, WebSocket.OPEN, 'CONNECTIONNNNN');
     // if (this.socket.readyState === WebSocket.OPEN) {
-    console.log(data, 'data');
+    console.log(data, 'dataasdsadasdasdsd');
     this.socket.send(JSON.stringify(data));
     // }
   }

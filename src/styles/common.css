@@ -12,12 +12,12 @@
 .live-stream-container{
  z-index: 1;
     position: absolute;
-    top: 21%;
-    left: 38.5%;
+    top: 22%;
+    left: 35.5%;
     width: 23% !important;
     height: 23% !important;
 }
-.live-stream-container video{
+.live-stream-container iframe{
   position: absolute;
 }
 .live-stream-container2{

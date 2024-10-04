@@ -8,6 +8,8 @@ import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { PacmanLoader } from 'react-spinners';
 import PrivateRoute from '@/components/PrivateRoute';
 import RemoteStream from '@/components/RemoteCam1';
+import SecondRemoteStream from '@/components/RemoteCam2';
+import ReactHlsPlayer from 'react-hls-player';
 
 const RemoteStreamComponent = React.memo(({ roomId }) => <RemoteStream roomId={roomId} />);
 
@@ -15,7 +17,7 @@ const GameComponent = () => {
   const { roomId } = useParams({ strict: false });
   const [loaded, setLoaded] = useState(false);
   const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
-
+  const playerref = useRef<HTMLVideoElement | null>(null);
   // Unity context
   const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
     loaderUrl: '/Build/Gameplay.loader.js',
@@ -110,7 +112,12 @@ const GameComponent = () => {
 
         {/* Remote Stream Component */}
         <div className="live-stream-container" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
-          <RemoteStream roomId={roomId} />
+          <iframe src="https://video.thietkewebcobac.com/XocDiaA/" height={250} width={400} />
+          {/* <RemoteStream roomId={roomId} userId={localStorage.getItem('userId')} /> */}
+        </div>
+
+        <div className="live-stream-container2" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
+          <SecondRemoteStream roomId={roomId} />
         </div>
       </div>
     </>
