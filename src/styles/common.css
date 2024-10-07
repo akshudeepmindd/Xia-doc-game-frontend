@@ -10,12 +10,16 @@
     height: -1rem;
 }
 .live-stream-container{
- z-index: 1;
+ left: 34.4%;
+    z-index: 1;
     position: absolute;
-    top: 22%;
-    left: 35.5%;
-    width: 23% !important;
-    height: 23% !important;
+    /* top: 22%; */
+    /* left: 35.5%; */
+    /* width: 23% !important; */
+    /* height: 23% !important; */
+    top: 21.2%;
+    height: 36%;
+    width: 30%;
 }
 .live-stream-container iframe{
   position: absolute;

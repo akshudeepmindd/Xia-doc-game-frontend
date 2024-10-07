@@ -2,7 +2,8 @@ import DealerFooter from '@/components/dealer-footer';
 import Webcam from 'react-webcam';
 import Navbar from '@/components/navbar';
 import { GET_ROUND_DETAILS } from '@/lib/constants';
-import { declareResultService, getRoundDetails, updateRound } from '@/services/round';
+import { toast } from 'sonner';
+import { addRound, declareResultService, getRoundDetails, updateRound } from '@/services/round';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useParams } from '@tanstack/react-router';
 import { GET_ROOMS_DETAILS } from '@/lib/constants';
@@ -43,7 +44,19 @@ const DealerComponent = () => {
   const signalServerRef = useRef<Camera1SignalServer | null>(null);
   const signalServerRef2 = useRef<Camera2SignalServer | null>(null);
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const createRound = useMutation({
+    mutationFn: addRound,
+  });
 
+  const updateRoundStatus = useMutation({
+    mutationFn: updateRound,
+  });
+  const handleUpdateRoundStatus = () => {
+    const roundId = roundDetails.message?.data?._id;
+    setSelectResult('');
+    setCountdown(0);
+    return updateRoundStatus.mutate({ roundId, round: { roundStatus: 'roundend' } });
+  };
   // Fetch available video devices
   const getVideoDevices = async () => {
     const deviceInfos = await navigator.mediaDevices.enumerateDevices();
@@ -98,7 +111,32 @@ const DealerComponent = () => {
       // }
     };
   }, [roomId]);
+  useEffect(() => {
+    const socket = new WebSocket('wss://SocketXocDia_BanA.thietkewebcobac.com');
 
+    socket.onopen = () => {
+      console.log('WebSocket connection established.');
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Message from server: ', data);
+
+      // Check if the event is 'start-bet'
+      if (data.event === 'start-bet') {
+        toast.info('Bạn có thể bắt đầu ván ngay bây giờ.');
+        // handleRoundStart();
+      } else if (data.event === 'stop-bet') {
+        toast.info('Bạn có thể kết thúc ván');
+        // handleUpdateRoundStatus();
+      } else if (data.event === 'game-result') {
+        toast.info(`Kết quả trong video ${data.data}`);
+      }
+    };
+    return () => {
+      socket.close();
+    };
+  }, []);
   // useEffect(() => {
 
   // }, []);
@@ -345,7 +383,19 @@ const DealerComponent = () => {
     refetchInterval: 1000,
     refetchIntervalInBackground: true,
   });
-
+  const handleRoundStart = () => {
+    let roundId = 1;
+    console.log(roundDetails?.message && roundDetails?.message?.data, 'roundeDetails');
+    if (roundDetails?.message && roundDetails?.message?.data?.roundNumber) {
+      roundId += roundDetails?.message?.data?.roundNumber;
+    }
+    setSelectResult('');
+    const futureTime = parseISO(roundDetails.message.data?.createdAt);
+    const currentTime = new Date();
+    const secondsLeft = differenceInSeconds(currentTime, futureTime);
+    setCountdown(45 - secondsLeft);
+    return createRound.mutate({ roomId, round: { roundNumber: roundId, gameroom: roomId, roundCountdown: true } });
+  };
   useEffect(() => {
     if (roundDetails) {
       const futureTime = parseISO(roundDetails.message.data?.createdAt);

@@ -3,4 +3,5 @@
 interface ImportMetaEnv {
   readonly XD_BASE_URL: string;
   readonly SOCKET_PATH: string;
+  readonly CAPTCHA_SITE_KEY: string;
 }

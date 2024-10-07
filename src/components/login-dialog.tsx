@@ -6,20 +6,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { userLoginService, userProfile } from '@/services/auth';
+import { userLoginService } from '@/services/auth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { setAuthToken, setAuthUser } from '@/services';
 import { useNavigate } from '@tanstack/react-router';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { USER_PROFILE } from '@/lib/constants';
-import { useQuery } from '@tanstack/react-query';
+
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 interface LoginDialogProps {
   children: ReactNode;
 }
 
 const LoginDialog = ({ children }: LoginDialogProps) => {
+  const [cpatchverify, setCpatchVerify] = useState(false);
   const intl = useIntl();
   const loginSchema = z.object({
     telegramusername: z.string().min(1, intl.formatMessage({ id: 'app.usernamevalidation' })),
@@ -109,8 +110,10 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
                 </FormItem>
               )}
             />
-
-            <Button type="submit" className="w-full buttoncss" disabled={loading}>
+            <div className="flex justify-center">
+              <HCaptcha sitekey={'8ee4e93a-ca52-4a8e-a7f0-8766433a5018'} onVerify={() => setCpatchVerify(true)} />
+            </div>
+            <Button type="submit" className="w-full buttoncss" disabled={!cpatchverify || loading}>
               {loading ? (
                 <span className="flex items-center gap-x-1">
                   <Loader2 className="w-4 h-4 animate-spin" />

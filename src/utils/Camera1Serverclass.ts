@@ -3,7 +3,7 @@ export default class Camera1SignalServer {
 
   constructor(channel: string, userId: string, stream: boolean) {
     // The channel is a string type
-    this.socket = new WebSocket(`ws://deepminddsvisualss.com/live/?roomId=${channel}`);
+    this.socket = new WebSocket(`wss://deepminddsvisualss.com/live/?roomId=${channel}`);
     // this.socket = new WebSocket(`ws://localhost:8000/?roomId=${channel}&userId=${userId}&streamer=${stream}`);
 
     this.socket.addEventListener('open', () => {

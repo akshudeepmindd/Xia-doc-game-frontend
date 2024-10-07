@@ -9,10 +9,10 @@ import { Button } from './ui/button';
 import { userRegister } from '@/services/auth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { setAuthToken, setAuthUser } from '@/services';
 import { useNavigate } from '@tanstack/react-router';
 import { FormattedMessage, useIntl } from 'react-intl';
 
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 interface RegisterProps {
   children: ReactNode;
   className?: string;
@@ -20,6 +20,7 @@ interface RegisterProps {
 
 const Register = ({ children }: RegisterProps) => {
   const navigate = useNavigate();
+  const [cpatchverify, setCpatchVerify] = useState(false);
   const [loading, setLoading] = useState(false);
   const intl = useIntl();
 
@@ -110,8 +111,10 @@ const Register = ({ children }: RegisterProps) => {
                 </FormItem>
               )}
             />
-
-            <Button type="submit" className="w-full buttoncss" disabled={loading}>
+            <div className="flex justify-center">
+              <HCaptcha sitekey={'8ee4e93a-ca52-4a8e-a7f0-8766433a5018'} onVerify={() => setCpatchVerify(true)} />
+            </div>
+            <Button type="submit" className="w-full buttoncss" disabled={!cpatchverify || loading}>
               {loading ? (
                 <span className="flex items-center gap-x-1">
                   <Loader2 className="w-4 h-4 animate-spin" />

@@ -18,6 +18,7 @@ const GameComponent = () => {
   const [loaded, setLoaded] = useState(false);
   const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const playerref = useRef<HTMLVideoElement | null>(null);
+
   // Unity context
   const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
     loaderUrl: '/Build/Gameplay.loader.js',
@@ -93,6 +94,7 @@ const GameComponent = () => {
           justifyContent: 'center',
           alignItems: 'center',
           background: '#000',
+          position: 'relative',
         }}
       >
         {!isLandscape && isMobile && (
@@ -108,14 +110,21 @@ const GameComponent = () => {
             visibility: isLoaded ? 'visible' : 'hidden',
           }}
           devicePixelRatio={window.devicePixelRatio}
+          matchWebGLToCanvasSize
         />
-
         {/* Remote Stream Component */}
-        <div className="live-stream-container" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
-          <iframe src="https://video.thietkewebcobac.com/XocDiaA/" height={250} width={400} />
-          {/* <RemoteStream roomId={roomId} userId={localStorage.getItem('userId')} /> */}
-        </div>
-
+        {isLandscape && isMobile && (
+          <div className="live-stream-container" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
+            <iframe src="https://video.thietkewebcobac.com/XocDiaA/" height={'100%'} width={'100%'} loading="lazy" />
+            {/* <RemoteStream roomId={roomId} userId={localStorage.getItem('userId')} /> */}
+          </div>
+        )}
+        {!isMobile && (
+          <div className="live-stream-container" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
+            <iframe src="https://video.thietkewebcobac.com/XocDiaA/" height={'100%'} width={'100%'} loading="lazy" />
+            {/* <RemoteStream roomId={roomId} userId={localStorage.getItem('userId')} /> */}
+          </div>
+        )}
         <div className="live-stream-container2" style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
           <SecondRemoteStream roomId={roomId} />
         </div>
@@ -123,6 +132,8 @@ const GameComponent = () => {
     </>
   );
 };
+
+export default GameComponent;
 
 export const Route = createLazyFileRoute('/play/$roomId')({
   component: () => (
