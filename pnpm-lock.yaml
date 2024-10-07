@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@hcaptcha/react-hcaptcha':
+        specifier: ^1.11.0
+        version: 1.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@hookform/resolvers':
         specifier: ^3.6.0
         version: 3.6.0(react-hook-form@7.52.0(react@18.3.1))
@@ -657,6 +660,15 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  '@hcaptcha/loader@1.2.4':
+    resolution: {integrity: sha512-3MNrIy/nWBfyVVvMPBKdKrX7BeadgiimW0AL/a/8TohNtJqxoySKgTJEXOQvYwlHemQpUzFrIsK74ody7JiMYw==}
+
+  '@hcaptcha/react-hcaptcha@1.11.0':
+    resolution: {integrity: sha512-UKHtzzVMHLTGwab5pgV96UbcXdyh5Qyq8E0G5DTyXq8txMvuDx7rSyC+BneOjWVW0a7O9VuZmkg/EznVLRE45g==}
+    peerDependencies:
+      react: '>= 16.3.0'
+      react-dom: '>= 16.3.0'
 
   '@hookform/resolvers@3.6.0':
     resolution: {integrity: sha512-UBcpyOX3+RR+dNnqBd0lchXpoL8p4xC21XP8H6Meb8uve5Br1GCnmg0PcBoKKqPKgGu9GHQ/oygcmPrQhetwqw==}
@@ -3682,6 +3694,15 @@ snapshots:
       tslib: 2.6.3
     optionalDependencies:
       typescript: 5.5.2
+
+  '@hcaptcha/loader@1.2.4': {}
+
+  '@hcaptcha/react-hcaptcha@1.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.24.7
+      '@hcaptcha/loader': 1.2.4
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   '@hookform/resolvers@3.6.0(react-hook-form@7.52.0(react@18.3.1))':
     dependencies:
