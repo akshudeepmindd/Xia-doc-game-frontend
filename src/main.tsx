@@ -38,9 +38,9 @@ const config: Config = {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <IntlProvider locale={locale} messages={Vitenamese}>
-      <DAppProvider config={config}>
-        <RouterProvider router={router} />
-      </DAppProvider>
+      {/* <DAppProvider config={config}> */}
+      <RouterProvider router={router} />
+      {/* </DAppProvider> */}
     </IntlProvider>
   </React.StrictMode>,
 );

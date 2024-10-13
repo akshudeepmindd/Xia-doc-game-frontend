@@ -21,10 +21,10 @@ const GameComponent = () => {
 
   // Unity context
   const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
-    loaderUrl: '/Build/Gameplay.loader.js',
-    dataUrl: '/Build/Gameplay.data',
-    frameworkUrl: '/Build/Gameplay.framework.js',
-    codeUrl: '/Build/Gameplay.wasm',
+    loaderUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.loader.js',
+    dataUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.data',
+    frameworkUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.framework.js',
+    codeUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.wasm',
   });
 
   // Handle window resize

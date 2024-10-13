@@ -21,7 +21,7 @@ import useTokenTransfer from '@/hooks/useTokenTransfer';
 import { useForm } from 'react-hook-form';
 import { USER_PROFILE } from '@/lib/constants';
 import { setAuthToken } from '@/services';
-import { userProfile, rechargeXusdt } from '@/services/auth';
+import { userProfile, rechargeXusdt, executePayment } from '@/services/auth';
 import { createRoom, deductXusdt } from '@/services/room';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -76,6 +76,14 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [depositeopen, setdepositeopen] = useState(false);
   const [amount, setAmount] = useState(0);
+  const [bankDetails, setBankDetails] = useState({
+    bankCode: '',
+    depositorBankName: '',
+    depositorName: '',
+    depositorBankAcctNo: '',
+    channel: '',
+    bankName: '',
+  });
   const { mutateAsync: purchaseRoom } = useMutation({
     mutationFn: createRoom,
   });
@@ -104,7 +112,9 @@ const Navbar = () => {
   const { mutateAsync: transferXusdt, isPending: isDeductLoading } = useMutation({
     mutationFn: deductXusdt,
   });
-
+  const { mutateAsync: addtoWallet, isPending: isInitatingPayment } = useMutation({
+    mutationFn: executePayment,
+  });
   const handleLogout = () => setAuthToken();
 
   const handleBuyRoom = async (response: z.infer<typeof CreateRoom>) => {
@@ -146,8 +156,20 @@ const Navbar = () => {
     }
   };
   const handleWalletRecharge = async () => {
-    console.log(amount, 'amount');
-    await sendToken('0xebE3B38b9BADD80452809987E353E03a88C13387', amount);
+    const response = addtoWallet({
+      amount,
+      bankCode: bankDetails.bankCode,
+      depositorBankName: bankDetails.depositorBankName,
+      depositorName: bankDetails.depositorName,
+      depositorBankAcctNo: bankDetails.depositorBankAcctNo,
+      userId: localStorage.getItem('userId'),
+      channel: bankDetails.channel,
+    })
+      .then((res) => window.location.replace(res.message.data.payUrl))
+
+      .catch((e) => console.log(e));
+    // console.log(amount, 'amount');
+    // await sendToken('0xebE3B38b9BADD80452809987E353E03a88C13387', amount);
   };
   const formatmessage = (message: string) => {
     return intl.formatMessage({ id: message });
@@ -513,6 +535,12 @@ const Navbar = () => {
                   </DialogHeader>
 
                   <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
+                  <select>
+                    <option disabled>Select Channel</option>
+                    <option value={'qr'}>QR</option>
+                    <option value={'direct'}>Direct</option>
+                    <option value={'c2c'}>C2C</option>
+                  </select>
                   <Button
                     onClick={() => handleWalletRecharge()}
                     className="w-full buttoncss"
@@ -530,7 +558,9 @@ const Navbar = () => {
                 </DialogContent>
               </Dialog>
               <div className="mt-3 flex justify-between ">
-                <UserCircle2Icon size={30} />
+                <a href="/profile">
+                  <UserCircle2Icon size={30} />
+                </a>
                 <p className="pl-2">{userDetail?.user?.telegramusername}</p>
               </div>
               <Button
@@ -934,12 +964,38 @@ const Navbar = () => {
                   </DialogHeader>
 
                   <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
+                  <select
+                    className="border p-2"
+                    onChange={(e) => setBankDetails({ ...bankDetails, channel: e.target.value })}
+                  >
+                    <option disabled>Select Channel</option>
+                    <option value={'qr'}>QR</option>
+                    <option value={'direct'}>Direct</option>
+                    <option value={'c2c'}>C2C</option>
+                  </select>
+                  {/* <label>Bank Code</label>
+                  <Input type="text" onChange={(e) => setBankDetails({ ...bankDetails, bankCode: e.target.value })} />
+                  <label>Bank Name</label>
+                  <Input
+                    type="text"
+                    onChange={(e) => setBankDetails({ ...bankDetails, depositorBankName: e.target.value })}
+                  />
+                  <label>Depositor Name</label>
+                  <Input
+                    type="text"
+                    onChange={(e) => setBankDetails({ ...bankDetails, depositorName: e.target.value })}
+                  />
+                  <label>Depositor Account Number</label>
+                  <Input
+                    type="text"
+                    onChange={(e) => setBankDetails({ ...bankDetails, depositorBankAcctNo: e.target.value })}
+                  /> */}
                   <Button
                     onClick={() => handleWalletRecharge()}
                     className="w-full buttoncss"
-                    disabled={RechargewalletPending}
+                    disabled={isInitatingPayment}
                   >
-                    {RechargewalletPending ? (
+                    {isInitatingPayment ? (
                       <span className="flex items-center gap-x-1">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <FormattedMessage id="app.depositpending" />
