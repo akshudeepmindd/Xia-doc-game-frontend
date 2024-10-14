@@ -68,78 +68,56 @@ const PlayRoomsPanel = () => {
           <h1 className="text-white text-3xl mt-2 mb-2 my-3 text-center">
             <FormattedMessage id="app.playroom" />
           </h1>
-          <Table className="bg-[white] ">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">
-                  <FormattedMessage id="app.roomname" />
-                </TableHead>
-                <TableHead>
-                  <FormattedMessage id="app.playersinroom" />
-                </TableHead>
-                <TableHead>
-                  <FormattedMessage id="app.roomowner" />
-                </TableHead>
-                <TableHead>
-                  <FormattedMessage id="app.action" />
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!isEmpty(dealerroomdetail) ? (
-                dealerroomdetail?.message?.map((player: Player, index: number) => (
-                  <TableRow>
-                    <TableCell>{player?.name}</TableCell>
-                    <TableCell>{player?.players?.length}</TableCell>
-                    <TableCell>{player?.owner?.telegramusername}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Hint content="Join">
-                          <Dialog open={requestStatus?.status === 'PENDING'}>
-                            <DialogTrigger asChild>
-                              <Button
-                                size={'icon'}
-                                className="h-8 w-8 bg-green-400 hover:bg-green-200"
-                                onClick={() => HandleJoinRequest(player)}
-                              >
-                                <Plus size={18} className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            {selectroom._id == player._id && (
-                              <DialogContent>
-                                <DialogHeader className="flex flex-row items-center gap-x-4">
-                                  <div>
-                                    <Loader2 className="w-8 h-8 animate-spin" />
-                                  </div>
-                                  <div>
-                                    <DialogTitle>
-                                      <FormattedMessage id="app.requestsent" />
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                      <FormattedMessage id="app.requestsenttext" />
-                                    </DialogDescription>
-                                  </div>
-                                </DialogHeader>
-                              </DialogContent>
-                            )}{' '}
-                          </Dialog>
-                        </Hint>
-                        {/* <Hint content="Reject">
-                          <Button size={'icon'} className="h-8 w-8 bg-red-500 hover:bg-red-200 ">
-                            <X size={18} className="h-4 w-4" />
-                          </Button>
-                        </Hint> */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4   gap-4">
+            {!isEmpty(dealerroomdetail)
+              ? dealerroomdetail?.message?.map((player: Player, index: number) => (
+                  <div className="max-w-sm rounded overflow-hidden shadow-lg border bg-[white]">
+                    <div className="px-6 py-4">
+                      <div className="font-bold text-xl mb-2">
+                        <span className="">{player?.name}</span>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                      <p className="text-gray-700 text-base">
+                        Numbers of players: <span className="">{player?.players?.length}</span>
+                      </p>
+                      <p className="text-gray-700 text-base">
+                        Room Owner: <span className="">{player?.owner?.telegramusername}</span>
+                      </p>
+                    </div>
+                    <div className="px-6 pt-4 pb-2 flex justify-end">
+                      <Hint content="Join">
+                        <Dialog open={requestStatus?.status === 'PENDING'}>
+                          <DialogTrigger asChild>
+                            <Button
+                              className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1"
+                              onClick={() => HandleJoinRequest(player)}
+                            >
+                              <FormattedMessage id="app.join" />
+                            </Button>
+                          </DialogTrigger>
+                          {selectroom._id == player._id && (
+                            <DialogContent>
+                              <DialogHeader className="flex flex-row items-center gap-x-4">
+                                <div>
+                                  <Loader2 className="w-8 h-8 animate-spin" />
+                                </div>
+                                <div>
+                                  <DialogTitle>
+                                    <FormattedMessage id="app.requestsent" />
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    <FormattedMessage id="app.requestsenttext" />
+                                  </DialogDescription>
+                                </div>
+                              </DialogHeader>
+                            </DialogContent>
+                          )}{' '}
+                        </Dialog>
+                      </Hint>
+                    </div>
+                  </div>
                 ))
-              ) : (
-                <TableRow>
-                  <FormattedMessage id="app.norooms" />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              : ''}
+          </div>
         </div>
       </div>
     </>
