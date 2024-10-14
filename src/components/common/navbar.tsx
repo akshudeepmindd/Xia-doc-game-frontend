@@ -156,6 +156,7 @@ const Navbar = () => {
     }
   };
   const handleWalletRecharge = async () => {
+    localStorage.setItem('rechargeAmount', amount);
     const response = addtoWallet({
       amount,
       bankCode: bankDetails.bankCode,
