@@ -91,10 +91,15 @@ const PlayRoomsPanel = () => {
                               className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-28 mt-1"
                               onClick={() => HandleJoinRequest(player)}
                             >
-                              <FormattedMessage id="app.join" />
+                              {selectroom._id == player._id ? (
+                                <Loader2 size={10} className="w-9 h-9 animate-spin" />
+                              ) : (
+                                <FormattedMessage id="app.join" />
+                              )}
                             </Button>
                           </DialogTrigger>
-                          {selectroom._id == player._id && (
+                          <br />
+                          {/* {selectroom._id == player._id && (
                             <DialogContent>
                               <DialogHeader className="flex flex-row items-center gap-x-4">
                                 <div>
@@ -110,7 +115,7 @@ const PlayRoomsPanel = () => {
                                 </div>
                               </DialogHeader>
                             </DialogContent>
-                          )}{' '}
+                          )}{' '} */}
                         </Dialog>
                       </Hint>
                     </div>
