@@ -10,6 +10,8 @@ import PrivateRoute from '@/components/PrivateRoute';
 import RemoteStream from '@/components/RemoteCam1';
 import SecondRemoteStream from '@/components/RemoteCam2';
 import ReactHlsPlayer from 'react-hls-player';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 const RemoteStreamComponent = React.memo(({ roomId }) => <RemoteStream roomId={roomId} />);
 
@@ -20,11 +22,17 @@ const GameComponent = () => {
   const playerref = useRef<HTMLVideoElement | null>(null);
 
   // Unity context
+  // const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
+  //   loaderUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.loader.js',
+  //   dataUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.data',
+  //   frameworkUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.framework.js',
+  //   codeUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.wasm',
+  // });
   const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
-    loaderUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.loader.js',
-    dataUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.data',
-    frameworkUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.framework.js',
-    codeUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.wasm',
+    loaderUrl: '/Build/Gameplay.loader.js',
+    dataUrl: '/Build/Gameplay.data',
+    frameworkUrl: '/Build/Gameplay.framework.js',
+    codeUrl: '/Build/Gameplay.wasm',
   });
 
   // Handle window resize
@@ -100,7 +108,18 @@ const GameComponent = () => {
         {!isLandscape && isMobile && (
           <div className="landscape-warning">Please rotate your device to landscape mode.</div>
         )}
-
+        <Button
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            marginTop: '10px',
+          }}
+          className="buttoncss rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-10 sm:w-10 md:w-10 "
+          onClick={() => window.location.replace('/')}
+        >
+          <LogOut size={15} />
+        </Button>
         {/* Unity Component */}
         <Unity
           unityProvider={unityProvider}

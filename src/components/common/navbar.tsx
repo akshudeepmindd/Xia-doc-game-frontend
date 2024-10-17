@@ -81,7 +81,7 @@ const Navbar = () => {
     depositorBankName: '',
     depositorName: '',
     depositorBankAcctNo: '',
-    channel: '',
+    channel: 'qr',
     bankName: '',
   });
   const { mutateAsync: purchaseRoom } = useMutation({
@@ -537,7 +537,7 @@ const Navbar = () => {
 
                   <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
                   <select>
-                    <option disabled>Select Channel</option>
+                    <option>Select Channel</option>
                     <option value={'qr'}>QR</option>
                     <option value={'direct'}>Direct</option>
                     <option value={'c2c'}>C2C</option>

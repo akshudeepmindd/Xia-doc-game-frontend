@@ -1,6 +1,28 @@
 .buttoncss{
     background: linear-gradient(109.77deg, #5200FF 21.74%, #DD1350 91.44%);
 }
+.logoutCss{
+      position: absolute;
+    right: 7.5%;
+    top: 5.5%;
+    /* border: 1px solid #fff; */
+    /* margin-top: 10px; */
+    padding: 3px !important;
+    background: #00000000 !important;
+    border-radius: 50%;
+}
+@media only screen  and (orientation: landscape) {
+   .logoutCss{
+      position: absolute;
+    right: 9%;
+    top: 2.5%;
+    /* border: 1px solid #fff; */
+    /* margin-top: 10px; */
+    padding: 3px !important;
+    background: #00000000 !important;
+    border-radius: 50%;
+}
+}
 .dealer-container{
     min-width: 100vh;
     height: 100%;

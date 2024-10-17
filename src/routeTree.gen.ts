@@ -17,23 +17,18 @@ import { Route as BaseImport } from './routes/_base'
 
 // Create Virtual Routes
 
-const RedirectLazyImport = createFileRoute('/redirect')()
 const ProfileLazyImport = createFileRoute('/profile')()
 const PlayroomsLazyImport = createFileRoute('/playrooms')()
 const DealerpanelLazyImport = createFileRoute('/dealerpanel')()
 const CallbackLazyImport = createFileRoute('/callback')()
 const BaseIndexLazyImport = createFileRoute('/_base/')()
+const RedirectIdLazyImport = createFileRoute('/redirect/$id')()
 const PlayRoomIdLazyImport = createFileRoute('/play/$roomId')()
 const DealerRoomIdLazyImport = createFileRoute('/dealer/$roomId')()
 const BaseRoomLazyImport = createFileRoute('/_base/room')()
 const BaseGameLazyImport = createFileRoute('/_base/game')()
 
 // Create/Update Routes
-
-const RedirectLazyRoute = RedirectLazyImport.update({
-  path: '/redirect',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/redirect.lazy').then((d) => d.Route))
 
 const ProfileLazyRoute = ProfileLazyImport.update({
   path: '/profile',
@@ -64,6 +59,11 @@ const BaseIndexLazyRoute = BaseIndexLazyImport.update({
   path: '/',
   getParentRoute: () => BaseRoute,
 } as any).lazy(() => import('./routes/_base/index.lazy').then((d) => d.Route))
+
+const RedirectIdLazyRoute = RedirectIdLazyImport.update({
+  path: '/redirect/$id',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/redirect.$id.lazy').then((d) => d.Route))
 
 const PlayRoomIdLazyRoute = PlayRoomIdLazyImport.update({
   path: '/play/$roomId',
@@ -126,13 +126,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileLazyImport
       parentRoute: typeof rootRoute
     }
-    '/redirect': {
-      id: '/redirect'
-      path: '/redirect'
-      fullPath: '/redirect'
-      preLoaderRoute: typeof RedirectLazyImport
-      parentRoute: typeof rootRoute
-    }
     '/_base/game': {
       id: '/_base/game'
       path: '/game'
@@ -161,6 +154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayRoomIdLazyImport
       parentRoute: typeof rootRoute
     }
+    '/redirect/$id': {
+      id: '/redirect/$id'
+      path: '/redirect/$id'
+      fullPath: '/redirect/$id'
+      preLoaderRoute: typeof RedirectIdLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/_base/': {
       id: '/_base/'
       path: '/'
@@ -183,9 +183,9 @@ export const routeTree = rootRoute.addChildren({
   DealerpanelLazyRoute,
   PlayroomsLazyRoute,
   ProfileLazyRoute,
-  RedirectLazyRoute,
   DealerRoomIdLazyRoute,
   PlayRoomIdLazyRoute,
+  RedirectIdLazyRoute,
 })
 
 /* prettier-ignore-end */
@@ -201,9 +201,9 @@ export const routeTree = rootRoute.addChildren({
         "/dealerpanel",
         "/playrooms",
         "/profile",
-        "/redirect",
         "/dealer/$roomId",
-        "/play/$roomId"
+        "/play/$roomId",
+        "/redirect/$id"
       ]
     },
     "/_base": {
@@ -226,9 +226,6 @@ export const routeTree = rootRoute.addChildren({
     "/profile": {
       "filePath": "profile.lazy.tsx"
     },
-    "/redirect": {
-      "filePath": "redirect.lazy.tsx"
-    },
     "/_base/game": {
       "filePath": "_base/game.lazy.tsx",
       "parent": "/_base"
@@ -242,6 +239,9 @@ export const routeTree = rootRoute.addChildren({
     },
     "/play/$roomId": {
       "filePath": "play.$roomId.lazy.tsx"
+    },
+    "/redirect/$id": {
+      "filePath": "redirect.$id.lazy.tsx"
     },
     "/_base/": {
       "filePath": "_base/index.lazy.tsx",
