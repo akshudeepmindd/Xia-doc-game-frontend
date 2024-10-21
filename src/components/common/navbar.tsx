@@ -35,16 +35,10 @@ const CreateRoom = z
     roomType: z.enum(['private', 'public']),
     houseEdgeFee: z.string().min(0).max(100),
     startTime: z.string(),
-    even: z.string().min(0).max(100),
-    odd: z.string().min(0).max(100),
     '4-white-0-red': z.string().min(0).max(100),
     '4-red-0-white': z.string().min(0).max(100),
     '3-white-1-red': z.string().min(0).max(100),
     '3-red-1-white': z.string().min(0).max(100),
-    'even-9-10': z.string().min(0).max(100),
-    'even-10-9': z.string().min(0).max(100),
-    'odd-9-10': z.string().min(0).max(100),
-    'odd-10-9': z.string().min(0).max(100),
   })
   .refine(
     (data) => {
@@ -123,16 +117,10 @@ const Navbar = () => {
       const rules = [];
 
       rules.push({
-        EVEN: response.even,
-        ODD: response.odd,
         FOUR_WHITE: response['4-white-0-red'],
         FOUR_BLACK: response['4-red-0-white'],
         THREE_WHITE_ONE_BLACK: response['3-white-1-red'],
         THREE_BLACK_ONE_WHITE: response['3-red-1-white'],
-        EVEN_NINE_TEN: response['even-9-10'],
-        EVEN_TEN_NINE: response['even-10-9'],
-        ODD_TEN_NINE: response['odd-9-10'],
-        ODD_NINE_TEN: response['odd-10-9'],
       });
 
       const payload = {
@@ -349,32 +337,6 @@ const Navbar = () => {
                           <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
                             <FormField
                               control={form.control}
-                              name="even"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Even</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enterevenrule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="odd"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Odd</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enteroddrule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
                               name="4-white-0-red"
                               render={({ field }) => (
                                 <FormItem className="relative">
@@ -436,59 +398,6 @@ const Navbar = () => {
                                       type="text"
                                       {...field}
                                     />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="even-10-9"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Even 10:9</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.entereven10rule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="even-9-10"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Even 9:10</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.entereven9rule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="odd-10-9"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Odd 10:9</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enterodd10rule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="odd-9-10"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Odd 9:10</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enterodd9rule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -778,32 +687,6 @@ const Navbar = () => {
                           <div className="w-full grid grid-cols-2 gap-3 gap-x-2">
                             <FormField
                               control={form.control}
-                              name="even"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Even</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enterevenrule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="odd"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Odd</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enteroddrule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
                               name="4-white-0-red"
                               render={({ field }) => (
                                 <FormItem className="relative">
@@ -865,59 +748,6 @@ const Navbar = () => {
                                       type="text"
                                       {...field}
                                     />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="even-10-9"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Even 10:9</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.entereven10rule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="even-9-10"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Even 9:10</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.entereven9rule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="odd-10-9"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Odd 10:9</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enterodd10rule')} type="text" {...field} />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="odd-9-10"
-                              render={({ field }) => (
-                                <FormItem className="relative">
-                                  {/* <FormLabel>Odd 9:10</FormLabel> */}
-                                  <FormControl>
-                                    <Input placeholder={formatmessage('app.enterodd9rule')} type="text" {...field} />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
@@ -1007,8 +837,16 @@ const Navbar = () => {
                   </Button>
                 </DialogContent>
               </Dialog>
-              <div>
-                <User2Icon size={20} />
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <User2Icon size={20} className=''/>
+                <p className="pl-2 pt-2">{userDetail?.user?.telegramusername}</p>
               </div>
               <Button
                 variant="secondary"

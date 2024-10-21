@@ -21,13 +21,6 @@ const GameComponent = () => {
   const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const playerref = useRef<HTMLVideoElement | null>(null);
 
-  // Unity context
-  // const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
-  //   loaderUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.loader.js',
-  //   dataUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.data',
-  //   frameworkUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.framework.js',
-  //   codeUrl: 'https://unity-build-xoc.s3.eu-north-1.amazonaws.com/Gameplay.wasm',
-  // });
   const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
     loaderUrl: '/Build/Gameplay.loader.js',
     dataUrl: '/Build/Gameplay.data',
