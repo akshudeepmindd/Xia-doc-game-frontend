@@ -44,7 +44,7 @@ const Register = ({ children }: RegisterProps) => {
       const response = await userRegister(data);
       toast.success('Register successfully. Please login to continue');
     } catch (error: unknown | any) {
-      toast.error(error.message || 'Failed to login');
+      toast.error(error.response.data.message || 'Failed to login');
     } finally {
       setLoading(false);
       form.reset();

@@ -57,7 +57,8 @@ const LoginDialog = ({ children }: LoginDialogProps) => {
       navigate({ to: '/' });
       toast.success('Login successful');
     } catch (error: unknown | any) {
-      toast.error(error.message || 'Failed to login');
+      console.log(error, 'error');
+      toast.error(error.response.data.message || 'Failed to login');
     } finally {
       setLoading(false);
       form.reset();

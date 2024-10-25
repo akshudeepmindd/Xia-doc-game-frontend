@@ -123,5 +123,6 @@
   "app.telegramusername": "tên người dùng Telegram",
   "app.currentpass": "Mật khẩu hiện tại",
   "app.newpass": "Mật khẩu mới",
-  "app.withdrawlmessage": "Yêu cầu rút tiền đã được gửi."
+  "app.withdrawlmessage": "Yêu cầu rút tiền đã được gửi.",
+  "app.priceperroom": "Giá mỗi phòng"
 }

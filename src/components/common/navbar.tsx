@@ -28,6 +28,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { addHours } from 'date-fns';
 import { z } from 'zod';
 import { FormattedMessage, useIntl } from 'react-intl';
+import { toast } from 'sonner';
 const CreateRoom = z
   .object({
     name: z.string().min(1, 'Room name is required'),
@@ -100,6 +101,10 @@ const Navbar = () => {
       password: '',
       roomType: 'private',
       startTime: '',
+      '4-white-0-red': '12',
+      '4-red-0-white': '12',
+      '3-white-1-red': '3.3',
+      '3-red-1-white': '3.3',
     },
   });
 
@@ -135,10 +140,13 @@ const Navbar = () => {
         SpoRequested: [],
         rules: rules,
       };
-
-      await transferXusdt({ amount: 1000 });
-      await purchaseRoom(payload); // API call for purchase room
-      setOpen(false);
+      if (userDetail?.user?.walletBalance >= 1000) {
+        await transferXusdt({ amount: 1000 });
+        await purchaseRoom(payload); // API call for purchase room
+        setOpen(false);
+      } else {
+        toast.error('Insufficent Balance');
+      }
     } catch (error) {
       console.log('handleBuyRoom-Error', error);
     }
@@ -407,7 +415,7 @@ const Navbar = () => {
                         </div>
 
                         <Button type="submit" className="w-full buttoncss" disabled={isPending}>
-                          {isPending ? (
+                          {isDeductLoading ? (
                             <span className="flex items-center gap-x-1">
                               <Loader2 className="w-4 h-4 animate-spin" />
                               <FormattedMessage id="app.pleasewait" />
@@ -443,12 +451,12 @@ const Navbar = () => {
                       <FormattedMessage id="app.depositetext" />
                     </DialogDescription>
                   </DialogHeader>
-
-                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
+                  <label>Amount (Minimum - 200000VND)</label>
+                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} min={200000} />
                   <select>
-                    <option>Select Channel</option>
+                    <option defaultChecked>Select Channel</option>
                     <option value={'qr'}>QR</option>
-                    <option value={'direct'}>Direct</option>
+                    {/* <option value={'direct'}>Direct</option> */}
                     <option value={'c2c'}>C2C</option>
                   </select>
                   <Button
@@ -571,8 +579,11 @@ const Navbar = () => {
                 )}
                 {
                   <DialogContent>
-                    <DialogTitle>
+                    <DialogTitle className="flex justify-around">
                       <FormattedMessage id="app.buyroom" />
+                      <p className="text-sm font-normal">
+                        <FormattedMessage id="app.priceperroom" />: <span className="font-bold text-md">1000xUSDT</span>
+                      </p>
                     </DialogTitle>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(handleBuyRoom)} className="space-y-4 w-full">
@@ -712,6 +723,7 @@ const Navbar = () => {
                                     <Input
                                       placeholder={formatmessage('app.enterfourblackrule')}
                                       type="text"
+                                      defaultValue={12}
                                       {...field}
                                     />
                                   </FormControl>
@@ -729,6 +741,7 @@ const Navbar = () => {
                                     <Input
                                       placeholder={formatmessage('app.enterthreewhiterule')}
                                       type="text"
+                                      defaultValue={3.3}
                                       {...field}
                                     />
                                   </FormControl>
@@ -746,6 +759,7 @@ const Navbar = () => {
                                     <Input
                                       placeholder={formatmessage('app.enterthreeredrule')}
                                       type="text"
+                                      defaultValue={3.3}
                                       {...field}
                                     />
                                   </FormControl>
@@ -757,7 +771,7 @@ const Navbar = () => {
                         </div>
 
                         <Button type="submit" className="w-full buttoncss" disabled={isPending}>
-                          {isPending ? (
+                          {isDeductLoading ? (
                             <span className="flex items-center gap-x-1">
                               <Loader2 className="w-4 h-4 animate-spin" />
                               <FormattedMessage id="app.pleasewait" />
@@ -793,40 +807,22 @@ const Navbar = () => {
                       <FormattedMessage id="app.depositetext" />
                     </DialogDescription>
                   </DialogHeader>
-
-                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} />
-                  <select
-                    className="border p-2"
-                    onChange={(e) => setBankDetails({ ...bankDetails, channel: e.target.value })}
-                  >
-                    <option disabled>Select Channel</option>
+                  <label>
+                    Amount <span className="text-xs">(Minimum - 200000VND)</span>
+                  </label>
+                  <Input type="number" onChange={(e) => setAmount(parseInt(e.target.value))} min={200000} />
+                  <select onChange={(e) => setBankDetails({ ...bankDetails, channel: e.target.value })}>
+                    <option defaultChecked>Select Channel</option>
                     <option value={'qr'}>QR</option>
-                    <option value={'direct'}>Direct</option>
+                    {/* <option value={'direct'}>Direct</option> */}
                     <option value={'c2c'}>C2C</option>
                   </select>
-                  {/* <label>Bank Code</label>
-                  <Input type="text" onChange={(e) => setBankDetails({ ...bankDetails, bankCode: e.target.value })} />
-                  <label>Bank Name</label>
-                  <Input
-                    type="text"
-                    onChange={(e) => setBankDetails({ ...bankDetails, depositorBankName: e.target.value })}
-                  />
-                  <label>Depositor Name</label>
-                  <Input
-                    type="text"
-                    onChange={(e) => setBankDetails({ ...bankDetails, depositorName: e.target.value })}
-                  />
-                  <label>Depositor Account Number</label>
-                  <Input
-                    type="text"
-                    onChange={(e) => setBankDetails({ ...bankDetails, depositorBankAcctNo: e.target.value })}
-                  /> */}
                   <Button
                     onClick={() => handleWalletRecharge()}
                     className="w-full buttoncss"
-                    disabled={isInitatingPayment}
+                    disabled={RechargewalletPending}
                   >
-                    {isInitatingPayment ? (
+                    {RechargewalletPending ? (
                       <span className="flex items-center gap-x-1">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <FormattedMessage id="app.depositpending" />
@@ -845,7 +841,7 @@ const Navbar = () => {
                   alignItems: 'center',
                 }}
               >
-                <User2Icon size={20} className=''/>
+                <User2Icon size={20} className="" />
                 <p className="pl-2 pt-2">{userDetail?.user?.telegramusername}</p>
               </div>
               <Button
