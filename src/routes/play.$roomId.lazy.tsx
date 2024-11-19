@@ -22,10 +22,10 @@ const GameComponent = () => {
   const playerref = useRef<HTMLVideoElement | null>(null);
 
   const { unityProvider, loadingProgression, isLoaded } = useUnityContext({
-    loaderUrl: '/Build/Gameplay.loader.js',
-    dataUrl: '/Build/Gameplay.data',
-    frameworkUrl: '/Build/Gameplay.framework.js',
-    codeUrl: '/Build/Gameplay.wasm',
+    loaderUrl: '/Build/Gameplay2.loader.js',
+    dataUrl: '/Build/Gameplay2.data.unityweb',
+    frameworkUrl: '/Build/Gameplay2.framework.js.unityweb',
+    codeUrl: '/Build/Gameplay2.wasm.unityweb',
   });
 
   // Handle window resize
