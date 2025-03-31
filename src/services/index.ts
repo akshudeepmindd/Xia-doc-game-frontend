@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 export const socket = io('https://deepminddsvisualss.com/ws/');
 
 export const http = axios.create({
-  baseURL: "https://bizarre-sherline-devquatersinnovation-951c89ae.koyeb.app/api/",
+  baseURL: "https://xoc-dia-backend.onrender.com/api/",
 });
 
 /**
